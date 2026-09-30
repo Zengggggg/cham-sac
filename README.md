@@ -11,8 +11,6 @@ MVP tập trung vào ba nhóm chức năng:
 > [!IMPORTANT]
 > Repository hiện mới ở giai đoạn khởi tạo. Frontend vẫn là màn hình mẫu React/Vite; backend mới có kết nối MongoDB và endpoint kiểm tra trạng thái. Các module nghiệp vụ mô tả bên dưới là phạm vi MVP cần triển khai, không phải tính năng đã hoàn thiện.
 
-Đặc tả sản phẩm đầy đủ nằm tại [Cham_Sac_Viet_Agent_Project_Spec.md](./Cham_Sac_Viet_Agent_Project_Spec.md) và là nguồn tham chiếu chính khi phát triển.
-
 ## Mục tiêu sản phẩm
 
 Chạm Sắc Việt hướng tới một hành trình liền mạch từ sản phẩm vật lý đến nội dung số:

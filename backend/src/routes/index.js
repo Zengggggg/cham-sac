@@ -4,11 +4,21 @@
 * Updated by Louis on 2026-06-16
 */
 import express from 'express';
+import { API_STATUS_MESSAGE } from '../config/api.js';
+import authRouter from './authRoutes.js';
+import { sendSuccess } from '../utils/apiResponse.js';
 
 const router = express.Router();
 
 router.get('/status', (req, res) => {
-    res.status(200).json({ message: 'API HerDays is running' });
+    void req;
+    return sendSuccess(res, {
+        statusCode: 200,
+        message: API_STATUS_MESSAGE,
+        data: { status: 'healthy' }
+    });
 });
+
+router.use('/auth', authRouter);
 
 export default router;

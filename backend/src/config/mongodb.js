@@ -4,14 +4,17 @@
 * Updated by Louis on 2026-06-16
 */
 import mongoose from 'mongoose';
+import { getMongoEnvironment } from './environment.js';
 
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI);
+        const { uri, dbName } = getMongoEnvironment();
+        const conn = await mongoose.connect(uri, { dbName });
         console.log(`MongoDB is connected successfully at host: ${conn.connection.host}`);
+        return conn;
     } catch (error) {
         console.error(`Error connect to MongoDB: ${error.message}`);
-        process.exit(1);
+        throw error;
     }
 };
 

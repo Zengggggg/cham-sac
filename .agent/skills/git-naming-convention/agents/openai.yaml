@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Naming Convention"
+  short_description: "Standardize branches, PR titles, and commits"
+  default_prompt: "Use $git-naming-convention to suggest a branch name, PR title, and atomic commit messages for my change."

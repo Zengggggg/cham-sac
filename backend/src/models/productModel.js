@@ -6,6 +6,22 @@ import {
     toPlainObject
 } from './modelValidators.js';
 
+const productChangeSchema = new mongoose.Schema({
+    field: { type: String, required: true },
+    from: { type: mongoose.Schema.Types.Mixed },
+    to: { type: mongoose.Schema.Types.Mixed }
+}, { _id: false });
+
+const productChangeEventSchema = new mongoose.Schema({
+    changedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    changedAt: { type: Date, required: true, default: Date.now },
+    changes: { type: [productChangeSchema], required: true }
+}, { _id: false });
+
 const productSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -42,10 +58,16 @@ const productSchema = new mongoose.Schema({
         enum: ['active', 'inactive', 'sold_out'],
         required: true,
         default: 'inactive'
+    },
+    changeHistory: {
+        type: [productChangeEventSchema],
+        default: [],
+        select: false
     }
 }, {
     collection: 'products',
     timestamps: true,
+    optimisticConcurrency: true,
     toJSON: { virtuals: true, transform: toPlainObject }
 });
 

@@ -123,7 +123,7 @@ Các cấu trúc nội dung linh hoạt phải tuân theo JSON shape được đ
 Product: active | inactive | sold_out
 User:    pending_verification -> active | blocked
 
-Order:   pending -> confirmed -> shipping -> completed
+Order:   pending -> confirmed -> shipping -> done
               \-> cancelled
 
 Payment: pending -> success
@@ -142,13 +142,13 @@ Payment: pending -> success
 | Health endpoint | Đã có `GET /chamsacviet/status` |
 | Auth email/mật khẩu, Google + JWT | Đã triển khai OTP email qua Resend, register/verify/resend, login, Google login/link, refresh, logout, `/me` và middleware phân quyền |
 | MongoDB models/validators/indexes | Đã có 7 collections và script khởi tạo idempotent |
-| Sản phẩm, đơn hàng, thanh toán API | Chưa triển khai |
-| payOS provider/webhook | Đã có SDK/provider xác minh chữ ký; chưa có checkout API và webhook route |
+| Sản phẩm, giỏ hàng, đơn hàng, thanh toán API | Đã triển khai backend, checkout transaction và worker hết hạn đơn |
+| payOS provider/webhook | Đã có payment link, webhook xác minh chữ ký và xử lý idempotent |
 | Nội dung di sản | Chưa triển khai |
 | Image tracking/WebAR | Chưa triển khai |
 | R2/CDN integration | Chưa triển khai |
-| Admin | Chưa triển khai |
-| Automated tests | Đã có test cho auth, response contract, MongoDB models/definitions và payOS provider |
+| Admin | Đã có backend quản lý sản phẩm, tồn kho và trạng thái đơn; frontend chưa triển khai |
+| Automated tests | Đã có test cho auth, response contract, MongoDB, shop rules, order state và payOS |
 
 Prefix API chính thức của dự án là `/chamsacviet`; không duy trì alias cho prefix của scaffold cũ.
 
@@ -160,7 +160,7 @@ Prefix API chính thức của dự án là `/chamsacviet`; không duy trì alia
 | Backend | Node.js, Express 4, Mongoose 8, MongoDB, ES modules, JWT, bcrypt, Google Auth Library, Resend |
 | Package manager | npm với lockfile riêng cho `frontend` và `backend` |
 
-Frontend hiện chưa cài router, AR engine, state manager, data-fetching library hay thư viện component. Backend dùng validation thủ công và Node.js test runner; ngoài auth, các implementation nghiệp vụ khác chưa được triển khai.
+Frontend hiện chưa cài router, AR engine, state manager, data-fetching library hay thư viện component. Backend dùng validation thủ công và Node.js test runner; auth và backend shop đã được triển khai, các module nội dung/AR còn lại chưa triển khai.
 
 ## Yêu cầu môi trường local
 
@@ -270,6 +270,9 @@ Mở địa chỉ do Vite in trên terminal, mặc định là `http://localhost
 | `PAYOS_RETURN_URL` | Có khi bật thanh toán | Không có | URL frontend sau khi thanh toán thành công |
 | `PAYOS_CANCEL_URL` | Có khi bật thanh toán | Không có | URL frontend sau khi hủy thanh toán |
 | `PAYOS_WEBHOOK_URL` | Không | Không có | HTTPS URL công khai để đăng ký webhook payOS |
+| `SHOP_SHIPPING_FEE_VND` | Không | `30000` | Phí giao hàng cố định của shop, đơn vị VND |
+| `ORDER_PAYMENT_EXPIRES_MINUTES` | Không | `15` | Thời hạn thanh toán trước khi đơn tự hủy |
+| `ORDER_EXPIRY_INTERVAL_SECONDS` | Không | `60` | Chu kỳ worker quét đơn hết hạn |
 | `PORT` | Không | `8080` | Cổng HTTP của backend |
 | `FRONTEND_URL` | Không | `http://localhost:5173` | Origin được phép truy cập API qua CORS |
 
@@ -291,6 +294,7 @@ Chạy trong `backend/`:
 | `npm run lint` | Kiểm tra JavaScript trong `src` bằng ESLint |
 | `npm test` | Chạy test backend bằng Node.js test runner |
 | `npm run db:init` | Tạo/cập nhật 7 collections, JSON Schema validators và indexes |
+| `npm run db:migrate:shop` | Backfill dữ liệu cũ và áp dụng schema/index của backend shop |
 | `npm run db:seed` | Seed dữ liệu tối thiểu cho development; cần biến `DEV_ADMIN_*` |
 
 Chi tiết request/response của auth API nằm trong `backend/README.md`.

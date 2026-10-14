@@ -89,6 +89,8 @@ Các biến bắt buộc:
 
 `GOOGLE_CLIENT_ID` là bắt buộc khi bật đăng nhập Google. `MONGODB_DB_NAME` mặc định là `cham_sac_viet`. Xem toàn bộ cấu hình trong `.env.example`.
 
+Shop dùng `SHOP_SHIPPING_FEE_VND` (mặc định `30000`), `ORDER_PAYMENT_EXPIRES_MINUTES` (mặc định `15`) và `ORDER_EXPIRY_INTERVAL_SECONDS` (mặc định `60`). MongoDB phải chạy dưới dạng replica set để checkout, webhook và hủy đơn dùng transaction.
+
 ## Khởi tạo MongoDB
 
 Backend có 7 collections theo `mongodb_database_spec.md`: `users`, `products`, `heritage_sites`, `orders`, `ar_models`, `game_rules`, `payments`. Order items được snapshot và nhúng trực tiếp trong `orders`.
@@ -100,6 +102,14 @@ npm run db:init
 ```
 
 Script có thể chạy lặp lại: collection mới sẽ được tạo; collection có sẵn được cập nhật JSON Schema validator bằng `collMod`; index được tạo theo tên cố định. Nếu dữ liệu hiện có vi phạm unique index, script dừng và báo rõ index lỗi để tránh âm thầm làm mất dữ liệu.
+
+Khi nâng cấp database đã có dữ liệu lên schema shop mới, chạy migration idempotent trước khi khởi động phiên bản mới:
+
+```bash
+npm run db:migrate:shop
+```
+
+Migration backfill cart/audit arrays, `expiresAt`, `refundRequired`, `statusHistory` và sau đó đồng bộ validator/index.
 
 Seed development tối thiểu:
 
@@ -115,9 +125,34 @@ Backend sử dụng SDK Node chính thức `@payos/node`. Cấu hình các biế
 
 Lớp tích hợp tại `src/providers/payOSProvider.js` hỗ trợ tạo payment link, xác minh chữ ký webhook và xác nhận webhook URL. Models lưu `providerOrderCode` để ánh xạ số đơn của payOS, `paymentLinkId` để tra cứu link và `providerTransactionId` để xử lý webhook idempotent.
 
-Checkout API và webhook route chưa được mount vì nghiệp vụ phí ship và thời điểm trừ tồn kho vẫn cần được chốt. Không cập nhật trạng thái thanh toán từ `returnUrl`; trạng thái phải được xác nhận từ webhook đã qua `payOS.webhooks.verify()`.
+Checkout trừ tồn kho trong MongoDB transaction. Đơn unpaid hết hạn được worker hủy và hoàn tồn đúng một lần. Không cập nhật trạng thái thanh toán từ `returnUrl`; trạng thái chỉ được xác nhận từ webhook đã qua `payOS.webhooks.verify()`.
 
 Trước khi thử đăng ký, tạo API key trên Resend, xác minh domain gửi và điền `RESEND_API_KEY`, `RESEND_FROM_EMAIL`. Backend không log hoặc trả OTP trong API response.
+
+## Shop API
+
+Các endpoint user yêu cầu access token của role `user`; endpoint admin yêu cầu role `admin`.
+
+| Method | Endpoint | Mục đích |
+| --- | --- | --- |
+| `GET` | `/chamsacviet/shop/boxes` | Danh sách sản phẩm đang bán |
+| `GET` | `/chamsacviet/shop/boxes/:id` | Chi tiết sản phẩm |
+| `GET` | `/chamsacviet/cart` | Lấy giỏ hàng với giá/tồn kho hiện tại |
+| `POST` | `/chamsacviet/cart/items` | Thêm/gộp sản phẩm vào giỏ |
+| `PATCH/DELETE` | `/chamsacviet/cart/items/:productId` | Cập nhật hoặc xóa dòng giỏ |
+| `POST` | `/chamsacviet/orders` | Checkout; bắt buộc header `Idempotency-Key` |
+| `GET` | `/chamsacviet/orders/me` | Lịch sử đơn của user |
+| `GET` | `/chamsacviet/orders/:id` | Chi tiết đơn thuộc user |
+| `POST` | `/chamsacviet/payments/payos` | Tạo/lấy payment link payOS |
+| `GET` | `/chamsacviet/payments/:orderId/status` | Trạng thái thanh toán |
+| `POST` | `/chamsacviet/payments/payos/webhook` | Webhook công khai, bắt buộc chữ ký payOS hợp lệ |
+| `GET/POST` | `/chamsacviet/admin/products` | Danh sách/tạo sản phẩm |
+| `PATCH` | `/chamsacviet/admin/products/:id` | Cập nhật sản phẩm với `expectedUpdatedAt` |
+| `GET` | `/chamsacviet/admin/orders` | Lọc và phân trang toàn bộ đơn |
+| `GET` | `/chamsacviet/admin/orders/:id` | Chi tiết đơn và thanh toán |
+| `PATCH` | `/chamsacviet/admin/orders/:id/status` | Chuyển trạng thái với `expectedUpdatedAt` |
+
+Giỏ hàng được nhúng trong user; order items, người nhận và địa chỉ được snapshot. Hệ thống vẫn giữ đúng bảy collections. Hủy đơn đã thanh toán chỉ đánh dấu cần hoàn tiền thủ công, không tự động hoàn tiền.
 
 ## Auth API
 

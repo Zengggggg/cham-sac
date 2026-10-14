@@ -34,6 +34,16 @@ const paymentSchema = new mongoose.Schema({
         trim: true,
         maxlength: 200
     },
+    checkoutUrl: {
+        type: String,
+        trim: true,
+        maxlength: 2048
+    },
+    qrCode: {
+        type: String,
+        trim: true,
+        maxlength: 10000
+    },
     amount: nonNegativeMoneyField,
     transferContent: {
         type: String,
@@ -56,7 +66,10 @@ const paymentSchema = new mongoose.Schema({
         trim: true,
         maxlength: 255
     },
-    paidAt: { type: Date }
+    paidAt: { type: Date },
+    expiresAt: { type: Date },
+    requiresManualReview: { type: Boolean, default: false },
+    reviewReason: { type: String, trim: true, maxlength: 1000 }
 }, {
     collection: 'payments',
     timestamps: true,
@@ -72,6 +85,10 @@ paymentSchema.pre('validate', function validatePaymentState(next) {
 });
 
 paymentSchema.index({ orderId: 1, createdAt: -1 });
+paymentSchema.index(
+    { orderId: 1, status: 1 },
+    { unique: true, partialFilterExpression: { status: 'pending' } }
+);
 paymentSchema.index(
     { provider: 1, providerTransactionId: 1 },
     {

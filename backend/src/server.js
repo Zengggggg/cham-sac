@@ -12,11 +12,12 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 
 import connectDB from './config/mongodb.js';
-import { getAuthEnvironment, getEmailEnvironment } from './config/environment.js';
+import { getAuthEnvironment, getEmailEnvironment, getShopEnvironment } from './config/environment.js';
 import { API_PREFIX } from './config/api.js';
 import swaggerSpec from './config/swagger.js';
 import router from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorMiddleware.js';
+import { startOrderExpiryWorker } from './workers/orderExpiryWorker.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -59,7 +60,9 @@ const startServer = async () => {
   try {
     getAuthEnvironment();
     getEmailEnvironment();
+    getShopEnvironment();
     await connectDB();
+    startOrderExpiryWorker();
     app.listen(PORT, () => {
       console.log(`Server is running at http://localhost:${PORT}`);
     });

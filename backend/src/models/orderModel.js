@@ -82,6 +82,23 @@ const orderItemSchema = new mongoose.Schema({
     isBox: { type: Boolean }
 }, { _id: false });
 
+const orderStatusEventSchema = new mongoose.Schema({
+    from: {
+        type: String,
+        enum: ['pending', 'confirmed', 'shipping', 'done', 'cancelled', null],
+        default: null
+    },
+    to: {
+        type: String,
+        required: true,
+        enum: ['pending', 'confirmed', 'shipping', 'done', 'cancelled']
+    },
+    actorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    actorRole: { type: String, enum: ['user', 'admin', 'system'], required: true },
+    reason: { type: String, trim: true, maxlength: 1000 },
+    changedAt: { type: Date, required: true, default: Date.now }
+}, { _id: false });
+
 const orderSchema = new mongoose.Schema({
     orderCode: {
         type: String,
@@ -97,6 +114,12 @@ const orderSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         index: false
+    },
+    checkoutKey: {
+        type: String,
+        trim: true,
+        maxlength: 200,
+        immutable: true
     },
     customer: { type: customerSchema, required: true },
     shippingAddress: { type: shippingAddressSchema, required: true },
@@ -121,10 +144,21 @@ const orderSchema = new mongoose.Schema({
         enum: ['pending', 'confirmed', 'shipping', 'done', 'cancelled'],
         required: true,
         default: 'pending'
-    }
+    },
+    expiresAt: {
+        type: Date,
+        required: true,
+        default: () => new Date(Date.now() + 15 * 60 * 1000)
+    },
+    cancelledAt: { type: Date },
+    cancellationReason: { type: String, trim: true, maxlength: 1000 },
+    stockRestoredAt: { type: Date },
+    refundRequired: { type: Boolean, default: false },
+    statusHistory: { type: [orderStatusEventSchema], default: [] }
 }, {
     collection: 'orders',
     timestamps: true,
+    optimisticConcurrency: true,
     toJSON: { virtuals: true, transform: toPlainObject }
 });
 
@@ -152,6 +186,14 @@ orderSchema.pre('validate', function validateOrderTotal(next) {
 
 orderSchema.index({ userId: 1, createdAt: -1 });
 orderSchema.index({ orderStatus: 1, createdAt: -1 });
+orderSchema.index(
+    { userId: 1, checkoutKey: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { checkoutKey: { $type: 'string' } }
+    }
+);
+orderSchema.index({ orderStatus: 1, paymentStatus: 1, expiresAt: 1 });
 
 const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 

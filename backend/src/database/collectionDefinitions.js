@@ -63,6 +63,28 @@ export const collectionDefinitions = [
         emailVerificationOtpSentAt: { bsonType: ['date', 'null'] },
         refreshTokenHash: { bsonType: ['string', 'null'] },
         refreshTokenExpiresAt: { bsonType: ['date', 'null'] },
+        defaultShippingAddress: {
+            bsonType: 'object',
+            properties: {
+                addressLine: { bsonType: 'string', maxLength: 500 },
+                ward: { bsonType: 'string', maxLength: 200 },
+                province: { bsonType: 'string', maxLength: 200 },
+                note: { bsonType: 'string', maxLength: 1000 }
+            }
+        },
+        cartItems: {
+            bsonType: 'array',
+            items: {
+                bsonType: 'object',
+                required: ['productId', 'quantity', 'selected', 'addedAt'],
+                properties: {
+                    productId: { bsonType: 'objectId' },
+                    quantity: positiveInteger,
+                    selected: { bsonType: 'bool' },
+                    addedAt: { bsonType: 'date' }
+                }
+            }
+        },
         ...timestampProperties
     }, [
         { key: { email: 1 }, options: { unique: true, name: 'email_1' } },
@@ -82,6 +104,29 @@ export const collectionDefinitions = [
         stock: nonNegativeInteger,
         images: { bsonType: 'array', items: httpsUrl },
         status: { enum: ['active', 'inactive', 'sold_out'] },
+        changeHistory: {
+            bsonType: 'array',
+            items: {
+                bsonType: 'object',
+                required: ['changedBy', 'changedAt', 'changes'],
+                properties: {
+                    changedBy: { bsonType: 'objectId' },
+                    changedAt: { bsonType: 'date' },
+                    changes: {
+                        bsonType: 'array',
+                        items: {
+                            bsonType: 'object',
+                            required: ['field'],
+                            properties: {
+                                field: { bsonType: 'string' },
+                                from: {},
+                                to: {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
         ...timestampProperties
     }, [
         {
@@ -115,12 +160,14 @@ export const collectionDefinitions = [
             'totalAmount',
             'paymentStatus',
             'orderStatus',
+            'expiresAt',
             'createdAt',
             'updatedAt'
         ],
         {
             orderCode: { bsonType: 'string', minLength: 3, maxLength: 50 },
             userId: { bsonType: 'objectId' },
+            checkoutKey: { bsonType: 'string', maxLength: 200 },
             customer: {
                 bsonType: 'object',
                 required: ['fullName', 'phone'],
@@ -159,6 +206,26 @@ export const collectionDefinitions = [
             totalAmount: nonNegativeInteger,
             paymentStatus: { enum: ['unpaid', 'paid', 'refunded'] },
             orderStatus: { enum: ['pending', 'confirmed', 'shipping', 'done', 'cancelled'] },
+            expiresAt: { bsonType: 'date' },
+            cancelledAt: { bsonType: 'date' },
+            cancellationReason: { bsonType: 'string', maxLength: 1000 },
+            stockRestoredAt: { bsonType: 'date' },
+            refundRequired: { bsonType: 'bool' },
+            statusHistory: {
+                bsonType: 'array',
+                items: {
+                    bsonType: 'object',
+                    required: ['to', 'actorRole', 'changedAt'],
+                    properties: {
+                        from: { enum: ['pending', 'confirmed', 'shipping', 'done', 'cancelled', null] },
+                        to: { enum: ['pending', 'confirmed', 'shipping', 'done', 'cancelled'] },
+                        actorId: { bsonType: 'objectId' },
+                        actorRole: { enum: ['user', 'admin', 'system'] },
+                        reason: { bsonType: 'string', maxLength: 1000 },
+                        changedAt: { bsonType: 'date' }
+                    }
+                }
+            },
             ...timestampProperties
         },
         [
@@ -170,6 +237,18 @@ export const collectionDefinitions = [
             {
                 key: { orderStatus: 1, createdAt: -1 },
                 options: { name: 'orderStatus_1_createdAt_-1' }
+            },
+            {
+                key: { userId: 1, checkoutKey: 1 },
+                options: {
+                    unique: true,
+                    name: 'userId_1_checkoutKey_1',
+                    partialFilterExpression: { checkoutKey: { $type: 'string' } }
+                }
+            },
+            {
+                key: { orderStatus: 1, paymentStatus: 1, expiresAt: 1 },
+                options: { name: 'orderStatus_1_paymentStatus_1_expiresAt_1' }
             }
         ]
     ),
@@ -239,18 +318,31 @@ export const collectionDefinitions = [
             provider: { enum: ['payos'] },
             providerOrderCode: positiveInteger,
             paymentLinkId: { bsonType: 'string', maxLength: 200 },
+            checkoutUrl: { bsonType: 'string', maxLength: 2048 },
+            qrCode: { bsonType: 'string', maxLength: 10000 },
             amount: nonNegativeInteger,
             transferContent: { bsonType: 'string', minLength: 1, maxLength: 255 },
             status: { enum: ['pending', 'success', 'failed'] },
             webhookPayload: { bsonType: 'object' },
             providerTransactionId: { bsonType: 'string', maxLength: 255 },
             paidAt: { bsonType: 'date' },
+            expiresAt: { bsonType: 'date' },
+            requiresManualReview: { bsonType: 'bool' },
+            reviewReason: { bsonType: 'string', maxLength: 1000 },
             ...timestampProperties
         },
         [
             {
                 key: { orderId: 1, createdAt: -1 },
                 options: { name: 'orderId_1_createdAt_-1' }
+            },
+            {
+                key: { orderId: 1, status: 1 },
+                options: {
+                    unique: true,
+                    name: 'orderId_1_pending_status_1',
+                    partialFilterExpression: { status: 'pending' }
+                }
             },
             {
                 key: { provider: 1, providerTransactionId: 1 },

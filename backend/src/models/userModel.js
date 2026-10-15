@@ -1,6 +1,32 @@
 import mongoose from 'mongoose';
 import { E164_PHONE_PATTERN } from './modelValidators.js';
 
+const shippingAddressSchema = new mongoose.Schema({
+    addressLine: { type: String, trim: true, maxlength: 500 },
+    ward: { type: String, trim: true, maxlength: 200 },
+    province: { type: String, trim: true, maxlength: 200 },
+    note: { type: String, trim: true, maxlength: 1000 }
+}, { _id: false });
+
+const cartItemSchema = new mongoose.Schema({
+    productId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product',
+        required: true
+    },
+    quantity: {
+        type: Number,
+        required: true,
+        min: 1,
+        validate: {
+            validator: Number.isSafeInteger,
+            message: 'quantity phải là số nguyên dương.'
+        }
+    },
+    selected: { type: Boolean, default: true },
+    addedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -42,6 +68,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null,
         maxlength: 2048
+    },
+    defaultShippingAddress: { type: shippingAddressSchema, default: undefined },
+    cartItems: {
+        type: [cartItemSchema],
+        default: [],
+        select: false
     },
     role: {
         type: String,
@@ -105,6 +137,7 @@ const userSchema = new mongoose.Schema({
             delete returnedObject.emailVerificationOtpSentAt;
             delete returnedObject.refreshTokenHash;
             delete returnedObject.refreshTokenExpiresAt;
+            delete returnedObject.cartItems;
             return returnedObject;
         }
     }
@@ -114,6 +147,7 @@ userSchema.index(
     { phone: 1 },
     { unique: true, partialFilterExpression: { phone: { $type: 'string' } } }
 );
+userSchema.index({ _id: 1, 'cartItems.productId': 1 });
 
 userSchema.virtual('isVerified').get(function getIsVerified() {
     return Boolean(this.emailVerifiedAt);

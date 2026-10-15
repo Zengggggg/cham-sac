@@ -28,6 +28,16 @@ const getPositiveInteger = (name, fallback) => {
     return value;
 };
 
+const getNonNegativeInteger = (name, fallback) => {
+    const value = Number.parseInt(process.env[name] || fallback, 10);
+
+    if (!Number.isSafeInteger(value) || value < 0) {
+        throw new Error(`${name} must be a non-negative safe integer`);
+    }
+
+    return value;
+};
+
 export const getAuthEnvironment = () => {
     const jwtSecret = getSecret('JWT_SECRET');
     const refreshTokenSecret = getSecret('REFRESH_TOKEN_SECRET');
@@ -68,4 +78,10 @@ export const getPayOSEnvironment = () => ({
     returnUrl: getRequiredEnvironmentVariable('PAYOS_RETURN_URL'),
     cancelUrl: getRequiredEnvironmentVariable('PAYOS_CANCEL_URL'),
     webhookUrl: process.env.PAYOS_WEBHOOK_URL?.trim() || null
+});
+
+export const getShopEnvironment = () => ({
+    shippingFee: getNonNegativeInteger('SHOP_SHIPPING_FEE_VND', '30000'),
+    paymentExpiresInMinutes: getPositiveInteger('ORDER_PAYMENT_EXPIRES_MINUTES', '15'),
+    expiryWorkerIntervalSeconds: getPositiveInteger('ORDER_EXPIRY_INTERVAL_SECONDS', '60')
 });

@@ -147,12 +147,31 @@ Các endpoint user yêu cầu access token của role `user`; endpoint admin yê
 | `GET` | `/chamsacviet/payments/:orderId/status` | Trạng thái thanh toán |
 | `POST` | `/chamsacviet/payments/payos/webhook` | Webhook công khai, bắt buộc chữ ký payOS hợp lệ |
 | `GET/POST` | `/chamsacviet/admin/products` | Danh sách/tạo sản phẩm |
-| `PATCH` | `/chamsacviet/admin/products/:id` | Cập nhật sản phẩm với `expectedUpdatedAt` |
+| `GET/PATCH` | `/chamsacviet/admin/products/:id` | Chi tiết/cập nhật sản phẩm với `expectedUpdatedAt` |
 | `GET` | `/chamsacviet/admin/orders` | Lọc và phân trang toàn bộ đơn |
 | `GET` | `/chamsacviet/admin/orders/:id` | Chi tiết đơn và thanh toán |
 | `PATCH` | `/chamsacviet/admin/orders/:id/status` | Chuyển trạng thái với `expectedUpdatedAt` |
 
 Giỏ hàng được nhúng trong user; order items, người nhận và địa chỉ được snapshot. Hệ thống vẫn giữ đúng bảy collections. Hủy đơn đã thanh toán chỉ đánh dấu cần hoàn tiền thủ công, không tự động hoàn tiền.
+
+## Admin API
+
+Toàn bộ endpoint dưới đây yêu cầu access token của role `admin`. Các thao tác cập nhật/xóa yêu cầu `expectedUpdatedAt` để ngăn ghi đè dữ liệu vừa được quản trị viên khác thay đổi.
+
+| Method | Endpoint | Mục đích |
+| --- | --- | --- |
+| `GET` | `/chamsacviet/admin/dashboard` | Tổng quan doanh thu, đơn, user và sản phẩm; chuỗi doanh thu ngày/tháng/năm |
+| `GET` | `/chamsacviet/admin/users` | Lọc, tìm kiếm và phân trang tài khoản |
+| `GET` | `/chamsacviet/admin/users/:id` | Chi tiết tài khoản, tổng hợp và 10 đơn gần nhất |
+| `PATCH` | `/chamsacviet/admin/users/:id/status` | Khóa/mở tài khoản user và thu hồi refresh token khi khóa |
+| `GET/POST` | `/chamsacviet/admin/posts` | Danh sách/tạo luật chơi |
+| `GET/PATCH/DELETE` | `/chamsacviet/admin/posts/:id` | Xem/cập nhật/xóa luật chơi |
+| `GET/POST` | `/chamsacviet/admin/heritage-sites` | Danh sách/tạo nội dung địa danh |
+| `GET/PATCH/DELETE` | `/chamsacviet/admin/heritage-sites/:id` | Xem/cập nhật/xóa địa danh chưa gắn model AR |
+| `GET/POST` | `/chamsacviet/admin/models` | Danh sách/tạo cấu hình model AR |
+| `GET/PATCH/DELETE` | `/chamsacviet/admin/models/:id` | Xem/cập nhật/soft-delete model AR |
+
+Dashboard chỉ tính payment `success` của đơn vẫn có `paymentStatus=paid`, nhóm doanh thu theo `paidAt`; đơn đã hoàn tiền không được tính. Trường `traffic.available=false` cho biết lượt truy cập chưa có dữ liệu vì MVP chưa tích hợp analytics. Endpoint trạng thái user không cho quản trị viên khóa chính mình, không chỉnh trạng thái admin khác và không kích hoạt tài khoản chưa xác minh email.
 
 ## Auth API
 

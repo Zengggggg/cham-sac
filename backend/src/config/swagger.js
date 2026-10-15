@@ -72,7 +72,9 @@ const swaggerDefinition = {
     ],
     tags: [
         { name: 'System', description: 'Trạng thái hệ thống' },
-        { name: 'Auth', description: 'Đăng ký, đăng nhập và quản lý phiên' }
+        { name: 'Auth', description: 'Đăng ký, đăng nhập và quản lý phiên' },
+        { name: 'Admin', description: 'Dashboard, tài khoản, nội dung và AR' },
+        { name: 'Admin Shop', description: 'Sản phẩm, tồn kho và đơn hàng' }
     ],
     components: {
         securitySchemes: {
@@ -649,6 +651,10 @@ Object.assign(swaggerDefinition.paths, {
         }
     },
     [`${API_PREFIX}/admin/products/{id}`]: {
+        get: {
+            tags: ['Admin Shop'], summary: 'Chi tiết sản phẩm quản trị', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        },
         patch: {
             tags: ['Admin Shop'], summary: 'Cập nhật sản phẩm', security: bearerSecurity,
             parameters: [objectIdParameter('id')],
@@ -674,6 +680,134 @@ Object.assign(swaggerDefinition.paths, {
             parameters: [objectIdParameter('id')],
             requestBody: jsonRequest({ type: 'object', required: ['status', 'expectedUpdatedAt'] }),
             responses: { 200: shopObjectResponse, 409: errorResponse('Bước chuyển không hợp lệ.') }
+        }
+    },
+    [`${API_PREFIX}/admin/dashboard`]: {
+        get: {
+            tags: ['Admin'], summary: 'Tổng quan vận hành và doanh thu', security: bearerSecurity,
+            responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/users`]: {
+        get: {
+            tags: ['Admin'], summary: 'Danh sách tài khoản', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/users/{id}`]: {
+        get: {
+            tags: ['Admin'], summary: 'Chi tiết tài khoản và lịch sử đơn gần đây', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/users/{id}/status`]: {
+        patch: {
+            tags: ['Admin'], summary: 'Cập nhật trạng thái tài khoản', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({
+                type: 'object',
+                required: ['status', 'expectedUpdatedAt'],
+                properties: {
+                    status: { type: 'string', enum: ['pending_verification', 'active', 'blocked'] },
+                    expectedUpdatedAt: { type: 'string', format: 'date-time' }
+                }
+            }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Không thể đổi trạng thái.') }
+        }
+    },
+    [`${API_PREFIX}/admin/posts`]: {
+        get: {
+            tags: ['Admin'], summary: 'Danh sách luật chơi', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        },
+        post: {
+            tags: ['Admin'], summary: 'Tạo luật chơi', security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object',
+                required: ['productId', 'title', 'summary', 'content']
+            }),
+            responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/posts/{id}`]: {
+        get: {
+            tags: ['Admin'], summary: 'Chi tiết luật chơi', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        },
+        patch: {
+            tags: ['Admin'], summary: 'Cập nhật luật chơi', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        },
+        delete: {
+            tags: ['Admin'], summary: 'Xóa luật chơi', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        }
+    },
+    [`${API_PREFIX}/admin/heritage-sites`]: {
+        get: {
+            tags: ['Admin'], summary: 'Danh sách nội dung địa danh', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        },
+        post: {
+            tags: ['Admin'], summary: 'Tạo nội dung địa danh', security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object',
+                required: ['name', 'shortDescription', 'content', 'targetImageUrl']
+            }),
+            responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/heritage-sites/{id}`]: {
+        get: {
+            tags: ['Admin'], summary: 'Chi tiết nội dung địa danh', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        },
+        patch: {
+            tags: ['Admin'], summary: 'Cập nhật nội dung địa danh', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        },
+        delete: {
+            tags: ['Admin'], summary: 'Xóa địa danh chưa gắn model AR', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Địa danh đang được sử dụng.') }
+        }
+    },
+    [`${API_PREFIX}/admin/models`]: {
+        get: {
+            tags: ['Admin'], summary: 'Danh sách model AR', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        },
+        post: {
+            tags: ['Admin'], summary: 'Tạo cấu hình model AR', security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object', required: ['heritageSiteId', 'model3dUrl']
+            }),
+            responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/models/{id}`]: {
+        get: {
+            tags: ['Admin'], summary: 'Chi tiết model AR', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        },
+        patch: {
+            tags: ['Admin'], summary: 'Cập nhật cấu hình model AR', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        },
+        delete: {
+            tags: ['Admin'], summary: 'Đánh dấu model AR đã xóa', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
         }
     }
 });

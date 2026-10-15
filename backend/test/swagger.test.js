@@ -17,6 +17,11 @@ test('Swagger spec exposes the current API routes and Bearer authentication', ()
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/payments/payos/webhook`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/products`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/orders/{id}/status`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/dashboard`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/users/{id}/status`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/posts/{id}`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/heritage-sites/{id}`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/models/{id}`]);
     assert.equal(swaggerSpec.components.securitySchemes.bearerAuth.scheme, 'bearer');
 });
 

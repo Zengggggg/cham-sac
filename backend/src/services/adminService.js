@@ -37,6 +37,12 @@ export const listAdminProducts = async (query = {}) => {
     };
 };
 
+export const getAdminProduct = async (productId) => {
+    const product = await Product.findById(productId).select('+changeHistory');
+    if (!product) throw new AppError('Sản phẩm không tồn tại.', 404);
+    return product;
+};
+
 export const createAdminProduct = async (adminId, input) => {
     const product = new Product(input);
     const changes = collectProductChanges({}, input);

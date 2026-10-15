@@ -144,10 +144,10 @@ Payment: pending -> success
 | MongoDB models/validators/indexes | Đã có 7 collections và script khởi tạo idempotent |
 | Sản phẩm, giỏ hàng, đơn hàng, thanh toán API | Đã triển khai backend, checkout transaction và worker hết hạn đơn |
 | payOS provider/webhook | Đã có payment link, webhook xác minh chữ ký và xử lý idempotent |
-| Nội dung di sản | Chưa triển khai |
-| Image tracking/WebAR | Chưa triển khai |
+| Nội dung di sản | Đã có backend admin CRUD; public API chưa triển khai |
+| Image tracking/WebAR | Đã có backend admin cấu hình model AR; trải nghiệm WebAR công khai chưa triển khai |
 | R2/CDN integration | Chưa triển khai |
-| Admin | Đã có backend quản lý sản phẩm, tồn kho và trạng thái đơn; frontend chưa triển khai |
+| Admin | Đã có backend dashboard, quản lý user, sản phẩm, tồn kho, đơn, luật chơi, địa danh và cấu hình model AR; frontend chưa triển khai |
 | Automated tests | Đã có test cho auth, response contract, MongoDB, shop rules, order state và payOS |
 
 Prefix API chính thức của dự án là `/chamsacviet`; không duy trì alias cho prefix của scaffold cũ.
@@ -160,7 +160,7 @@ Prefix API chính thức của dự án là `/chamsacviet`; không duy trì alia
 | Backend | Node.js, Express 4, Mongoose 8, MongoDB, ES modules, JWT, bcrypt, Google Auth Library, Resend |
 | Package manager | npm với lockfile riêng cho `frontend` và `backend` |
 
-Frontend hiện chưa cài router, AR engine, state manager, data-fetching library hay thư viện component. Backend dùng validation thủ công và Node.js test runner; auth và backend shop đã được triển khai, các module nội dung/AR còn lại chưa triển khai.
+Frontend hiện chưa cài router, AR engine, state manager, data-fetching library hay thư viện component. Backend dùng validation thủ công và Node.js test runner; auth, shop và các API admin cho nội dung/AR đã được triển khai, còn public API nội dung và trải nghiệm WebAR chưa triển khai.
 
 ## Yêu cầu môi trường local
 

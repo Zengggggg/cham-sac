@@ -1,0 +1,301 @@
+.ui-demo {
+  background: #fff9ed;
+  color: #211832;
+  min-height: 100%;
+  padding: clamp(28px, 5vw, 64px) max(20px, 5vw);
+}
+.ui-demo__intro {
+  margin: 0 auto 34px;
+  max-width: 760px;
+}
+.ui-demo__eyebrow {
+  color: #b12069;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+.ui-demo h1 {
+  color: #211832;
+  font-family: "Baloo 2", sans-serif;
+  font-size: clamp(38px, 6vw, 72px);
+  line-height: 0.98;
+  margin: 0 0 14px;
+}
+.ui-demo__intro > p {
+  color: #6b6375;
+  line-height: 1.7;
+  max-width: 650px;
+}
+.ui-demo__section {
+  border-top: 2px solid #eadfe6;
+  margin: 34px auto 0;
+  max-width: 1100px;
+  padding-top: 26px;
+}
+.ui-demo__section h2 {
+  color: #72327e;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 30px;
+  margin: 0 0 18px;
+}
+.ui-demo__button-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ui-demo__button-row + .ui-demo__button-row {
+  margin-top: 14px;
+}
+.ui-demo__cards {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.ui-demo__card-copy {
+  color: #6b6375;
+  font-size: 14px;
+  margin: 0;
+}
+.ui-demo__modal-note {
+  color: #6b6375;
+  margin: 0;
+}
+.ui-demo__type-samples {
+  background: #ffffff;
+  border-left: 5px solid #ce337f;
+  border-radius: 0 10px 10px 0;
+  padding: 20px 24px;
+}
+.ui-demo__title-sample {
+  color: #211832;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 32px;
+  line-height: 1.1;
+  margin: 0 0 6px;
+}
+.ui-demo__subtitle-sample {
+  color: #72327e;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+.ui-demo__body-sample {
+  color: #514653;
+  line-height: 1.7;
+  margin: 0 0 10px;
+}
+.ui-demo__body-sample a {
+  color: #b12069;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition:
+    color 180ms ease,
+    text-decoration-color 180ms ease;
+}
+.ui-demo__body-sample a:hover,
+.ui-demo__body-sample a:focus-visible {
+  color: #72327e;
+  text-decoration-color: #ce337f;
+}
+.ui-demo__body-sample a:focus-visible {
+  outline: 2px solid #eea53b;
+  outline-offset: 3px;
+}
+.ui-demo__caption-sample {
+  color: #6b6375;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+.ui-demo__placeholder-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.6fr);
+}
+.ui-demo__placeholder {
+  align-items: center;
+  background: #fffdf8;
+  border: 2px solid #eadfe6;
+  border-radius: 8px;
+  color: #6b6375;
+  display: flex;
+  gap: 10px;
+  min-height: 50px;
+  padding: 0 16px;
+}
+.ui-demo__placeholder svg {
+  color: #ce337f;
+  flex: 0 0 auto;
+}
+.ui-demo__placeholder--empty {
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 120px;
+  text-align: center;
+}
+.ui-demo__placeholder--empty svg {
+  color: #52bcbf;
+}
+.ui-demo__placeholder--empty span {
+  font-size: 13px;
+}
+.ui-demo__inputs {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 900px;
+}
+.ui-demo__inputs > label {
+  color: #514653;
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 7px;
+}
+.ui-demo__inputs input:not([type="checkbox"]):not([type="radio"]),
+.ui-demo__inputs select,
+.ui-demo__inputs textarea {
+  background: #fffdf8;
+  border: 2px solid #d9ccda;
+  border-radius: 7px;
+  box-sizing: border-box;
+  color: #211832;
+  font:
+    400 14px/1.4 "Be Vietnam Pro",
+    sans-serif;
+  min-height: 46px;
+  padding: 10px 12px;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+.ui-demo__inputs textarea {
+  resize: vertical;
+}
+.ui-demo__inputs input::placeholder,
+.ui-demo__inputs textarea::placeholder {
+  color: #9b91a1;
+}
+.ui-demo__inputs input:not([type="checkbox"]):not([type="radio"]):focus,
+.ui-demo__inputs select:focus,
+.ui-demo__inputs textarea:focus {
+  border-color: #d44a89;
+  box-shadow: 0 0 0 1px rgba(206, 51, 127, 0.12);
+  outline: none;
+}
+.ui-demo__inputs input:disabled {
+  background: #f0ebed;
+  color: #9b91a1;
+  cursor: not-allowed;
+}
+.ui-demo__input-wide,
+.ui-demo__choice-group {
+  grid-column: 1 / -1;
+}
+.ui-demo__input--error {
+  border-color: #d52841 !important;
+}
+.ui-demo__error-message {
+  color: #d52841;
+  font-size: 12px;
+  font-weight: 400;
+}
+.ui-demo__choice-group {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.ui-demo__choice-label {
+  color: #514653;
+  font-size: 13px;
+  font-weight: 700;
+  margin-right: 4px;
+}
+.ui-demo__choice {
+  align-items: center;
+  color: #514653;
+  display: inline-flex;
+  font-size: 14px;
+  gap: 7px;
+}
+.ui-demo__choice input {
+  appearance: none;
+  background: #fffdf8;
+  border: 2px solid #9b91a1;
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 19px;
+  margin: 0;
+  position: relative;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+  width: 19px;
+}
+.ui-demo__choice input[type="checkbox"] {
+  border-radius: 4px;
+}
+.ui-demo__choice input[type="radio"] {
+  border-radius: 50%;
+}
+.ui-demo__choice input:hover {
+  border-color: #ce337f;
+}
+.ui-demo__choice input:focus-visible {
+  border-color: #d44a89;
+  box-shadow: 0 0 0 2px rgba(206, 51, 127, 0.16);
+  outline: none;
+}
+.ui-demo__choice input:checked {
+  background: #ce337f;
+  border-color: #ce337f;
+}
+.ui-demo__choice input[type="checkbox"]:checked::after {
+  border: solid #fffdf8;
+  border-width: 0 2px 2px 0;
+  content: "";
+  height: 9px;
+  left: 5px;
+  position: absolute;
+  top: 2px;
+  transform: rotate(45deg);
+  width: 4px;
+}
+.ui-demo__choice input[type="radio"]:checked::after {
+  background: #fffdf8;
+  border-radius: 50%;
+  content: "";
+  height: 7px;
+  left: 4px;
+  position: absolute;
+  top: 4px;
+  width: 7px;
+}
+@media (max-width: 800px) {
+  .ui-demo__cards {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .ui-demo__placeholder-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .ui-demo__inputs {
+    grid-template-columns: 1fr;
+  }
+  .ui-demo__input-wide,
+  .ui-demo__choice-group {
+    grid-column: auto;
+  }
+}

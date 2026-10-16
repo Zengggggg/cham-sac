@@ -1,0 +1,29 @@
+.home-page {
+  background: linear-gradient(180deg, #fdf0f4 0%, #fff 100%);
+  min-height: calc(100svh - 150px);
+  display: grid;
+  place-items: center;
+  padding: 72px 24px;
+  text-align: center;
+}
+
+.home-page__content {
+  width: min(720px, 100%);
+}
+.home-page__eyebrow {
+  margin-bottom: 12px;
+  color: #8c3f68;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.home-page h1 {
+  margin: 0 0 20px;
+  font-size: clamp(2.25rem, 5vw, 4.5rem);
+  line-height: 1.06;
+  letter-spacing: -0.045em;
+}
+.home-page p:last-child {
+  max-width: 56ch;
+  margin: 0 auto;
+}

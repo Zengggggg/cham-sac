@@ -1,0 +1,396 @@
+/* Hallmark · macrostructure: Utility Rail · tone: warm administrative · anchor hue: FPT red */
+.manage-sidebar {
+  --sidebar-red: #ce0000;
+  --sidebar-red-dark: #a80000;
+  --sidebar-ink: #252525;
+  --sidebar-muted: #73777d;
+  --sidebar-inline-padding: 16px;
+  --sidebar-scrollbar-size: 6px;
+  --sidebar-scrollbar-thumb: #c9cdd2;
+  --sidebar-scrollbar-thumb-hover: #aeb4bb;
+  --sidebar-scrollbar-track: transparent;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  width: var(--manage-sidebar-width, 272px);
+  height: 100vh;
+  min-height: 100vh;
+  padding: 24px 16px 18px;
+  color: var(--sidebar-ink);
+  background: #fff;
+  border-right: 1px solid #e7e7e7;
+  transition:
+    width 0.25s ease,
+    padding 0.25s ease;
+}
+
+/* Account replaces the former brand block and keeps event navigation above logout. */
+.manage-sidebar .manage-sidebar__brand {
+  display: none;
+}
+.manage-sidebar .manage-sidebar__account {
+  order: 0;
+  margin: 0 0 20px;
+  padding-top: 0;
+  border-top: 0;
+}
+.manage-sidebar .manage-sidebar__nav {
+  order: 1;
+}
+.manage-sidebar .manage-sidebar__footer {
+  display: contents;
+}
+.manage-sidebar .manage-sidebar__footer > .manage-sidebar__item:first-child {
+  order: 2;
+}
+.manage-sidebar .manage-sidebar__footer > .manage-sidebar__logout {
+  order: 3;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid #ededed;
+}
+.manage-sidebar .manage-sidebar__account-dropdown {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+
+@media (max-width: 760px) {
+  .manage-sidebar .manage-sidebar__account-dropdown {
+    top: 0;
+    left: calc(100% + 8px);
+  }
+}
+.manage-sidebar__collapse-old {
+  display: none;
+}
+
+.manage-sidebar__brand {
+  display: none;
+}
+.manage-sidebar__nav {
+  order: 1;
+}
+.manage-sidebar__account {
+  order: 0;
+  margin: 0 0 20px;
+}
+.manage-sidebar__footer {
+  display: contents;
+}
+.manage-sidebar__footer > .manage-sidebar__item:first-child {
+  order: 2;
+}
+.manage-sidebar__footer > .manage-sidebar__logout {
+  order: 3;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid #ededed;
+}
+.manage-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 10px 30px;
+}
+.manage-sidebar__avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.manage-sidebar--collapsed {
+  --sidebar-inline-padding: 10px;
+  width: var(--manage-sidebar-width, 72px);
+  padding-right: 10px;
+  padding-left: 10px;
+}
+.manage-sidebar--collapsed .manage-sidebar__brand {
+  justify-content: center;
+  padding-right: 0;
+  padding-left: 0;
+}
+.manage-sidebar--collapsed .manage-sidebar__brand-copy,
+.manage-sidebar--collapsed .manage-sidebar__item span {
+  display: none;
+}
+.manage-sidebar--collapsed .manage-sidebar__collapse {
+  margin-left: 0;
+}
+.manage-sidebar--collapsed .manage-sidebar__item {
+  justify-content: center;
+  padding-right: 0;
+  padding-left: 0;
+}
+.manage-sidebar--collapsed .manage-sidebar__account-button {
+  justify-content: center;
+  padding-right: 0;
+  padding-left: 0;
+}
+.manage-sidebar--collapsed .manage-sidebar__account-button span {
+  display: none;
+}
+.manage-sidebar__brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.manage-sidebar__brand-copy strong {
+  font-size: 16px;
+}
+.manage-sidebar__brand-copy span {
+  color: var(--sidebar-muted);
+  font-size: 12px;
+}
+.manage-sidebar__collapse {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  place-items: center;
+  color: var(--sidebar-red);
+  background: white;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.manage-sidebar__nav {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: 7px;
+  min-height: 0;
+  margin-right: calc(var(--sidebar-inline-padding) * -1);
+  padding-right: calc(var(--sidebar-inline-padding) - var(--sidebar-scrollbar-size));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-color: var(--sidebar-scrollbar-thumb) var(--sidebar-scrollbar-track);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.manage-sidebar__nav::-webkit-scrollbar {
+  width: var(--sidebar-scrollbar-size);
+}
+.manage-sidebar__nav::-webkit-scrollbar-track {
+  background: var(--sidebar-scrollbar-track);
+}
+.manage-sidebar__nav::-webkit-scrollbar-thumb {
+  background: var(--sidebar-scrollbar-thumb);
+  border-radius: 999px;
+}
+.manage-sidebar__nav::-webkit-scrollbar-thumb:hover {
+  background: var(--sidebar-scrollbar-thumb-hover);
+}
+.manage-sidebar__account {
+  position: relative;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #ededed;
+}
+.manage-sidebar__account-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--sidebar-ink);
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.manage-sidebar__account-button:hover {
+  color: var(--sidebar-red);
+  background: #fff4f4;
+}
+.manage-sidebar__account-button > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.manage-sidebar__account-button strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.manage-sidebar__account-button small {
+  color: var(--sidebar-muted);
+  font-size: 11px;
+}
+.manage-sidebar__account-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  display: grid;
+  width: 220px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px #2021241c;
+}
+.manage-sidebar__account-greeting,
+.manage-sidebar__account-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 9px 10px;
+  color: #555a60;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+.manage-sidebar__account-greeting {
+  color: var(--sidebar-red);
+  border-bottom: 1px solid #eee;
+  border-radius: 0;
+  font-weight: 700;
+}
+.manage-sidebar__account-dropdown button {
+  cursor: pointer;
+}
+.manage-sidebar__account-dropdown button:hover {
+  color: var(--sidebar-red);
+  background: #fff4f4;
+}
+.manage-sidebar__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  color: var(--sidebar-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+.manage-sidebar__item:hover {
+  color: var(--sidebar-red);
+  background: #fff4f4;
+}
+.manage-sidebar__item--active {
+  color: var(--sidebar-red);
+  background: #fff4f4;
+}
+.manage-sidebar__item--active:hover {
+  color: var(--sidebar-red);
+  background: #fff4f4;
+}
+.manage-sidebar__footer {
+  display: grid;
+  gap: 7px;
+  padding-top: 18px;
+}
+.manage-sidebar__logout:hover {
+  color: var(--sidebar-red-dark);
+}
+.manage-sidebar__mobile-toggle {
+  display: none;
+}
+.manage-sidebar button:focus-visible {
+  outline: 3px solid #ffb3b3;
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .manage-sidebar {
+    --sidebar-inline-padding: 10px;
+    --sidebar-scrollbar-size: 2px;
+    width: var(--manage-sidebar-width, 72px);
+    height: 100vh;
+    min-height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    padding: 16px 10px;
+  }
+  .manage-sidebar__brand {
+    justify-content: center;
+    padding: 0 0 24px;
+  }
+  .manage-sidebar__brand-copy,
+  .manage-sidebar__collapse,
+  .manage-sidebar__item span,
+  .manage-sidebar__account-button span {
+    display: none;
+  }
+  .manage-sidebar__account-button {
+    justify-content: center;
+    padding: 10px 0;
+  }
+  .manage-sidebar__account-dropdown {
+    top: 0;
+    left: calc(100% + 8px);
+  }
+  .manage-sidebar__item {
+    justify-content: center;
+    padding: 0;
+  }
+  .manage-sidebar__nav {
+    margin-right: calc(var(--sidebar-inline-padding) * -1);
+    padding-right: calc(
+      var(--sidebar-inline-padding) - var(--sidebar-scrollbar-size)
+    );
+    scrollbar-gutter: stable;
+    touch-action: pan-y;
+  }
+  .manage-sidebar__mobile-toggle {
+    display: none;
+  }
+}
+
+.manage-sidebar .manage-sidebar__brand {
+  display: none;
+}
+.manage-sidebar .manage-sidebar__account {
+  order: 0;
+  margin: 0 0 20px;
+  padding-top: 0;
+  border-top: 0;
+}
+.manage-sidebar .manage-sidebar__nav {
+  order: 1;
+}
+.manage-sidebar .manage-sidebar__footer {
+  display: contents;
+}
+.manage-sidebar .manage-sidebar__footer > .manage-sidebar__item:first-child {
+  order: 2;
+}
+.manage-sidebar .manage-sidebar__footer > .manage-sidebar__logout {
+  order: 3;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid #ededed;
+}
+.manage-sidebar .manage-sidebar__account-dropdown {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+
+@media (max-width: 760px) {
+  .manage-sidebar .manage-sidebar__account-dropdown {
+    top: 0;
+    left: calc(100% + 8px);
+  }
+}

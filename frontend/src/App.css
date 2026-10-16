@@ -182,3 +182,16 @@
     border-right-color: var(--border);
   }
 }
+.app-shell { min-height: 100svh; display: flex; flex-direction: column; }
+.app-main { width: 100%; margin: 0; flex: 1; }
+.site-container { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+.site-header { padding: 18px 0; background: #fffaf2; }
+.site-brand { font-weight: 800; color: #7d3f55; }
+.site-tagline { margin-left: 16px; color: #6b6375; font-size: .9rem; }
+.site-nav { border-block: 1px solid #eadfd7; background: #fff; }
+.site-nav__inner { display: flex; gap: 24px; }
+.site-nav__link { padding: 14px 0; color: #514653; text-decoration: none; }
+.site-nav__link.is-active { color: #8c3f68; font-weight: 700; }
+.site-footer { padding: 28px 0; color: #fff; background: #4d3041; }
+.site-footer p { margin: 0 0 6px; font-weight: 700; }
+.site-footer small { color: #eadfd7; }

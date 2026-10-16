@@ -1,0 +1,39 @@
+.ui-button {
+  --button-bg: #ce337f;
+  --button-color: #fffdf8;
+  --button-border: #ce337f;
+  align-items: center;
+  border: 2px solid var(--button-border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  gap: 9px;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.ui-button:hover:not(:disabled) { transform: translateY(-2px); }
+.ui-button:active:not(:disabled) { transform: translateY(0); }
+.ui-button:focus-visible { outline: 3px solid #eea53b; outline-offset: 3px; }
+.ui-button:disabled { cursor: not-allowed; opacity: .55; }
+.ui-button--sm { min-height: 36px; padding: 0 14px; font-size: 13px; }
+.ui-button--lg { min-height: 52px; padding: 0 24px; font-size: 16px; }
+.ui-button__spinner { animation: ui-button-spin 800ms linear infinite; height: 18px; width: 18px; }
+
+.ui-button--primary { background: var(--button-bg); color: var(--button-color); }
+.ui-button--primary:hover:not(:disabled) { background: #b12069; border-color: #b12069; box-shadow: 0 5px 0 #72327e; }
+.ui-button--secondary { background: #fffdf8; border-color: #335797; color: #335797; }
+.ui-button--secondary:hover:not(:disabled) { background: #eef3ff; box-shadow: 0 5px 0 #335797; }
+.ui-button--accent { background: #eea53b; border-color: #eea53b; color: #211832; }
+.ui-button--accent:hover:not(:disabled) { background: #d98b1e; border-color: #d98b1e; box-shadow: 0 5px 0 #72327e; }
+.ui-button--ghost { background: transparent; border-color: transparent; color: #72327e; }
+.ui-button--ghost:hover:not(:disabled) { background: #f8e8f0; border-color: #ce337f; }
+.ui-button--danger { background: #d52841; border-color: #d52841; color: #fff; }
+.ui-button--danger:hover:not(:disabled) { background: #a91f35; border-color: #a91f35; box-shadow: 0 5px 0 #72327e; }
+
+@keyframes ui-button-spin { to { transform: rotate(360deg); } }

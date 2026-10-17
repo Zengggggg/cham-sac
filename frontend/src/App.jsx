@@ -1,14 +1,35 @@
 import { Toaster } from 'react-hot-toast'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import Footer from './components/layout/Footer.jsx'
 import Header from './components/layout/Header.jsx'
 import Navbar from './components/layout/Navbar.jsx'
 import MessengerButton from './components/layout/MessengerButton.jsx'
 import HomePage from './pages/Common/HomePage.jsx'
 import ContactUsPage from './pages/Common/ContactUsPage.jsx'
+import FAQ from './pages/Common/FAQ.jsx'
 import LoginPage from './pages/Authentication/LoginPage.jsx'
+import RegisterPage from './pages/Authentication/RegisterPage.jsx'
+import ConfirmEmail from './pages/Authentication/ConfirmEmail.jsx'
 import DemoUI from './components/ui/DemoUI.jsx'
+import DataPolicy from './pages/Policy/DataPolicy.jsx'
+import TermOfPrivacy from './pages/Policy/TermOfPrivacy.jsx'
+import TermOfUse from './pages/Policy/TermOfUse.jsx'
+import ErrorPage403 from './pages/Error/ErrorPage403.jsx'
+import ErrorPage404 from './pages/Error/ErrorPage404.jsx'
+import InternetConnection from './pages/Error/InternetConnection.jsx'
+import UserProfile from './pages/Profile/UserProfile.jsx'
 import './App.css'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+  }, [pathname])
+
+  return null
+}
 
 function Layout({ children }) {
   return (
@@ -25,8 +46,17 @@ function Layout({ children }) {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/confirm-email" element={<ConfirmEmail />} />
+        <Route path="/user-profile" element={<Layout><UserProfile /></Layout>} />
+        <Route path="/data-policy" element={<Layout><DataPolicy /></Layout>} />
+        <Route path="/privacy-policy" element={<Layout><TermOfPrivacy /></Layout>} />
+        <Route path="/terms-of-use" element={<Layout><TermOfUse /></Layout>} />
+        <Route path="/403" element={<ErrorPage403 />} />
+        <Route path="/offline" element={<InternetConnection />} />
         <Route
           path="/"
           element={
@@ -44,16 +74,16 @@ function App() {
           }
         />
         <Route
+          path="/faq"
+          element={<Layout><FAQ /></Layout>}
+        />
+        <Route
           path="/demo-ui"
           element={<Layout><DemoUI /></Layout>}
         />
         <Route
           path="*"
-          element={
-            <Layout>
-              <HomePage />
-            </Layout>
-          }
+          element={<ErrorPage404 />}
         />
       </Routes>
       <Toaster

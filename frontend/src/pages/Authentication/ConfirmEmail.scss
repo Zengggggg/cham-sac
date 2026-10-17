@@ -1,0 +1,246 @@
+.app-shell:has(.confirm-email-page),
+#root:has(.confirm-email-page) {
+  height: auto;
+  min-height: 100svh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.confirm-email-page {
+  align-items: center;
+  background: #fff9ed;
+  box-sizing: border-box;
+  color: #211832;
+  display: flex;
+  justify-content: center;
+  min-height: 100svh;
+  overflow: visible;
+  padding: 16px 18px 18px;
+}
+
+.confirm-email-page__form-pane {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.confirm-email-page__content {
+  margin: 0 auto;
+  max-width: 540px;
+  text-align: center;
+  width: 100%;
+}
+
+.confirm-email-page__logo {
+  display: block;
+  height: auto;
+  margin: 0 auto 16px;
+  max-width: min(175px, 58vw);
+  object-fit: contain;
+  width: 175px;
+}
+
+.confirm-email-page__eyebrow {
+  color: #b12069;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+
+.confirm-email-page__heading h1 {
+  color: #211832;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: clamp(38px, 4vw, 48px);
+  line-height: 1;
+  margin: 0 0 10px;
+}
+
+.confirm-email-page__heading > p:last-child {
+  color: #6b6375;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 auto 18px;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.confirm-email-page__card {
+  background: #fffefa;
+  padding: clamp(18px, 2.5vw, 24px);
+  text-align: left;
+}
+
+.confirm-email-page__card + .confirm-email-page__card {
+  margin-top: 22px;
+}
+
+.confirm-email-page__card:hover {
+  border-color: #eadfe6;
+  box-shadow: 7px 7px 0 rgba(114, 50, 126, .1);
+  transform: none;
+}
+
+.confirm-email-page__card .ui-card__body {
+  margin-top: 16px;
+}
+
+.confirm-email-page__email-field {
+  align-items: center;
+  color: #72327e;
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-email-page__email-field .ui-input {
+  background: #f4eaf0;
+  color: #514653;
+  cursor: not-allowed;
+  font-weight: 700;
+}
+
+.confirm-email-page__error {
+  color: #d52841;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
+.confirm-email-page__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.confirm-email-page__card-actions .ui-button {
+  flex: 1 1 190px;
+}
+
+.confirm-email-page__otp-inputs {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, clamp(48px, 8vw, 62px));
+  justify-content: space-between;
+}
+
+.confirm-email-page__otp-input {
+  background: #fffdf8;
+  border: 2px solid #d9ccda;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #211832;
+  font: 700 24px/1 'Be Vietnam Pro', sans-serif;
+  aspect-ratio: 1;
+  height: auto;
+  min-width: 0;
+  padding: 10px 4px;
+  text-align: center;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.confirm-email-page__otp-input:focus {
+  border-color: #ce337f;
+  box-shadow: 0 0 0 3px rgba(206, 51, 127, .12);
+  outline: none;
+}
+
+.confirm-email-page__verify-button {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.confirm-email-page__resend {
+  align-items: center;
+  border-top: 1px solid rgba(114, 50, 126, .16);
+  color: #6b6375;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 5px 8px;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 18px;
+}
+
+.confirm-email-page__resend button {
+  background: transparent;
+  border: 0;
+  color: #72327e;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 3px;
+}
+
+.confirm-email-page__resend button:hover:not(:disabled) {
+  color: #b12069;
+}
+
+.confirm-email-page__resend button:disabled {
+  color: #9b91a1;
+  cursor: not-allowed;
+}
+
+.confirm-email-page__footer-copy {
+  color: #6b6375;
+  font-size: 14px;
+  margin: 28px 0 12px;
+}
+
+.confirm-email-page__footer-copy a,
+.confirm-email-page__home {
+  color: #72327e;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.confirm-email-page__footer-copy a:hover,
+.confirm-email-page__home:hover {
+  color: #b12069;
+}
+
+.confirm-email-page__home {
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 480px) {
+  .confirm-email-page {
+    align-items: flex-start;
+    padding: 28px 14px 42px;
+  }
+
+  .confirm-email-page__logo {
+    margin-bottom: 10px;
+    width: 170px;
+  }
+
+  .confirm-email-page__heading h1 {
+    font-size: 44px;
+  }
+
+  .confirm-email-page__heading > p:last-child {
+    white-space: normal;
+  }
+
+  .confirm-email-page__otp-inputs {
+    gap: 6px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .confirm-email-page__otp-input {
+    font-size: 20px;
+    min-height: 0;
+  }
+
+  .confirm-email-page__card-actions {
+    flex-direction: column;
+  }
+
+  .confirm-email-page__card-actions .ui-button {
+    flex-basis: auto;
+    width: 100%;
+  }
+}

@@ -1,7 +1,8 @@
+import { useEffect, useRef, useState } from "react";
 import "./Navbar.css";
 import { Link, useLocation } from "react-router-dom";
 import wtm from "../../assets/wtm.png";
-import { ShoppingBag } from "lucide-react";
+import { LogIn, Menu, ShoppingBag, UserPlus, X } from "lucide-react";
 import PermIdentityIcon from "@mui/icons-material/PermIdentity";
 
 // Các nghiệp vụ cũ được giữ lại dưới dạng comment để có thể bật lại:
@@ -24,6 +25,28 @@ const navigationItems = [
 
 function Navbar() {
   const location = useLocation();
+  const accountRef = useRef(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAuthenticated] = useState(() =>
+    Boolean(localStorage.getItem("user")),
+  );
+
+  useEffect(() => {
+    if (!accountOpen) return undefined;
+    const closeOnOutsideClick = (event) => {
+      if (!accountRef.current?.contains(event.target)) setAccountOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setAccountOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [accountOpen]);
 
   return (
     <nav className="fpt-navbar">
@@ -54,16 +77,95 @@ function Navbar() {
               aria-label="Giỏ hàng"
               title="Giỏ hàng"
             >
-              <ShoppingBag size={23} strokeWidth={2.4} />
+              <ShoppingBag size={22} />
             </Link>
-            <Link
-              className="fpt-navbar__icon-link"
-              to="/login"
-              aria-label="Tài khoản"
-              title="Tài khoản"
+            <div className="fpt-navbar__account" ref={accountRef}>
+              {isAuthenticated ? (
+                <Link
+                  className="fpt-navbar__icon-link"
+                  to="/user-profile"
+                  aria-label="Tài khoản"
+                  title="Tài khoản"
+                >
+                  <PermIdentityIcon
+                    className="fpt-navbar__account-icon"
+                    sx={{
+                      fontSize: 30,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  />
+                </Link>
+              ) : (
+                <>
+                  <button
+                    className="fpt-navbar__icon-link fpt-navbar__account-trigger"
+                    type="button"
+                    onClick={() => setAccountOpen((open) => !open)}
+                    aria-label="Tài khoản"
+                    aria-expanded={accountOpen}
+                    title="Tài khoản"
+                  >
+                    <PermIdentityIcon
+                      className="fpt-navbar__account-icon"
+                      sx={{
+                        fontSize: 30,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    />
+                  </button>
+                  <div
+                    className={`fpt-navbar__account-dropdown${accountOpen ? " is-open" : ""}`}
+                    role="menu"
+                  >
+                    <Link
+                      to="/login"
+                      role="menuitem"
+                      onClick={() => setAccountOpen(false)}
+                    >
+                      <LogIn size={17} aria-hidden="true" /> Đăng nhập
+                    </Link>
+                    <Link
+                      to="/register"
+                      role="menuitem"
+                      onClick={() => setAccountOpen(false)}
+                    >
+                      <UserPlus size={17} aria-hidden="true" /> Đăng ký
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+            <button
+              className="fpt-navbar__mobile-toggle"
+              type="button"
+              onClick={() => setMobileOpen((open) => !open)}
+              aria-label={mobileOpen ? "Đóng menu" : "Mở menu"}
+              aria-expanded={mobileOpen}
             >
-              <PermIdentityIcon sx={{ fontSize: 27 }} />
-            </Link>
+              {mobileOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
+            </button>
+          </div>
+        </div>
+        <div className={`fpt-navbar__mobile-drawer${mobileOpen ? " fpt-navbar__mobile-drawer--open" : ""}`} onClick={() => setMobileOpen(false)}>
+          <div className="fpt-navbar__mobile-content" onClick={(event) => event.stopPropagation()}>
+            <div className="fpt-navbar__mobile-header">
+              <h3>Điều hướng</h3>
+              <button className="fpt-navbar__mobile-close" type="button" onClick={() => setMobileOpen(false)} aria-label="Đóng menu"><X size={22} /></button>
+            </div>
+            <nav className="fpt-navbar__mobile-nav" aria-label="Điều hướng mobile">
+              {navigationItems.map((item) => <Link key={item.href} to={item.href} className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}>{item.label}</Link>)}
+              <div className="fpt-navbar__mobile-account">
+                <Link to="/cart" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><ShoppingBag size={18} /> Giỏ hàng</Link>
+                {isAuthenticated ? <Link to="/user-profile" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><UserPlus size={18} /> Tài khoản</Link> : <>
+                  <Link to="/login" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><LogIn size={18} /> Đăng nhập</Link>
+                  <Link to="/register" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><UserPlus size={18} /> Đăng ký</Link>
+                </>}
+              </div>
+            </nav>
           </div>
         </div>
       </div>

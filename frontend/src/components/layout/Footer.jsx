@@ -6,6 +6,8 @@ import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import YouTubeIcon from "@mui/icons-material/YouTube";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 // Các nghiệp vụ cũ được giữ lại dưới dạng comment:
 // import { useTranslation } from "react-i18next";
@@ -18,36 +20,31 @@ const linkGroups = [
     title: "Khám phá",
     links: [
       ["Trang chủ", "/"],
-      ["Giới thiệu", "/introduce-hlw26"],
-      ["Câu chuyện", "/haunted-ghost"],
-      ["Sự kiện cũ", "/old-event"],
-    ],
-  },
-  {
-    title: "Sự kiện",
-    links: [
-      ["Giới thiệu chung", "/introduce-hlw26"],
-      ["Tin tức", "/news"],
-      ["Board Game Club", "/fbgc"],
-      ["PDP", "/pdp"],
-    ],
-  },
-  {
-    title: "Vé & hỗ trợ",
-    links: [
-      ["Mua vé", "/tickets"],
-      ["Vé của tôi", "/my-ticket"],
-      ["FAQ", "/faq"],
+      ["Về chúng tôi", "/about-us"],
       ["Liên hệ", "/contact-us"],
     ],
   },
   {
-    title: "Ban tổ chức",
+    title: "Mua sắm",
     links: [
-      ["BTC", "/btc-fuhlw"],
-      ["PDP", "/pdp"],
-      ["Câu lạc bộ", "/fbgc"],
-      ["Fanpage", "/fanpage"],
+      ["Sản phẩm", "/introduce-hlw26"],
+      ["Chi tiết", "/news"],
+      ["Giỏ hàng", "/fbgc"],
+    ],
+  },
+  {
+    title: "Trải nghiệm AR",
+    links: [
+      ["Bắt đầu trải nghiệm", "/ar/landmarkId"],
+      ["Nội dung di sản", "/landmarks/:id"],
+    ],
+  },
+  {
+    title: "Câu hỏi của tôi",
+    links: [
+      ["Danh sách câu hỏi", "/questions"],
+      ["Câu hỏi của tôi", "/profile/questions"],
+      ["Tạo câu hỏi", "/profile/questions/create"],
     ],
   },
   {
@@ -55,7 +52,7 @@ const linkGroups = [
     links: [
       ["Chính sách dữ liệu", "/data-policy"],
       ["Điều khoản sử dụng", "/terms-of-use"],
-      ["Chính sách vé", "/ticket-policy"],
+      ["Chính sách bảo mật", "/privacy-policy"],
     ],
   },
   {
@@ -70,6 +67,7 @@ const linkGroups = [
 
 function Footer() {
   const year = new Date().getFullYear();
+  const [openGroup, setOpenGroup] = useState(linkGroups[0].title);
 
   return (
     <footer className="fpt-footer">
@@ -88,9 +86,7 @@ function Footer() {
               <span className="fpt-footer__contact-icon" aria-hidden="true">
                 <EmailIcon fontSize="small" />
               </span>
-              <p className="fpt-footer__contact-text">
-                fptuhalloween@fpt.edu.vn
-              </p>
+              <p className="fpt-footer__contact-text">chamsacviet@gmail.com</p>
             </div>
             <div className="fpt-footer__contact-item">
               <span className="fpt-footer__contact-icon" aria-hidden="true">
@@ -135,13 +131,13 @@ function Footer() {
           </div>
           <div className="fpt-footer__links-grid">
             {linkGroups.map((group) => (
-              <div className="fpt-footer__link-group" key={group.title}>
-                <h4 className="fpt-footer__link-title">{group.title}</h4>
-                {group.links.map(([label, href]) => (
-                  <Link className="fpt-footer__link" to={href} key={href}>
-                    {label}
-                  </Link>
-                ))}
+              <div className={`fpt-footer__link-group${openGroup === group.title ? " is-open" : ""}`} key={group.title}>
+                <button className="fpt-footer__link-title" type="button" onClick={() => setOpenGroup((current) => current === group.title ? "" : group.title)} aria-expanded={openGroup === group.title}>
+                  <span>{group.title}</span><ChevronDown size={18} aria-hidden="true" />
+                </button>
+                <div className="fpt-footer__link-list">
+                  {group.links.map(([label, href]) => <Link className="fpt-footer__link" to={href} key={href}>{label}</Link>)}
+                </div>
               </div>
             ))}
           </div>
@@ -149,7 +145,7 @@ function Footer() {
       </div>
       <hr className="fpt-footer__divider" />
       <div className="fpt-footer__copyright">
-        © 2026 ChamSacViet. Bảo lưu mọi quyền
+      © {year} ChamSacViet. Bảo lưu mọi quyền
       </div>
     </footer>
   );

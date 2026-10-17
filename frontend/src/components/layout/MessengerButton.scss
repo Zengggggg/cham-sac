@@ -1,193 +1,85 @@
 .messenger-wrapper {
-  --messenger-popup-surface: #fff;
-  --messenger-popup-body: #f7f7f8;
-  --messenger-popup-bubble: #e9edf2;
-  --messenger-popup-text: #20242c;
-  --messenger-popup-border: #e5e7eb;
-  --messenger-popup-shadow: rgba(17, 24, 39, 0.18);
+  --messenger-surface: #fffefa;
+  --messenger-page: #fff9ed;
+  --messenger-bubble: #f4eaf0;
+  --messenger-text: #211832;
+  --messenger-border: #eadfe6;
+  --messenger-shadow: rgba(114, 50, 126, 0.2);
+  bottom: 24px;
+  font-family: "Be Vietnam Pro", sans-serif;
   position: fixed;
   right: 24px;
-  bottom: 24px;
   z-index: 9999;
-  font-family: "Inter", "Roboto", sans-serif;
-}
-
-:root[data-theme='dark'] .messenger-wrapper {
-  --messenger-popup-surface: var(--public-dark-surface, #1a2029);
-  --messenger-popup-body: var(--public-dark-bg, #0e131a);
-  --messenger-popup-bubble: var(--public-dark-surface-raised, #232c37);
-  --messenger-popup-text: var(--public-dark-ink, #f1f5f9);
-  --messenger-popup-border: var(--public-dark-line, #344050);
-  --messenger-popup-shadow: rgba(0, 0, 0, 0.48);
 }
 
 .messenger-fab-stack {
+  align-items: center;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 10px;
 }
 
-.faq-fab {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  color: #fff;
-  background: linear-gradient(135deg, #e63946, #ff6b6b);
-  border-radius: 50%;
-  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.18);
-  text-decoration: none;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease;
-}
-
-.faq-fab:hover {
-  background: linear-gradient(135deg, #c92f3d, #e65353);
-  transform: scale(1.05);
-}
-.faq-fab:active {
-  transform: translateY(1px);
-}
-.faq-fab:focus-visible {
-  outline: 3px solid #ffcccc;
-  outline-offset: 3px;
-}
-
-.messenger-popup {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 16px);
-  width: 320px;
-  overflow: hidden;
-  color: var(--messenger-popup-text);
-  background-color: var(--messenger-popup-surface);
-  border: 1px solid var(--messenger-popup-border);
-  border-radius: 16px;
-  box-shadow: 0 8px 24px var(--messenger-popup-shadow);
-  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.popup-header {
-  padding: 16px;
-  color: #fff;
-  background: linear-gradient(135deg, #e63946, #ff0000);
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.page-avatar {
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
-  aspect-ratio: 1;
-  background-color: #fff;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.page-details h4 {
-  margin: 0 0 4px;
-  font-size: 16px;
-  font-weight: 700;
-}
-.page-details p {
-  margin: 0;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.9);
-  opacity: 0.9;
-}
-.popup-body {
-  min-height: 120px;
-  padding: 20px 16px;
-  background-color: var(--messenger-popup-body);
-}
-.messenger-chat-bubble {
-  width: fit-content;
-  max-width: 90%;
-  padding: 12px 16px;
-  color: var(--messenger-popup-text);
-  background-color: var(--messenger-popup-bubble);
-  border-radius: 18px 18px 18px 4px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-.popup-footer {
-  padding: 16px;
-  background-color: var(--messenger-popup-surface);
-  border-top: 1px solid var(--messenger-popup-border);
-}
-.start-chat-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  color: #fff;
-  background-color: #e63946;
-  border-radius: 24px;
-  font-size: 15px;
-  font-weight: 600;
-  text-decoration: none;
-}
-.start-chat-btn:hover {
-  background-color: #c92f3d;
-}
-.btn-icon {
-  font-size: 18px;
-}
+.faq-fab,
 .messenger-fab {
-  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  padding: 0;
-  color: #fff;
-  background: linear-gradient(135deg, #0677ff, #00c6ff);
   border: 0;
   border-radius: 50%;
-  cursor: pointer;
-  font-size: 28px;
-  transition: transform 0.2s ease;
-}
-.messenger-fab svg {
-  display: block;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
-}
-.messenger-fab:hover {
-  transform: scale(1.05);
-}
-.messenger-fab:focus-visible {
-  outline: 3px solid #ffcccc;
-  outline-offset: 3px;
+  box-shadow: 0 5px 16px rgba(114, 50, 126, 0.18);
+  color: #fffdf8;
+  display: flex;
+  height: 60px;
+  justify-content: center;
+  padding: 0;
+  text-decoration: none;
+  transition: background-color 180ms ease, transform 180ms ease;
+  width: 60px;
 }
 
+.faq-fab { background: #52bcbf; }
+.messenger-fab { background: #ce337f; cursor: pointer; }
+.messenger-fab svg { height: 32px; width: 32px; }
+.faq-fab:hover, .messenger-fab:hover { transform: translateY(-2px); }
+.faq-fab:hover { background: #3aa6a9; }
+.messenger-fab:hover { background: #b12069; }
+.faq-fab:active, .messenger-fab:active { transform: translateY(0); }
+.faq-fab:focus-visible, .messenger-fab:focus-visible { outline: 3px solid #eea53b; outline-offset: 3px; }
+
+.messenger-popup {
+  animation: slideUp 180ms ease-out;
+  background: var(--messenger-surface);
+  border: 2px solid var(--messenger-border);
+  border-radius: 14px;
+  bottom: calc(100% + 14px);
+  box-shadow: 7px 7px 0 var(--messenger-shadow);
+  box-sizing: border-box;
+  color: var(--messenger-text);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100svh - 32px);
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  width: min(360px, calc(100vw - 32px));
+}
+
+.popup-header { background: #ce337f; color: #fffdf8; padding: 18px; }
+.header-info { align-items: center; display: flex; gap: 12px; }
+.page-avatar { background: #fffdf8; border: 3px solid rgba(255, 253, 248, 0.75); border-radius: 50%; flex: 0 0 46px; height: 46px; object-fit: cover; width: 46px; }
+.page-details h4 { font-family: "Baloo 2", sans-serif; font-size: 20px; line-height: 1.05; margin: 0 0 1px; }
+.page-details p { color: #fff4d9; font-size: 12px; margin: 0; }
+.popup-body { background: var(--messenger-page); flex: 1; min-height: 130px; overflow: auto; padding: 24px 18px; }
+.messenger-chat-bubble { background: var(--messenger-bubble); border-radius: 14px 14px 14px 4px; color: var(--messenger-text); font-size: 14px; line-height: 1.55; max-width: 90%; padding: 12px 16px; width: fit-content; }
+.popup-footer { background: var(--messenger-surface); border-top: 1px solid var(--messenger-border); padding: 16px; }
+.start-chat-btn { box-sizing: border-box; text-decoration: none; width: 100%; }
+.btn-icon { height: 19px; width: 19px; }
+
 @media (max-width: 480px) {
-  .messenger-wrapper {
-    right: 16px;
-    bottom: 16px;
-  }
-  .messenger-popup {
-    right: -4px;
-    width: min(320px, calc(100vw - 32px));
-  }
+  .messenger-wrapper { bottom: 16px; right: 16px; }
+  .messenger-popup { bottom: calc(100% + 12px); max-height: calc(100svh - 24px); width: min(360px, calc(100vw - 32px)); }
+  .faq-fab, .messenger-fab { height: 56px; width: 56px; }
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

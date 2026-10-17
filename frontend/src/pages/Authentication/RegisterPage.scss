@@ -1,0 +1,57 @@
+.app-shell:has(.register-page),
+#root:has(.register-page) {
+  height: auto;
+  min-height: 100svh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.register-page { background: #fff9ed; box-sizing: border-box; color: #211832; display: grid; grid-template-columns: 1fr minmax(390px, 37%); height: auto; min-height: 100svh; overflow: visible; }
+.register-page__cover { background-position: center; background-size: cover; min-height: 100svh; }
+.register-page__form-pane { align-items: center; background: #fff9ed; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; min-height: 100svh; padding: 20px clamp(24px, 5vw, 74px); }
+.register-page__content { margin: 0 auto; max-width: 450px; text-align: center; width: 100%; }
+.register-page__eyebrow { color: #b12069; font-size: 12px; font-weight: 800; letter-spacing: .16em; margin: 0 0 10px; text-transform: uppercase; }
+.register-page__heading h1 { color: #211832; font-family: "Baloo 2", sans-serif; font-size: clamp(38px, 4vw, 52px); line-height: 1; margin: 0 0 10px; }
+.register-page__heading > p:last-child { color: #6b6375; font-size: 15px; line-height: 1.6; margin: 0 auto 26px; max-width: 340px; }
+.register-page__card { background: #fffefa; padding: clamp(20px, 3vw, 30px); text-align: left; }
+.register-page__card:hover { border-color: #eadfe6; box-shadow: 7px 7px 0 rgba(114, 50, 126, .1); transform: none; }
+.register-page__card .ui-card__body { border-top: 0; margin-top: 0; padding-top: 0; }
+.register-page__label { color: #514653; display: block; font-size: 14px; font-weight: 700; margin: 0 0 8px; }
+.register-page__label + .ui-input,
+.register-page__password-field { margin-bottom: 18px; }
+.register-page__password-field { position: relative; }
+.register-page__password-field .ui-input { padding-right: 46px; }
+.register-page__password-toggle { background: transparent; border: 0; color: #6b6375; cursor: pointer; padding: 10px; position: absolute; right: 4px; top: 4px; }
+.register-page__password-toggle:focus-visible { border-radius: 5px; outline: 2px solid #eea53b; }
+.register-page__error { color: #d52841; font-size: 12px; margin: -8px 0 14px; }
+.register-page__submit { margin-top: 2px; width: 100%; }
+.register-page__or { color: #6b6375; font-size: 14px; margin: 16px 0 12px; }
+.register-page__google-button { background: #fffefa; border-color: #d9ccda; color: #211832; width: 100%; }
+.register-page__google-button:hover:not(:disabled) { background: #fffefa; border-color: #ce337f; box-shadow: 0 5px 0 rgba(114, 50, 126, .16); }
+.register-page__login { color: #6b6375; font-size: 14px; margin: 25px 0 12px; }
+.register-page__login a, .register-page__home { color: #72327e; text-decoration: underline; text-underline-offset: 3px; }
+.register-page__login a:hover, .register-page__home:hover { color: #b12069; }
+.register-page__home { font-size: 14px; font-weight: 700; text-decoration: none; }
+
+@media (max-width: 820px) {
+  .app-shell:has(.register-page), #root:has(.register-page) { height: auto; min-height: 100svh; overflow: visible; }
+  .register-page { grid-template-columns: 1fr; height: auto; min-height: 100svh; overflow: visible; }
+  .register-page__cover { min-height: 320px; }
+  .register-page__form-pane { display: block; min-height: auto; padding: 38px 24px 54px; }
+  .register-page__content { margin: 0 auto; }
+}
+
+@media (max-width: 480px) {
+  .register-page__cover { min-height: 250px; }
+  .register-page__form-pane { padding: 32px 18px 44px; }
+  .register-page__heading h1 { font-size: 44px; }
+  .register-page__heading > p:last-child { margin-bottom: 20px; }
+}
+
+@media (min-width: 821px) and (max-height: 900px) {
+  .register-page__heading h1 { font-size: 48px; margin-bottom: 8px; }
+  .register-page__heading > p:last-child { margin-bottom: 18px; }
+  .register-page__card { padding: 22px; }
+  .register-page__label + .ui-input, .register-page__password-field { margin-bottom: 14px; }
+  .register-page__submit { min-height: 48px; }
+}

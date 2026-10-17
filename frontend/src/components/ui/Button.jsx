@@ -10,6 +10,7 @@ function Button({
   icon = null,
   iconPosition = 'left',
   type = 'button',
+  as: Element = 'button',
   className = '',
   ...props
 }) {
@@ -22,17 +23,17 @@ function Button({
   ].filter(Boolean).join(' ')
 
   return (
-    <button
+    <Element
       {...props}
-      type={type}
+      {...(Element === 'button' ? { type } : {})}
       className={classes}
-      disabled={disabled || loading}
+      {...(Element === 'button' ? { disabled: disabled || loading } : { 'aria-disabled': disabled || loading || undefined })}
       aria-busy={loading || undefined}
     >
       {loading ? <LoaderCircle className="ui-button__spinner" aria-hidden="true" /> : iconPosition === 'left' ? icon : null}
       <span>{loading ? 'Đang xử lý...' : children}</span>
       {!loading && iconPosition === 'right' ? icon : null}
-    </button>
+    </Element>
   )
 }
 

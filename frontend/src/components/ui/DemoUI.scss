@@ -64,7 +64,7 @@
   margin: 0;
 }
 .ui-demo__type-samples {
-  background: #ffffff;
+  background: #fffefa;
   border-left: 5px solid #ce337f;
   border-radius: 0 10px 10px 0;
   padding: 20px 24px;
@@ -119,7 +119,7 @@
 }
 .ui-demo__placeholder {
   align-items: center;
-  background: #fffdf8;
+  background: #fffefa;
   border: 2px solid #eadfe6;
   border-radius: 8px;
   color: #6b6375;
@@ -162,7 +162,7 @@
 .ui-demo__inputs input:not([type="checkbox"]):not([type="radio"]),
 .ui-demo__inputs select,
 .ui-demo__inputs textarea {
-  background: #fffdf8;
+  background: #fffefa;
   border: 2px solid #d9ccda;
   border-radius: 7px;
   box-sizing: border-box;
@@ -228,7 +228,7 @@
 }
 .ui-demo__choice input {
   appearance: none;
-  background: #fffdf8;
+  background: #fffefa;
   border: 2px solid #9b91a1;
   cursor: pointer;
   flex: 0 0 auto;

@@ -50,6 +50,8 @@
 
 .fpt-header__email {
   gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
   font-family: "Be Vietnam Pro", sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -75,6 +77,7 @@
   gap: 8px;
   flex-shrink: 0;
 }
+.fpt-header__email span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .fpt-header__ticker {
   display: flex;
@@ -513,9 +516,7 @@
     gap: 8px;
   }
 
-  .fpt-header__email span {
-    display: none;
-  }
+  .fpt-header__email { max-width: min(58vw, 340px); }
 }
 
 @media (max-width: 480px) {

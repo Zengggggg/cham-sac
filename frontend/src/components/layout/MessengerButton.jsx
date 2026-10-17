@@ -1,13 +1,34 @@
-import { useState } from "react";
-import { HelpCircle, MessageCircle, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { HelpCircle, X } from "lucide-react";
+import { FaFacebookMessenger } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import Button from "../ui/Button.jsx";
 import "./MessengerButton.scss";
 import logo from "../../assets/wtm.png";
 export default function MessengerButton() {
   const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const closeOnOutsideClick = (event) => {
+      if (!wrapperRef.current?.contains(event.target)) setIsOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isOpen]);
 
   return (
-    <div className="messenger-wrapper">
+    <div className="messenger-wrapper" ref={wrapperRef}>
       {/* Khung Pop-up chat */}
       {isOpen && (
         <div className="messenger-popup">
@@ -25,20 +46,21 @@ export default function MessengerButton() {
           <div className="popup-body">
             <div className="messenger-chat-bubble">
               Xin chào! <br />
-              Chúng tôi có thể hỗ trợ bạn.
+              Chúng tôi có thể hỗ trợ gì cho bạn.
             </div>
           </div>
 
           <div className="popup-footer">
-            <a
-              href="https://m.me/fptuhalloween"
+            <Button
+              as="a"
+              href="https://m.me/61592108695547"
               target="_blank"
               rel="noopener noreferrer"
               className="start-chat-btn"
+              icon={<FaFacebookMessenger className="btn-icon" aria-hidden="true" />}
             >
-              <MessageCircle className="btn-icon" aria-hidden="true" />
               Nhắn tin với chúng tôi
-            </a>
+            </Button>
           </div>
         </div>
       )}
@@ -54,7 +76,7 @@ export default function MessengerButton() {
           {isOpen ? (
             <X size={24} aria-hidden="true" />
           ) : (
-            <MessageCircle size={28} aria-hidden="true" />
+            <FaFacebookMessenger size={32} aria-hidden="true" />
           )}
         </button>
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, House } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Button from '../../components/ui/Button.jsx'
@@ -88,7 +88,10 @@ export default function RegisterPage() {
           <p className="register-page__or">Hoặc</p>
           <Button className="register-page__google-button" variant="secondary" type="button" icon={<GoogleIcon />} onClick={handleGoogleRegister}>Tiếp tục với Google</Button>
           <p className="register-page__login">Đã có tài khoản? <Link to="/login">Đăng nhập ngay</Link></p>
-          <Link className="register-page__home" to="/">Về trang chủ</Link>
+          <Link className="register-page__home" to="/">
+            <House size={16} aria-hidden="true" />
+            Về trang chủ
+          </Link>
         </div>
       </section>
     </main>

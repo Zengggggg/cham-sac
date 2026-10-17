@@ -114,7 +114,7 @@ export default function UserProfile() {
         </section>
 
         <section className="profile-page__lower-grid">
-          <Card className="profile-page__orders" eyebrow="Mua sắm" title="Đơn hàng của tôi" description="Theo dõi sản phẩm, trạng thái thanh toán và tiến trình giao hàng của bạn." actions={!orders.length && <Button variant="secondary" size="sm" onClick={() => toast('Danh sách sản phẩm sẽ được kết nối trong bước tiếp theo')}>Khám phá sản phẩm</Button>}>
+          <Card id="orders" className="profile-page__orders" eyebrow="Mua sắm" title="Đơn hàng của tôi" description="Theo dõi sản phẩm, trạng thái thanh toán và tiến trình giao hàng của bạn." actions={!orders.length && <Button variant="secondary" size="sm" onClick={() => toast('Danh sách sản phẩm sẽ được kết nối trong bước tiếp theo')}>Khám phá sản phẩm</Button>}>
             {orders.length > 0 ? <div className="profile-page__orders-list">{orders.map((order) => <article className="profile-page__order" key={order._id || order.orderCode}>
               <div className="profile-page__order-head"><strong>#{order.orderCode || 'Chưa có mã'}</strong><span>{formatDate(order.createdAt)}</span></div>
               <ul className="profile-page__order-items">{(order.items || []).map((item, index) => <li key={`${item.productId || item.productName || 'item'}-${index}`}><span>{item.productName || 'Sản phẩm'} × {item.quantity || 0}</span><strong>{formatMoney((item.unitPrice || 0) * (item.quantity || 0))}</strong></li>)}</ul>

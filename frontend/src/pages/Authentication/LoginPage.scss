@@ -114,6 +114,7 @@
 .login-page__home {
   color: #72327e;
   font-size: 14px;
+  font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -151,6 +152,18 @@
 .login-page__home {
   font-weight: 700;
   text-decoration: none;
+}
+.login-page__home {
+  align-items: center;
+  display: inline-flex;
+  font-weight: 400;
+  gap: 6px;
+}
+.login-page__home svg,
+.register-page__home svg {
+  display: block;
+  flex: 0 0 auto;
+  transform: translateY(-2px);
 }
 .login-page__cover {
   background-position: center;

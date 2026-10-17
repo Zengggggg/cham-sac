@@ -67,6 +67,7 @@
 
 .confirm-email-page__card {
   background: #fffefa;
+  border-color: transparent;
   padding: clamp(18px, 2.5vw, 24px);
   text-align: left;
 }
@@ -76,9 +77,13 @@
 }
 
 .confirm-email-page__card:hover {
-  border-color: #eadfe6;
+  border-color: #ce337f;
   box-shadow: 7px 7px 0 rgba(114, 50, 126, .1);
   transform: none;
+}
+
+.confirm-email-page__otp-card:hover {
+  border-color: #52bcbf;
 }
 
 .confirm-email-page__card .ui-card__body {

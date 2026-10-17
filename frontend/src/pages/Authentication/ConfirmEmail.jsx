@@ -21,8 +21,8 @@ export default function ConfirmEmail() {
   const navigate = useNavigate();
   const inputRefs = useRef([]);
   const registration = location.state?.registration || {};
-  // Tạm mở sẵn bước OTP để kiểm tra giao diện.
-  const [step, setStep] = useState("otp");
+  // Hiện card xác nhận email trước, sau đó mới chuyển sang card OTP.
+  const [step, setStep] = useState("email");
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -129,7 +129,7 @@ export default function ConfirmEmail() {
       /*
       await verifyEmail({ email, otp: verificationCode });
       toast.success("Xác thực email thành công. Bạn có thể đăng nhập ngay.");
-      navigate("/login", { replace: true, state: { email } });
+      navigate("/complete-register", { replace: true, state: { email } });
       */
       toast("Đã bỏ qua xác thực API để kiểm tra giao diện OTP.");
     } catch (error) {

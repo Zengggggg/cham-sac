@@ -84,7 +84,8 @@
   transform: translateY(0);
   visibility: visible;
 }
-.fpt-navbar__account-dropdown a {
+.fpt-navbar__account-dropdown a,
+.fpt-navbar__account-dropdown button {
   align-items: center;
   border-radius: 7px;
   color: #211832;
@@ -93,15 +94,29 @@
   font-size: 13px;
   font-weight: 700;
   gap: 9px;
-  padding: 10px 11px;
+  justify-content: flex-start;
+  line-height: 1.4;
+  margin: 0;
+  padding: 11px 12px;
   text-decoration: none;
   white-space: nowrap;
 }
-.fpt-navbar__account-dropdown a svg {
+.fpt-navbar__account-dropdown button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.fpt-navbar__account-dropdown a svg,
+.fpt-navbar__account-dropdown button svg {
   color: #b12069;
 }
 .fpt-navbar__account-dropdown a:hover,
-.fpt-navbar__account-dropdown a:focus-visible {
+.fpt-navbar__account-dropdown a:focus-visible,
+.fpt-navbar__account-dropdown button:hover,
+.fpt-navbar__account-dropdown button:focus-visible {
   background: #f4eaf0;
   color: #b12069;
   outline: none;
@@ -514,6 +529,15 @@
   text-align: left;
   font: inherit;
   cursor: pointer;
+}
+
+.fpt-navbar__mobile-logout {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
 /* User dropdown */

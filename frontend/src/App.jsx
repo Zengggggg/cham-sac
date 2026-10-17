@@ -11,6 +11,10 @@ import FAQ from './pages/Common/FAQ.jsx'
 import LoginPage from './pages/Authentication/LoginPage.jsx'
 import RegisterPage from './pages/Authentication/RegisterPage.jsx'
 import ConfirmEmail from './pages/Authentication/ConfirmEmail.jsx'
+import CompleteRegister from './pages/Authentication/CompleteRegister.jsx'
+import ForgotPassword from './pages/Authentication/ForgotPassword.jsx'
+import ResetPassword from './pages/Authentication/Reset_Password.jsx'
+import EnterOldPassword from './pages/Authentication/EnterOldPassword.jsx'
 import DemoUI from './components/ui/DemoUI.jsx'
 import DataPolicy from './pages/Policy/DataPolicy.jsx'
 import TermOfPrivacy from './pages/Policy/TermOfPrivacy.jsx'
@@ -51,6 +55,10 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/confirm-email" element={<ConfirmEmail />} />
+        <Route path="/complete-register" element={<CompleteRegister />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/enter-old-password" element={<EnterOldPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/user-profile" element={<Layout><UserProfile /></Layout>} />
         <Route path="/data-policy" element={<Layout><DataPolicy /></Layout>} />
         <Route path="/privacy-policy" element={<Layout><TermOfPrivacy /></Layout>} />

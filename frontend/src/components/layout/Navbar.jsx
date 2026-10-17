@@ -1,8 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import "./Navbar.css";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import wtm from "../../assets/wtm.png";
-import { LogIn, Menu, ShoppingBag, UserPlus, X } from "lucide-react";
+import LogoutModal from "./LogoutModal.jsx";
+import {
+  KeyRound,
+  LogIn,
+  LogOut,
+  Menu,
+  Package,
+  ShoppingBag,
+  Sparkles,
+  UserPlus,
+  UserRound,
+  X,
+} from "lucide-react";
 import PermIdentityIcon from "@mui/icons-material/PermIdentity";
 
 // Các nghiệp vụ cũ được giữ lại dưới dạng comment để có thể bật lại:
@@ -23,14 +35,39 @@ const navigationItems = [
   { label: "LIÊN HỆ", href: "/contact-us" },
 ];
 
+const authenticatedAccountItems = [
+  { label: "Tài khoản", href: "/user-profile", icon: UserRound },
+  { label: "Đổi mật khẩu", href: "/enter-old-password", icon: KeyRound },
+  { label: "Đơn hàng", href: "/user-profile#orders", icon: Package },
+  { label: "Trải nghiệm AR", href: "/haunted-ghost", icon: Sparkles },
+];
+
+const readAuthenticationState = () => Boolean(localStorage.getItem("user"));
+
 function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const accountRef = useRef(null);
   const [accountOpen, setAccountOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isAuthenticated] = useState(() =>
-    Boolean(localStorage.getItem("user")),
-  );
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(readAuthenticationState);
+
+  useEffect(() => {
+    const syncAuthenticationState = () => {
+      setIsAuthenticated(readAuthenticationState());
+    };
+
+    window.addEventListener("storage", syncAuthenticationState);
+    window.addEventListener("auth:login", syncAuthenticationState);
+    window.addEventListener("auth:logout", syncAuthenticationState);
+
+    return () => {
+      window.removeEventListener("storage", syncAuthenticationState);
+      window.removeEventListener("auth:login", syncAuthenticationState);
+      window.removeEventListener("auth:logout", syncAuthenticationState);
+    };
+  }, []);
 
   useEffect(() => {
     if (!accountOpen) return undefined;
@@ -47,6 +84,21 @@ function Navbar() {
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [accountOpen]);
+
+  const handleLogoutRequest = () => {
+    setAccountOpen(false);
+    setMobileOpen(false);
+    setLogoutModalOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    localStorage.removeItem("user");
+    setIsAuthenticated(false);
+    setAccountOpen(false);
+    setLogoutModalOpen(false);
+    window.dispatchEvent(new Event("auth:logout"));
+    navigate("/login");
+  };
 
   return (
     <nav className="fpt-navbar">
@@ -81,22 +133,46 @@ function Navbar() {
             </Link>
             <div className="fpt-navbar__account" ref={accountRef}>
               {isAuthenticated ? (
-                <Link
-                  className="fpt-navbar__icon-link"
-                  to="/user-profile"
-                  aria-label="Tài khoản"
-                  title="Tài khoản"
-                >
-                  <PermIdentityIcon
-                    className="fpt-navbar__account-icon"
-                    sx={{
-                      fontSize: 30,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  />
-                </Link>
+                <>
+                  <button
+                    className="fpt-navbar__icon-link fpt-navbar__account-trigger"
+                    type="button"
+                    onClick={() => setAccountOpen((open) => !open)}
+                    aria-label="Tài khoản"
+                    aria-expanded={accountOpen}
+                    aria-controls="desktop-account-menu"
+                    title="Tài khoản"
+                  >
+                    <PermIdentityIcon
+                      className="fpt-navbar__account-icon"
+                      sx={{
+                        fontSize: 30,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    />
+                  </button>
+                  <div
+                    id="desktop-account-menu"
+                    className={`fpt-navbar__account-dropdown${accountOpen ? " is-open" : ""}`}
+                    role="menu"
+                  >
+                    {authenticatedAccountItems.map(({ label, href, icon: Icon }) => (
+                      <Link
+                        key={href}
+                        to={href}
+                        role="menuitem"
+                        onClick={() => setAccountOpen(false)}
+                      >
+                        <Icon size={17} aria-hidden="true" /> {label}
+                      </Link>
+                    ))}
+                    <button type="button" role="menuitem" onClick={handleLogoutRequest}>
+                      <LogOut size={17} aria-hidden="true" /> Đăng xuất
+                    </button>
+                  </div>
+                </>
               ) : (
                 <>
                   <button
@@ -160,7 +236,10 @@ function Navbar() {
               {navigationItems.map((item) => <Link key={item.href} to={item.href} className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}>{item.label}</Link>)}
               <div className="fpt-navbar__mobile-account">
                 <Link to="/cart" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><ShoppingBag size={18} /> Giỏ hàng</Link>
-                {isAuthenticated ? <Link to="/user-profile" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><UserPlus size={18} /> Tài khoản</Link> : <>
+                {isAuthenticated ? <>
+                  {authenticatedAccountItems.map(({ label, href, icon: Icon }) => <Link key={href} to={href} className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><Icon size={18} /> {label}</Link>)}
+                  <button type="button" className="fpt-navbar__mobile-link fpt-navbar__mobile-logout" onClick={handleLogoutRequest}><LogOut size={18} /> Đăng xuất</button>
+                </> : <>
                   <Link to="/login" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><LogIn size={18} /> Đăng nhập</Link>
                   <Link to="/register" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><UserPlus size={18} /> Đăng ký</Link>
                 </>}
@@ -169,6 +248,11 @@ function Navbar() {
           </div>
         </div>
       </div>
+      <LogoutModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleLogoutConfirm}
+      />
     </nav>
   );
 }

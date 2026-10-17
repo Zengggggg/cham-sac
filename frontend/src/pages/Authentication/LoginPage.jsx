@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Eye, EyeOff, House } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
@@ -9,15 +9,33 @@ import coverImage from "../../assets/pics/auth_cover.png";
 import "./LoginPage.scss";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") || "").trim();
+    const fullName = email.split("@")[0] || "Người khám phá";
+
     setLoading(true);
     window.setTimeout(() => {
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          email,
+          fullName,
+          name: fullName,
+          role: "user",
+          status: "active",
+          authProvider: "local",
+        }),
+      );
+      window.dispatchEvent(new Event("auth:login"));
       setLoading(false);
-      toast("Kết nối đăng nhập sẽ được tích hợp trong bước tiếp theo.");
+      toast.success("Đăng nhập thành công.");
+      navigate("/");
     }, 700);
   };
 
@@ -30,7 +48,7 @@ const LoginPage = () => {
       <section className="login-page__form-pane">
         <div className="login-page__content">
           <header className="login-page__heading">
-            {/* <p className="login-page__eyebrow">Chạm Sắc Việt</p> */}
+            <p className="login-page__eyebrow">Chạm Sắc Việt</p>
             <h1>Đăng nhập</h1>
             <p>Chào mừng bạn trở lại với hành trình khám phá di sản.</p>
           </header>
@@ -104,6 +122,7 @@ const LoginPage = () => {
             Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
           </p>
           <Link className="login-page__home" to="/">
+            <House size={16} aria-hidden="true" />
             Về trang chủ
           </Link>
         </div>

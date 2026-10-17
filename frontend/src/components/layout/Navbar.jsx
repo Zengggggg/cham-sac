@@ -33,6 +33,7 @@ const navigationItems = [
   { label: "TRẢI NGHIỆM AR", href: "/haunted-ghost" },
   { label: "VỀ CHÚNG TÔI", href: "/btc-fuhlw" },
   { label: "LIÊN HỆ", href: "/contact-us" },
+  { label: "QUẢN TRỊ", href: "/admin/dashboard" },
 ];
 
 const authenticatedAccountItems = [
@@ -42,7 +43,13 @@ const authenticatedAccountItems = [
   { label: "Trải nghiệm AR", href: "/haunted-ghost", icon: Sparkles },
 ];
 
-const readAuthenticationState = () => Boolean(localStorage.getItem("user"));
+const readStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    return null;
+  }
+};
 
 function Navbar() {
   const location = useLocation();
@@ -51,11 +58,12 @@ function Navbar() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(readAuthenticationState);
+  const [currentUser, setCurrentUser] = useState(readStoredUser);
+  const isAuthenticated = Boolean(currentUser);
 
   useEffect(() => {
     const syncAuthenticationState = () => {
-      setIsAuthenticated(readAuthenticationState());
+      setCurrentUser(readStoredUser());
     };
 
     window.addEventListener("storage", syncAuthenticationState);
@@ -93,7 +101,7 @@ function Navbar() {
 
   const handleLogoutConfirm = () => {
     localStorage.removeItem("user");
-    setIsAuthenticated(false);
+    setCurrentUser(null);
     setAccountOpen(false);
     setLogoutModalOpen(false);
     window.dispatchEvent(new Event("auth:logout"));

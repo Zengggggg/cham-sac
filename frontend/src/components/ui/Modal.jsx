@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import Button from './Button.jsx'
 import './Modal.scss'
@@ -16,7 +17,7 @@ function Modal({ open, onClose, title, description, children, actions, size = 'm
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div className="ui-modal" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose?.()}>
       <section className={`ui-modal__dialog ui-modal__dialog--${size}`} role="dialog" aria-modal="true" aria-labelledby="ui-modal-title">
         <header className="ui-modal__header">
@@ -31,7 +32,8 @@ function Modal({ open, onClose, title, description, children, actions, size = 'm
         {children && <div className="ui-modal__body">{children}</div>}
         {actions && <footer className="ui-modal__footer">{actions}</footer>}
       </section>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

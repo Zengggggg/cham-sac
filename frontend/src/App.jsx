@@ -23,6 +23,11 @@ import ErrorPage403 from './pages/Error/ErrorPage403.jsx'
 import ErrorPage404 from './pages/Error/ErrorPage404.jsx'
 import InternetConnection from './pages/Error/InternetConnection.jsx'
 import UserProfile from './pages/Profile/UserProfile.jsx'
+import AdminDashboard from './pages/Admin/AdminDashboard.jsx'
+import AdminListUser from './pages/Admin/AdminListUser.jsx'
+import AdminListContact from './pages/Admin/AdminListContact.jsx'
+import AdminListOrder from './pages/Admin/AdminListOrder.jsx'
+import AdminLayout from './components/layout/AdminLayout.jsx'
 import './App.css'
 
 function ScrollToTop() {
@@ -60,6 +65,10 @@ function App() {
         <Route path="/enter-old-password" element={<EnterOldPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/user-profile" element={<Layout><UserProfile /></Layout>} />
+        <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+        <Route path="/admin/users" element={<AdminLayout><AdminListUser /></AdminLayout>} />
+        <Route path="/admin/contacts" element={<AdminLayout><AdminListContact /></AdminLayout>} />
+        <Route path="/admin/orders" element={<AdminLayout><AdminListOrder /></AdminLayout>} />
         <Route path="/data-policy" element={<Layout><DataPolicy /></Layout>} />
         <Route path="/privacy-policy" element={<Layout><TermOfPrivacy /></Layout>} />
         <Route path="/terms-of-use" element={<Layout><TermOfUse /></Layout>} />

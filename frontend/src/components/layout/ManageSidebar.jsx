@@ -1,106 +1,53 @@
-import React from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  BadgeCheck,
-  ClipboardPenLine,
+  Archive,
   CircleUserRound,
-  ContactRound,
-  Home,
+  FileText,
+  House,
   KeyRound,
-  Gift,
   LayoutDashboard,
   LogOut,
-  Menu,
-  Megaphone,
-  MessagesSquare,
-  Newspaper,
-  ReceiptText,
-  Tags,
-  TicketCheck,
-  Tickets,
+  Mail,
+  MessageCircleQuestion,
+  Package,
+  Sparkles,
   UsersRound,
-  Vote,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { authAPI } from "../apis/authAPI";
-import LogoutModal from "./LogoutModal";
+import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { translateSuccess } from "../utils/translateResponse";
-import { useManageSidebar } from "../contexts/manage-sidebar-context";
+import LogoutModal from "./LogoutModal.jsx";
 import "./ManageSidebar.scss";
-import avatar from "../assets/avatar.jpg";
 
-const MENU_BY_ROLE = {
-  admin: [
-    { id: "dashboard", labelKey: "dashboard", icon: LayoutDashboard },
-    { id: "chat", labelKey: "chat", icon: MessagesSquare },
-    { id: "check-in", labelKey: "checkIn", icon: BadgeCheck },
-    { id: "users", labelKey: "users", icon: UsersRound },
-    { id: "ticket-types", labelKey: "ticketTypes", icon: TicketCheck },
-    {
-      id: "purchased-tickets",
-      labelKey: "purchasedTickets",
-      icon: Tickets,
-    },
-    { id: "orders", labelKey: "orders", icon: ReceiptText },
-    { id: "contacts", labelKey: "contacts", icon: ContactRound },
-    { id: "hot-news", labelKey: "hotNews", icon: Megaphone },
-    { id: "facebook-news", labelKey: "facebookNews", icon: Newspaper },
-    { id: "feedback", labelKey: "feedbackManagement", icon: ClipboardPenLine },
-    { id: "vote", labelKey: "ddayVote", icon: Vote },
-    { id: "lucky-draw", labelKey: "luckyDraw", icon: Gift },
-    { id: "home", labelKey: "eventHome", icon: Home },
-  ],
-  staff: [
-    { id: "dashboard", labelKey: "dashboard", icon: LayoutDashboard },
-    { id: "chat", labelKey: "chat", icon: MessagesSquare },
-    { id: "ticket-types", labelKey: "ticketTypes", icon: TicketCheck },
-    { id: "purchased-tickets", labelKey: "purchasedTickets", icon: Tickets },
-    { id: "check-in", labelKey: "checkIn", icon: BadgeCheck },
-    { id: "feedback", labelKey: "feedback", icon: ClipboardPenLine },
-    { id: "home", labelKey: "eventHome", icon: Home },
-  ],
+const menuItems = [
+  { label: "Tổng quan", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Người dùng", href: "/admin/users", icon: UsersRound },
+  { label: "Liên hệ", href: "/admin/contacts", icon: Mail },
+  { label: "Đơn hàng", href: "/admin/orders", icon: Package },
+  { label: "Sản phẩm", icon: Archive },
+  { label: "Nội dung di sản", icon: FileText },
+  { label: "Trải nghiệm AR", icon: Sparkles },
+  { label: "Câu hỏi cộng đồng", icon: MessageCircleQuestion },
+];
+
+const readStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    return null;
+  }
 };
 
-const getRoleName = (user) =>
-  user?.role?.roleName ||
-  user?.roleName ||
-  user?.role ||
-  user?.roleId?.roleName ||
-  user?.roleId;
-
-const normalizeRole = (role) =>
-  String(role || "staff")
-    .trim()
-    .toLowerCase() === "admin"
-    ? "admin"
-    : "staff";
-
-const ManageSidebar = ({ role, activeItem = "dashboard", onNavigate }) => {
-  const { t } = useTranslation();
-  const componentText = (key, options) => t(`components.${key}`, options);
+function ManageSidebar({ isCollapsed }) {
   const navigate = useNavigate();
-  const { isSidebarCollapsed, toggleSidebar } = useManageSidebar();
-  const [user, setUser] = React.useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user") || "null");
-    } catch {
-      return null;
-    }
-  });
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
-  const dropdownRef = React.useRef(null);
-  const resolvedRole = normalizeRole(getRoleName(user) || role);
+  const location = useLocation();
+  const dropdownRef = useRef(null);
+  const [user, setUser] = useState(readStoredUser);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const userName = user?.fullName || user?.name || "Người quản trị";
 
-  React.useEffect(() => {
-    const syncUser = () => {
-      try {
-        setUser(JSON.parse(localStorage.getItem("user") || "null"));
-      } catch {
-        setUser(null);
-      }
-    };
+  useEffect(() => {
+    const syncUser = () => setUser(readStoredUser());
     window.addEventListener("storage", syncUser);
     window.addEventListener("auth:login", syncUser);
     window.addEventListener("auth:logout", syncUser);
@@ -111,143 +58,119 @@ const ManageSidebar = ({ role, activeItem = "dashboard", onNavigate }) => {
     };
   }, []);
 
-  React.useEffect(() => {
-    const handleOutsideClick = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target))
-        setShowDropdown(false);
+  useEffect(() => {
+    const closeOnOutsideClick = (event) => {
+      if (!dropdownRef.current?.contains(event.target)) setAccountOpen(false);
     };
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () =>
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
   }, []);
 
-  const handleLogout = async () => {
-    await authAPI.logout();
+  const handleLogout = () => {
+    localStorage.removeItem("user");
     setUser(null);
-    setShowDropdown(false);
-    setShowLogoutModal(false);
-    toast.success(translateSuccess("Logout successful"));
-    navigate("/");
+    setLogoutModalOpen(false);
+    window.dispatchEvent(new Event("auth:logout"));
+    toast.success("Đã đăng xuất tài khoản.");
+    navigate("/login");
   };
 
-  const userName = user?.fullName || user?.name || componentText("you");
+  const handleMenuClick = (item) => {
+    if (item.href) {
+      navigate(item.href);
+      return;
+    }
 
-  const menuItems = MENU_BY_ROLE[resolvedRole] || MENU_BY_ROLE.staff;
-  const defaultRoutes = {
-    dashboard:
-      resolvedRole === "admin" ? "/admin/dashboard" : "/staff/dashboard",
-    chat: resolvedRole === "admin" ? "/admin/chat" : "/staff/chat",
-    "check-in":
-      resolvedRole === "admin" ? "/admin/check-in" : "/staff/check-in",
-    users: "/admin/users",
-    orders: "/admin/orders",
-    contacts: "/admin/contacts",
-    "hot-news": "/admin/hot-news",
-    "facebook-news": "/admin/facebook-news",
-    "ticket-types":
-      resolvedRole === "admin" ? "/admin/tickets" : "/staff/ticket-types",
-    feedback: resolvedRole === "admin" ? "/admin/feedback" : "/staff/feedback",
-    vote: "/admin/votes",
-    "lucky-draw": "/admin/lucky-draw",
-    "purchased-tickets":
-      resolvedRole === "admin"
-        ? "/admin/purchased-tickets"
-        : "/staff/purchased-tickets",
-    home: "/",
+    toast(`${item.label} sẽ được kết nối trong bước tiếp theo.`);
   };
 
   return (
     <aside
-      className={`manage-sidebar ${isSidebarCollapsed ? "manage-sidebar--collapsed" : ""}`}
-      aria-label={componentText("manageNavigation")}
+      className={`manage-sidebar${isCollapsed ? " manage-sidebar--collapsed" : ""}`}
+      aria-label="Điều hướng quản trị"
     >
-      <div className="manage-sidebar__brand">
-        <img
-          className="manage-sidebar__avatar"
-          src={avatar}
-          alt={componentText("avatarAlt")}
-        />
-        <div className="manage-sidebar__brand-copy">
-          <strong>{componentText("eventBrand")}</strong>
-          <span>
-            {componentText(resolvedRole === "admin" ? "admin" : "staff")}
-          </span>
-        </div>
+      <div className="manage-sidebar__user" ref={dropdownRef}>
         <button
-          className="manage-sidebar__collapse-old"
+          className="manage-sidebar__user-button"
           type="button"
-          onClick={toggleSidebar}
-          aria-expanded={!isSidebarCollapsed}
-          aria-label={componentText(
-            isSidebarCollapsed ? "expandSidebar" : "collapseSidebar",
-          )}
+          onClick={() => setAccountOpen((open) => !open)}
+          aria-expanded={accountOpen}
+          title={isCollapsed ? userName : undefined}
         >
-          <Menu size={18} />
-        </button>
-      </div>
-
-      <nav className="manage-sidebar__nav">
-        {menuItems.map(({ id, labelKey, icon: Icon }) => (
-          <button
-            className={`manage-sidebar__item ${activeItem === id ? "manage-sidebar__item--active" : ""}`}
-            key={id}
-            type="button"
-            onClick={() =>
-              onNavigate ? onNavigate(id) : navigate(defaultRoutes[id])
-            }
-            aria-current={activeItem === id ? "page" : undefined}
-          >
-            <Icon size={20} strokeWidth={1.9} />
-            <span>{componentText(labelKey)}</span>
-          </button>
-        ))}
-      </nav>
-
-      <div className="manage-sidebar__account" ref={dropdownRef}>
-        <button
-          className="manage-sidebar__account-button"
-          type="button"
-          onClick={() => setShowDropdown((value) => !value)}
-          aria-expanded={showDropdown}
-        >
-          <CircleUserRound size={21} />
-          <span>
+          <CircleUserRound size={24} aria-hidden="true" />
+          <span className="manage-sidebar__user-copy">
             <strong>{userName}</strong>
-            <small>{componentText(resolvedRole === "admin" ? "admin" : "staff")}</small>
+            <small>Quản trị viên</small>
           </span>
         </button>
-        {showDropdown && (
-          <div className="manage-sidebar__account-dropdown">
-            <div className="manage-sidebar__account-greeting">
-              <CircleUserRound size={17} />
-              <span>{componentText("greeting", { name: userName })}</span>
-            </div>
-            <button type="button" onClick={() => navigate("/user-profile")}>
-              <CircleUserRound size={16} /> {componentText("yourAccount")}
-            </button>
-            <button type="button" onClick={() => navigate("/change-password")}>
-              <KeyRound size={16} /> {componentText("changePassword")}
+        {accountOpen && (
+          <div className="manage-sidebar__account-dropdown" role="menu">
+            <p>Đang đăng nhập với vai trò quản trị viên</p>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => navigate("/user-profile")}
+            >
+              <CircleUserRound size={16} aria-hidden="true" /> Tài khoản
             </button>
             <button
               type="button"
-              onClick={() => {
-                setShowDropdown(false);
-                setShowLogoutModal(true);
-              }}
+              role="menuitem"
+              onClick={() => navigate("/enter-old-password")}
             >
-              <LogOut size={16} /> {componentText("logout")}
+              <KeyRound size={16} aria-hidden="true" /> Đổi mật khẩu
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => setLogoutModalOpen(true)}
+            >
+              <LogOut size={16} aria-hidden="true" /> Đăng xuất
             </button>
           </div>
         )}
       </div>
 
+      <nav className="manage-sidebar__nav" aria-label="Điều hướng quản trị">
+        <p className="manage-sidebar__nav-label">Không gian làm việc</p>
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const active = item.href && location.pathname === item.href;
+          return (
+            <button
+              className={`manage-sidebar__item${active ? " manage-sidebar__item--active" : ""}`}
+              key={item.label}
+              type="button"
+              onClick={() => handleMenuClick(item)}
+              title={isCollapsed ? item.label : undefined}
+              aria-current={active ? "page" : undefined}
+            >
+              <Icon size={20} strokeWidth={1.9} aria-hidden="true" />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="manage-sidebar__footer">
+        <button
+          className="manage-sidebar__back-link"
+          type="button"
+          onClick={() => navigate("/")}
+        >
+          <House size={17} aria-hidden="true" />
+          <span>Về trang chủ</span>
+        </button>
+      </div>
+
       <LogoutModal
-        isOpen={showLogoutModal}
-        onClose={() => setShowLogoutModal(false)}
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
         onConfirm={handleLogout}
-        isManagement
       />
     </aside>
   );
-};
+}
 
 export default ManageSidebar;

@@ -1,0 +1,226 @@
+/* Footer Styles - FPT Halloween Website */
+.fpt-footer {
+  background-color: #fffefa;
+  color: var(--color-text);
+  border-top: 1px solid #e5e7eb;
+  width: 100%;
+  margin-top: 0;
+  padding-top: 0;
+  box-sizing: border-box;
+  line-height: 1.35;
+}
+
+.fpt-footer__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 36px 16px 32px;
+}
+
+.fpt-footer__grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 2.25fr);
+  gap: 42px;
+}
+
+.fpt-footer__contact-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fpt-footer__logo {
+  height: auto;
+  width: 160px;
+}
+
+.fpt-footer__contact-title {
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0;
+}
+
+.fpt-footer__contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fpt-footer__contact-icon {
+  color: var(--color-button);
+  display: flex;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.fpt-footer__contact-icon svg {
+  font-size: 22px;
+}
+
+.fpt-footer__contact-text {
+  font-size: 14px;
+  margin: 0;
+}
+
+.fpt-footer__social-title {
+  font-weight: 700;
+  font-size: 16px;
+  margin: 8px 0 0 0;
+}
+
+.fpt-footer__social-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.fpt-footer__social-btn {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 18px;
+  font-weight: bold;
+  background: none;
+}
+
+.fpt-footer__social-btn:hover {
+  background-color: var(--color-hover-background);
+}
+
+.fpt-footer__social-btn--facebook {
+  color: #1877f2;
+}
+
+.fpt-footer__social-btn--instagram {
+  color: #bc29b7;
+}
+
+.fpt-footer__social-btn--youtube {
+  color: #c60000;
+}
+
+.fpt-footer__contact-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.fpt-footer__contact-link {
+  color: inherit;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.fpt-footer__contact-link:hover {
+  color: var(--color-button);
+  text-decoration: underline;
+}
+
+.fpt-footer__links-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 40px;
+  row-gap: 36px;
+}
+
+.fpt-footer__link-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fpt-footer__link-title {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: flex;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: inherit;
+  justify-content: space-between;
+  margin: 0 0 4px 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+.fpt-footer__link-title svg {
+  display: none;
+}
+.fpt-footer__link-list { display: flex; flex-direction: column; gap: 8px; }
+
+.fpt-footer__link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.55;
+  transition: color 0.2s ease;
+}
+
+.fpt-footer__link:hover {
+  color: var(--color-button);
+  text-decoration: underline;
+}
+
+.fpt-footer__divider {
+  border: none;
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 0;
+}
+
+.fpt-footer__copyright {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-muted-text);
+  padding: 16px;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fpt-footer__grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .fpt-footer__links-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .fpt-footer__container {
+    padding: 32px 16px;
+  }
+
+  .fpt-footer__links-grid { gap: 8px; }
+  .fpt-footer__link-group { border-top: 1px solid #eadfe6; gap: 0; padding: 2px 0; }
+  .fpt-footer__link-title { cursor: pointer; min-height: 46px; margin: 0; padding: 10px 0; }
+  .fpt-footer__link-title svg { color: #b12069; display: block; transition: transform 180ms ease; }
+  .fpt-footer__link-group.is-open .fpt-footer__link-title svg { transform: rotate(180deg); }
+  .fpt-footer__link-list { display: none; gap: 0; padding: 0 0 10px 4px; }
+  .fpt-footer__link-group.is-open .fpt-footer__link-list { display: flex; }
+  .fpt-footer__link { border-left: 2px solid #f8e8f0; padding: 8px 0 8px 12px; }
+}
+
+@media (max-width: 480px) {
+  .fpt-footer__links-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .fpt-footer__container {
+    padding: 24px 12px;
+  }
+}

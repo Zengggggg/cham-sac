@@ -1,0 +1,15 @@
+.ui-input {
+  background: #fffdf8;
+  border: 2px solid #d9ccda;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #211832;
+  font: 400 15px/1.4 'Be Vietnam Pro', sans-serif;
+  min-height: 48px;
+  padding: 11px 13px;
+  transition: border-color 300ms ease, box-shadow 300ms ease, background-color 300ms ease;
+  width: 100%;
+}
+
+.ui-input::placeholder { color: #9b91a1; }
+.ui-input:focus { border-color: #ce337f; box-shadow: 0 0 0 3px rgba(206, 51, 127, .12); outline: none; }

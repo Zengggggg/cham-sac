@@ -1,0 +1,113 @@
+.policy-page {
+  background: #fff9ed;
+  color: #211832;
+  min-height: 68vh;
+  padding: clamp(28px, 5vw, 64px) 20px 88px;
+}
+.policy-shell {
+  background: #fffdf8;
+  border: 2px solid #eadfe6;
+  box-shadow: 9px 9px 0 rgba(114, 50, 126, 0.1);
+  margin: 0 auto;
+  max-width: 980px;
+}
+.policy-hero {
+  background: #fffdf8;
+  border-bottom: 2px solid #eadfe6;
+  padding: clamp(28px, 6vw, 68px);
+}
+.policy-icon {
+  align-items: center;
+  background: #f8e8f0;
+  border-radius: 12px;
+  color: #b12069;
+  display: inline-flex;
+  height: 48px;
+  justify-content: center;
+  margin-bottom: 22px;
+  width: 48px;
+}
+.policy-eyebrow {
+  color: #b12069;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+.policy-hero h1 {
+  color: #211832;
+  font-family: "Baloo 2", sans-serif;
+  font-size: clamp(38px, 6vw, 68px);
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+  margin: 0;
+  max-width: 760px;
+}
+.policy-intro {
+  color: #6b6375;
+  font-size: 18px;
+  line-height: 1.65;
+  margin: 22px 0 0;
+  max-width: 700px;
+}
+.policy-content {
+  padding: clamp(28px, 6vw, 64px);
+}
+.policy-section {
+  border-bottom: 1px solid #eadfe6;
+  margin: 0 0 30px;
+  padding: 0 0 30px;
+}
+.policy-section:last-of-type {
+  margin-bottom: 28px;
+}
+.policy-section h2 {
+  color: #72327e;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 25px;
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+.policy-section p {
+  color: #514653;
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 0 0 10px;
+  max-width: 780px;
+}
+.policy-section p:last-child {
+  margin-bottom: 0;
+}
+.policy-note {
+  align-items: flex-start;
+  background: #f8e8f0;
+  color: #514653;
+  display: flex;
+  font-size: 14px;
+  gap: 10px;
+  line-height: 1.6;
+  padding: 16px 18px;
+}
+.policy-note svg {
+  color: #b12069;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+@media (max-width: 520px) {
+  .policy-page {
+    padding: 24px 12px 60px;
+  }
+  .policy-hero h1 {
+    font-size: 40px;
+  }
+  .policy-intro {
+    font-size: 16px;
+  }
+  .policy-section h2 {
+    font-size: 22px;
+  }
+  .policy-section p {
+    font-size: 14px;
+  }
+}

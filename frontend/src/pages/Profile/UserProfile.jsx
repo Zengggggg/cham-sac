@@ -1,10 +1,12 @@
-import { useState } from 'react'
-import { Edit3, Save, X } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Edit3, Pencil, Save, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '../../components/ui/Button.jsx'
 import Card from '../../components/ui/Card.jsx'
 import Input from '../../components/ui/Input.jsx'
 import authCover from '../../assets/pics/auth_cover.png'
+import elementFlag from '../../assets/elements/IMG_4820.PNG'
+import elementRedFold from '../../assets/elements/IMG_4821.PNG'
 import './UserProfile.scss'
 
 const initialProfile = {
@@ -51,6 +53,7 @@ export default function UserProfile() {
   const [draft, setDraft] = useState(profile)
   const [orders] = useState(readOrders)
   const [isEditing, setIsEditing] = useState(false)
+  const avatarInputRef = useRef(null)
 
   const handleChange = ({ target }) => setDraft((current) => ({ ...current, [target.name]: target.value }))
   const handleSave = (event) => {
@@ -63,9 +66,32 @@ export default function UserProfile() {
     toast.success('Đã cập nhật hồ sơ')
   }
   const cancelEdit = () => { setDraft(profile); setIsEditing(false) }
+  const handleAvatarChange = ({ target }) => {
+    const file = target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn một tệp hình ảnh')
+      target.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const updated = { ...profile, avatarUrl: reader.result }
+      setProfile(updated)
+      setDraft((current) => ({ ...current, avatarUrl: reader.result }))
+      localStorage.setItem('user', JSON.stringify(updated))
+      toast.success('Đã cập nhật ảnh đại diện')
+    }
+    reader.readAsDataURL(file)
+    target.value = ''
+  }
 
   return (
     <main className="profile-page">
+      <img className="profile-page__element profile-page__element--flag" src={elementFlag} alt="" aria-hidden="true" />
+      <img className="profile-page__element profile-page__element--red" src={elementRedFold} alt="" aria-hidden="true" />
       <div className="profile-page__shell">
         <header className="profile-page__header">
           <div>
@@ -83,8 +109,26 @@ export default function UserProfile() {
 
         <section className="profile-page__grid">
           <Card className="profile-page__summary">
-            <div className="profile-page__avatar">
-              <img src={profile.avatarUrl || authCover} alt={`Ảnh đại diện của ${profile.fullName}`} />
+            <div className="profile-page__avatar-wrap">
+              <div className="profile-page__avatar">
+                <img src={profile.avatarUrl || authCover} alt={`Ảnh đại diện của ${profile.fullName}`} />
+              </div>
+              <button
+                className="profile-page__avatar-edit"
+                type="button"
+                aria-label="Thay ảnh đại diện"
+                title="Thay ảnh đại diện"
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                <Pencil size={15} aria-hidden="true" />
+              </button>
+              <input
+                ref={avatarInputRef}
+                className="profile-page__avatar-input"
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+              />
             </div>
             <h2>{profile.fullName}</h2>
             <p className="profile-page__email">{profile.email}</p>

@@ -8,6 +8,7 @@ import MessengerButton from './components/layout/MessengerButton.jsx'
 import HomePage from './pages/Common/HomePage.jsx'
 import ContactUsPage from './pages/Common/ContactUsPage.jsx'
 import FAQ from './pages/Common/FAQ.jsx'
+import AboutUs from './pages/Common/AboutUs.jsx'
 import LoginPage from './pages/Authentication/LoginPage.jsx'
 import RegisterPage from './pages/Authentication/RegisterPage.jsx'
 import ConfirmEmail from './pages/Authentication/ConfirmEmail.jsx'
@@ -28,6 +29,12 @@ import AdminListUser from './pages/Admin/AdminListUser.jsx'
 import AdminListContact from './pages/Admin/AdminListContact.jsx'
 import AdminListOrder from './pages/Admin/AdminListOrder.jsx'
 import AdminLayout from './components/layout/AdminLayout.jsx'
+import ListProductPage from './pages/Shopping/ListProductPage.jsx'
+import ProductDetailPage from './pages/Shopping/ProductDetailPage.jsx'
+import MyCartPage from './pages/Shopping/MyCartPage.jsx'
+import CheckOutPage from './pages/Shopping/CheckOutPage.jsx'
+import PaymentPage from './pages/Shopping/PaymentPage.jsx'
+import MyOrderPage from './pages/Shopping/MyOrderPage.jsx'
 import './App.css'
 
 function ScrollToTop() {
@@ -69,6 +76,13 @@ function App() {
         <Route path="/admin/users" element={<AdminLayout><AdminListUser /></AdminLayout>} />
         <Route path="/admin/contacts" element={<AdminLayout><AdminListContact /></AdminLayout>} />
         <Route path="/admin/orders" element={<AdminLayout><AdminListOrder /></AdminLayout>} />
+        <Route path="/products" element={<Layout><ListProductPage /></Layout>} />
+        <Route path="/products/:productId" element={<Layout><ProductDetailPage /></Layout>} />
+        <Route path="/cart" element={<Layout><MyCartPage /></Layout>} />
+        <Route path="/checkout" element={<Layout><CheckOutPage /></Layout>} />
+        <Route path="/payment" element={<Layout><PaymentPage /></Layout>} />
+        <Route path="/my-orders" element={<Layout><MyOrderPage /></Layout>} />
+        <Route path="/introduce-hlw26" element={<Layout><ListProductPage /></Layout>} />
         <Route path="/data-policy" element={<Layout><DataPolicy /></Layout>} />
         <Route path="/privacy-policy" element={<Layout><TermOfPrivacy /></Layout>} />
         <Route path="/terms-of-use" element={<Layout><TermOfUse /></Layout>} />
@@ -93,6 +107,10 @@ function App() {
         <Route
           path="/faq"
           element={<Layout><FAQ /></Layout>}
+        />
+        <Route
+          path="/about-us"
+          element={<Layout><AboutUs /></Layout>}
         />
         <Route
           path="/demo-ui"

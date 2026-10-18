@@ -27,7 +27,7 @@ const linkGroups = [
   {
     title: "Mua sắm",
     links: [
-      ["Sản phẩm", "/introduce-hlw26"],
+      ["Sản phẩm", "/products"],
       ["Chi tiết", "/news"],
       ["Giỏ hàng", "/fbgc"],
     ],

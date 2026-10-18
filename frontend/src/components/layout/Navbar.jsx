@@ -29,9 +29,9 @@ import PermIdentityIcon from "@mui/icons-material/PermIdentity";
 
 const navigationItems = [
   { label: "TRANG CHỦ", href: "/" },
-  { label: "MUA SẮM", href: "/introduce-hlw26" },
+  { label: "MUA SẮM", href: "/products" },
   { label: "TRẢI NGHIỆM AR", href: "/haunted-ghost" },
-  { label: "VỀ CHÚNG TÔI", href: "/btc-fuhlw" },
+  { label: "VỀ CHÚNG TÔI", href: "/about-us" },
   { label: "LIÊN HỆ", href: "/contact-us" },
   { label: "QUẢN TRỊ", href: "/admin/dashboard" },
 ];
@@ -39,7 +39,7 @@ const navigationItems = [
 const authenticatedAccountItems = [
   { label: "Tài khoản", href: "/user-profile", icon: UserRound },
   { label: "Đổi mật khẩu", href: "/enter-old-password", icon: KeyRound },
-  { label: "Đơn hàng", href: "/user-profile#orders", icon: Package },
+  { label: "Đơn hàng", href: "/my-orders", icon: Package },
   { label: "Trải nghiệm AR", href: "/haunted-ghost", icon: Sparkles },
 ];
 
@@ -166,17 +166,23 @@ function Navbar() {
                     className={`fpt-navbar__account-dropdown${accountOpen ? " is-open" : ""}`}
                     role="menu"
                   >
-                    {authenticatedAccountItems.map(({ label, href, icon: Icon }) => (
-                      <Link
-                        key={href}
-                        to={href}
-                        role="menuitem"
-                        onClick={() => setAccountOpen(false)}
-                      >
-                        <Icon size={17} aria-hidden="true" /> {label}
-                      </Link>
-                    ))}
-                    <button type="button" role="menuitem" onClick={handleLogoutRequest}>
+                    {authenticatedAccountItems.map(
+                      ({ label, href, icon: Icon }) => (
+                        <Link
+                          key={href}
+                          to={href}
+                          role="menuitem"
+                          onClick={() => setAccountOpen(false)}
+                        >
+                          <Icon size={17} aria-hidden="true" /> {label}
+                        </Link>
+                      ),
+                    )}
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleLogoutRequest}
+                    >
                       <LogOut size={17} aria-hidden="true" /> Đăng xuất
                     </button>
                   </div>
@@ -230,27 +236,95 @@ function Navbar() {
               aria-label={mobileOpen ? "Đóng menu" : "Mở menu"}
               aria-expanded={mobileOpen}
             >
-              {mobileOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
+              {mobileOpen ? (
+                <X size={24} aria-hidden="true" />
+              ) : (
+                <Menu size={24} aria-hidden="true" />
+              )}
             </button>
           </div>
         </div>
-        <div className={`fpt-navbar__mobile-drawer${mobileOpen ? " fpt-navbar__mobile-drawer--open" : ""}`} onClick={() => setMobileOpen(false)}>
-          <div className="fpt-navbar__mobile-content" onClick={(event) => event.stopPropagation()}>
+        <div
+          className={`fpt-navbar__mobile-drawer${mobileOpen ? " fpt-navbar__mobile-drawer--open" : ""}`}
+          onClick={() => setMobileOpen(false)}
+        >
+          <div
+            className="fpt-navbar__mobile-content"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="fpt-navbar__mobile-header">
               <h3>Điều hướng</h3>
-              <button className="fpt-navbar__mobile-close" type="button" onClick={() => setMobileOpen(false)} aria-label="Đóng menu"><X size={22} /></button>
+              <button
+                className="fpt-navbar__mobile-close"
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Đóng menu"
+              >
+                <X size={22} />
+              </button>
             </div>
-            <nav className="fpt-navbar__mobile-nav" aria-label="Điều hướng mobile">
-              {navigationItems.map((item) => <Link key={item.href} to={item.href} className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}>{item.label}</Link>)}
+            <nav
+              className="fpt-navbar__mobile-nav"
+              aria-label="Điều hướng mobile"
+            >
+              {navigationItems.map((item) => (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className="fpt-navbar__mobile-link"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
               <div className="fpt-navbar__mobile-account">
-                <Link to="/cart" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><ShoppingBag size={18} /> Giỏ hàng</Link>
-                {isAuthenticated ? <>
-                  {authenticatedAccountItems.map(({ label, href, icon: Icon }) => <Link key={href} to={href} className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><Icon size={18} /> {label}</Link>)}
-                  <button type="button" className="fpt-navbar__mobile-link fpt-navbar__mobile-logout" onClick={handleLogoutRequest}><LogOut size={18} /> Đăng xuất</button>
-                </> : <>
-                  <Link to="/login" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><LogIn size={18} /> Đăng nhập</Link>
-                  <Link to="/register" className="fpt-navbar__mobile-link" onClick={() => setMobileOpen(false)}><UserPlus size={18} /> Đăng ký</Link>
-                </>}
+                <Link
+                  to="/cart"
+                  className="fpt-navbar__mobile-link"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <ShoppingBag size={18} /> Giỏ hàng
+                </Link>
+                {isAuthenticated ? (
+                  <>
+                    {authenticatedAccountItems.map(
+                      ({ label, href, icon: Icon }) => (
+                        <Link
+                          key={href}
+                          to={href}
+                          className="fpt-navbar__mobile-link"
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          <Icon size={18} /> {label}
+                        </Link>
+                      ),
+                    )}
+                    <button
+                      type="button"
+                      className="fpt-navbar__mobile-link fpt-navbar__mobile-logout"
+                      onClick={handleLogoutRequest}
+                    >
+                      <LogOut size={18} /> Đăng xuất
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="fpt-navbar__mobile-link"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <LogIn size={18} /> Đăng nhập
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="fpt-navbar__mobile-link"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <UserPlus size={18} /> Đăng ký
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </div>

@@ -31,17 +31,16 @@
   justify-content: center;
   padding: 0;
   text-decoration: none;
-  transition: background-color 180ms ease, transform 180ms ease;
+  transition: background-color 180ms ease;
   width: 60px;
 }
 
 .faq-fab { background: #52bcbf; }
 .messenger-fab { background: #ce337f; cursor: pointer; }
 .messenger-fab svg { height: 32px; width: 32px; }
-.faq-fab:hover, .messenger-fab:hover { transform: translateY(-2px); }
 .faq-fab:hover { background: #3aa6a9; }
 .messenger-fab:hover { background: #b12069; }
-.faq-fab:active, .messenger-fab:active { transform: translateY(0); }
+.faq-fab:active, .messenger-fab:active { transform: none; }
 .faq-fab:focus-visible, .messenger-fab:focus-visible { outline: 3px solid #eea53b; outline-offset: 3px; }
 
 .messenger-popup {

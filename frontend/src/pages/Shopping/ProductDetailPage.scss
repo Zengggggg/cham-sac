@@ -97,7 +97,7 @@
 
 .product-detail-layout {
   display: grid;
-  grid-template-columns: minmax(0, 720px) minmax(300px, 392px);
+  grid-template-columns: minmax(0, 720px) minmax(300px, 440px);
   align-items: start;
   justify-content: space-between;
   gap: clamp(24px, 3vw, 48px);
@@ -123,7 +123,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 14px;
-  color: var(--detail-pink-dark);
+  color: #ce337f;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -161,20 +161,20 @@
   border: 2px solid var(--detail-line);
   border-radius: 14px;
   background: var(--detail-surface);
-  box-shadow: 7px 7px 0 var(--detail-shadow);
+  box-shadow: 4px 4px 0 var(--detail-shadow);
   cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .product-detail-thumbnail:hover {
   border-color: var(--detail-pink);
-  box-shadow: 9px 9px 0 var(--detail-shadow);
+  box-shadow: 6px 6px 0 var(--detail-shadow);
   transform: translateY(-3px);
 }
 
 .product-detail-thumbnail.is-active {
   border-color: var(--detail-pink);
-  box-shadow: 7px 7px 0 var(--detail-pink);
+  box-shadow: 4px 4px 0 var(--detail-pink);
 }
 
 .product-detail-thumbnail:focus-visible {
@@ -342,7 +342,7 @@
 }
 
 .product-detail-price-row strong {
-  color: var(--detail-pink-dark);
+  color: #ce337f;
   font-family: var(--font-display);
   font-size: clamp(30px, 4vw, 46px);
   font-weight: 800;
@@ -352,7 +352,7 @@
 
 .product-detail-purchase.ui-card {
   box-sizing: border-box;
-  width: min(100%, 392px);
+  width: min(100%, 440px);
   margin-top: 0;
   padding: 22px;
   background: var(--detail-surface);
@@ -626,7 +626,7 @@
 
 @media (max-width: 1180px) {
   .product-detail-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
     gap: 32px;
   }
 }

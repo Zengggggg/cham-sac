@@ -28,6 +28,7 @@ import AdminDashboard from './pages/Admin/AdminDashboard.jsx'
 import AdminListUser from './pages/Admin/AdminListUser.jsx'
 import AdminListContact from './pages/Admin/AdminListContact.jsx'
 import AdminListOrder from './pages/Admin/AdminListOrder.jsx'
+import AdminListProduct from './pages/Admin/AdminListProduct.jsx'
 import AdminLayout from './components/layout/AdminLayout.jsx'
 import ListProductPage from './pages/Shopping/ListProductPage.jsx'
 import ProductDetailPage from './pages/Shopping/ProductDetailPage.jsx'
@@ -76,6 +77,7 @@ function App() {
         <Route path="/admin/users" element={<AdminLayout><AdminListUser /></AdminLayout>} />
         <Route path="/admin/contacts" element={<AdminLayout><AdminListContact /></AdminLayout>} />
         <Route path="/admin/orders" element={<AdminLayout><AdminListOrder /></AdminLayout>} />
+        <Route path="/admin/products" element={<AdminLayout><AdminListProduct /></AdminLayout>} />
         <Route path="/products" element={<Layout><ListProductPage /></Layout>} />
         <Route path="/products/:productId" element={<Layout><ProductDetailPage /></Layout>} />
         <Route path="/cart" element={<Layout><MyCartPage /></Layout>} />

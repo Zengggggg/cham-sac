@@ -41,6 +41,7 @@
 }
 
 .fpt-header__email,
+.fpt-header__phone,
 .fpt-header__social-link {
   display: inline-flex;
   align-items: center;
@@ -51,15 +52,32 @@
 .fpt-header__email {
   gap: 12px;
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   font-family: "Be Vietnam Pro", sans-serif;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
 }
+.fpt-header__contact {
+  align-items: center;
+  display: flex;
+  flex: 1 1 auto;
+  gap: clamp(16px, 3vw, 34px);
+  min-width: 0;
+}
+.fpt-header__phone {
+  flex: 0 0 auto;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
 .fpt-header__email svg {
   filter: drop-shadow(0.35px 0 0 currentColor);
 }
+.fpt-header__phone svg { filter: drop-shadow(0.35px 0 0 currentColor); }
 .fpt-header__social-link {
   width: 32px;
   height: 32px;
@@ -516,6 +534,7 @@
     gap: 8px;
   }
 
+  .fpt-header__contact { gap: 12px; }
   .fpt-header__email { max-width: min(58vw, 340px); }
 }
 
@@ -523,6 +542,7 @@
   .fpt-header__container {
     padding: 0 12px;
   }
+  .fpt-header__phone { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

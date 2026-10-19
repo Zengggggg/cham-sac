@@ -5,6 +5,7 @@ import {
     normalizeGooglePayload,
     verifyGoogleIdToken
 } from '../src/providers/googleAuthProvider.js';
+import { mergeGoogleProfileIntoExistingUser } from '../src/services/authService.js';
 import { validateGoogleIdToken } from '../src/validations/authValidation.js';
 
 test('normalizeGooglePayload accepts only a verified Google email', () => {
@@ -12,6 +13,7 @@ test('normalizeGooglePayload accepts only a verified Google email', () => {
         sub: 'google-account-id',
         email: ' USER@EXAMPLE.COM ',
         email_verified: true,
+        hd: 'example.com',
         name: 'Nguyễn An',
         picture: 'https://example.com/avatar.jpg'
     });
@@ -20,7 +22,9 @@ test('normalizeGooglePayload accepts only a verified Google email', () => {
         googleId: 'google-account-id',
         email: 'user@example.com',
         name: 'Nguyễn An',
-        avatarUrl: 'https://example.com/avatar.jpg'
+        avatarUrl: 'https://example.com/avatar.jpg',
+        hostedDomain: 'example.com',
+        isEmailAuthoritative: true
     });
     assert.throws(
         () => normalizeGooglePayload({
@@ -29,6 +33,79 @@ test('normalizeGooglePayload accepts only a verified Google email', () => {
             email_verified: false
         }),
         /email đã xác minh/
+    );
+});
+
+test('Google is authoritative for Gmail and Workspace but not third-party email', () => {
+    const gmailProfile = normalizeGooglePayload({
+        sub: 'gmail-id',
+        email: 'user@gmail.com',
+        email_verified: true
+    });
+    const thirdPartyProfile = normalizeGooglePayload({
+        sub: 'third-party-id',
+        email: 'user@example.com',
+        email_verified: true
+    });
+
+    assert.equal(gmailProfile.isEmailAuthoritative, true);
+    assert.equal(thirdPartyProfile.isEmailAuthoritative, false);
+});
+
+test('existing pending user is safely linked and activated by authoritative Google email', () => {
+    const verifiedAt = new Date('2026-10-19T00:00:00.000Z');
+    const user = new User({
+        name: 'Nguyễn An',
+        email: 'user@gmail.com',
+        passwordHash: 'existing-password-hash',
+        role: 'admin',
+        status: 'pending_verification',
+        emailVerificationOtpHash: 'otp-hash',
+        emailVerificationOtpExpiresAt: new Date('2026-10-19T00:10:00.000Z')
+    });
+
+    mergeGoogleProfileIntoExistingUser(user, {
+        googleId: 'google-account-id',
+        avatarUrl: 'https://example.com/avatar.jpg',
+        isEmailAuthoritative: true
+    }, verifiedAt);
+
+    assert.equal(user.googleId, 'google-account-id');
+    assert.equal(user.passwordHash, 'existing-password-hash');
+    assert.equal(user.role, 'admin');
+    assert.equal(user.status, 'active');
+    assert.equal(user.emailVerifiedAt.toISOString(), verifiedAt.toISOString());
+    assert.equal(user.emailVerificationOtpHash, null);
+    assert.equal(user.emailVerificationOtpExpiresAt, null);
+});
+
+test('automatic Google linking rejects blocked users and non-authoritative email', () => {
+    const profile = {
+        googleId: 'google-account-id',
+        avatarUrl: null,
+        isEmailAuthoritative: true
+    };
+    const blockedUser = new User({
+        name: 'Nguyễn An',
+        email: 'user@gmail.com',
+        status: 'blocked'
+    });
+    const thirdPartyUser = new User({
+        name: 'Nguyễn An',
+        email: 'user@example.com',
+        status: 'active'
+    });
+
+    assert.throws(
+        () => mergeGoogleProfileIntoExistingUser(blockedUser, profile),
+        (error) => error.statusCode === 403
+    );
+    assert.throws(
+        () => mergeGoogleProfileIntoExistingUser(thirdPartyUser, {
+            ...profile,
+            isEmailAuthoritative: false
+        }),
+        (error) => error.statusCode === 409
     );
 });
 

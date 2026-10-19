@@ -83,6 +83,8 @@ function App() {
         <Route path="/cart" element={<Layout><MyCartPage /></Layout>} />
         <Route path="/checkout" element={<Layout><CheckOutPage /></Layout>} />
         <Route path="/payment" element={<Layout><PaymentPage /></Layout>} />
+        <Route path="/payment/success" element={<Layout><PaymentPage /></Layout>} />
+        <Route path="/payment/cancel" element={<Layout><PaymentPage /></Layout>} />
         <Route path="/my-orders" element={<Layout><MyOrderPage /></Layout>} />
         <Route path="/introduce-hlw26" element={<Layout><ListProductPage /></Layout>} />
         <Route path="/data-policy" element={<Layout><DataPolicy /></Layout>} />

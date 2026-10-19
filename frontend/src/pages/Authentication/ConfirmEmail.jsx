@@ -5,11 +5,7 @@ import toast from "react-hot-toast";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import Input from "../../components/ui/Input.jsx";
-// import {
-//   registerUser,
-//   resendVerificationOtp,
-//   verifyEmail,
-// } from "../../services/authService.js";
+import { resendVerificationOtp, verifyEmail } from "../../services/authService.js";
 import wtmLogo from "../../assets/wtm.png";
 import "./ConfirmEmail.scss";
 
@@ -21,18 +17,19 @@ export default function ConfirmEmail() {
   const navigate = useNavigate();
   const inputRefs = useRef([]);
   const registration = location.state?.registration || {};
-  // Hiện card xác nhận email trước, sau đó mới chuyển sang card OTP.
-  const [step, setStep] = useState("email");
+  const verification = location.state?.verification || {};
+  const email = verification.email || registration.email || "";
+  const otpWasSent = Boolean(verification.otpSent);
+  const [step, setStep] = useState(otpWasSent ? "otp" : "email");
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(""));
   const [loading, setLoading] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendCooldown, setResendCooldown] = useState(
+    otpWasSent
+      ? verification.resendAvailableInSeconds || RESEND_COOLDOWN_SECONDS
+      : 0,
+  );
   const [errorMessage, setErrorMessage] = useState("");
   const [otpError, setOtpError] = useState("");
-
-  const email = registration.email || "";
-  const hasRegistrationData = Boolean(
-    email && registration.name && registration.password,
-  );
 
   useEffect(() => {
     if (resendCooldown <= 0) return undefined;
@@ -45,11 +42,18 @@ export default function ConfirmEmail() {
   }, [resendCooldown]);
 
   const handleBackToRegister = () => {
-    navigate("/register", { state: { registration } });
+    navigate("/register", {
+      state: {
+        registration: {
+          email,
+          name: registration.name || "",
+        },
+      },
+    });
   };
 
   const handleSendCode = async () => {
-    if (!hasRegistrationData) {
+    if (!email) {
       setErrorMessage(
         "Phiên đăng ký đã hết hạn. Vui lòng quay lại nhập lại thông tin.",
       );
@@ -60,13 +64,12 @@ export default function ConfirmEmail() {
     setLoading(true);
 
     try {
-      /* await registerUser({
-        email: registration.email,
-        name: registration.name,
-        password: registration.password,
-      }); */
+      const response = await resendVerificationOtp(email);
       setStep("otp");
-      toast("Đã bỏ qua bước gửi mã để kiểm tra giao diện OTP.");
+      setResendCooldown(
+        response.data?.resendAvailableInSeconds || RESEND_COOLDOWN_SECONDS,
+      );
+      toast.success(response.message || "Mã xác thực đã được gửi đến email của bạn.");
     } catch (error) {
       setErrorMessage(
         error.message || "Không thể gửi mã xác thực. Vui lòng thử lại.",
@@ -126,12 +129,9 @@ export default function ConfirmEmail() {
     setLoading(true);
 
     try {
-      /*
-      await verifyEmail({ email, otp: verificationCode });
-      toast.success("Xác thực email thành công. Bạn có thể đăng nhập ngay.");
+      const response = await verifyEmail({ email, otp: verificationCode });
+      toast.success(response.message || "Xác thực email thành công.");
       navigate("/complete-register", { replace: true, state: { email } });
-      */
-      toast("Đã bỏ qua xác thực API để kiểm tra giao diện OTP.");
     } catch (error) {
       setOtpError(error.message || "Mã xác thực không đúng hoặc đã hết hạn.");
     } finally {
@@ -140,13 +140,16 @@ export default function ConfirmEmail() {
   };
 
   const handleResend = async () => {
-    if (resendCooldown > 0 || loading) return;
+    if (!email || resendCooldown > 0 || loading) return;
 
+    setOtpError("");
     setLoading(true);
     try {
-      /* await resendVerificationOtp(email); */
-      setResendCooldown(RESEND_COOLDOWN_SECONDS);
-      toast("Đã bỏ qua API gửi lại mã để kiểm tra giao diện.");
+      const response = await resendVerificationOtp(email);
+      setResendCooldown(
+        response.data?.resendAvailableInSeconds || RESEND_COOLDOWN_SECONDS,
+      );
+      toast.success(response.message || "Đã gửi lại mã xác thực.");
     } catch (error) {
       setOtpError(error.message || "Không thể gửi lại mã xác thực.");
     } finally {
@@ -209,7 +212,7 @@ export default function ConfirmEmail() {
                   loading={loading}
                   onClick={handleSendCode}
                 >
-                  Xác nhận gửi mã
+                  Gửi mã xác thực
                 </Button>
               </div>
             </Card>

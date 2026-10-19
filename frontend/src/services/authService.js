@@ -1,44 +1,69 @@
-const API_PREFIX = '/chamsacviet'
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
-
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-  })
-
-  const payload = await response.json().catch(() => null)
-
-  if (!response.ok || payload?.success === false) {
-    const error = new Error(payload?.message || 'Không thể kết nối đến hệ thống.')
-    error.statusCode = payload?.statusCode || response.status
-    error.errors = payload?.errors || null
-    throw error
-  }
-
-  return payload
-}
+import { apiRequest, clearAuthSession, getRefreshToken, saveAuthSession } from './apiClient.js'
 
 export function registerUser({ name, email, password }) {
-  return request('/auth/register', {
-    body: JSON.stringify({ name, email, password }),
+  return apiRequest('/auth/register', {
+    auth: false,
+    body: { name, email, password },
     method: 'POST',
   })
 }
 
 export function verifyEmail({ email, otp }) {
-  return request('/auth/verify-email', {
-    body: JSON.stringify({ email, otp }),
+  return apiRequest('/auth/verify-email', {
+    auth: false,
+    body: { email, otp },
     method: 'POST',
+  }).then((payload) => {
+    saveAuthSession(payload.data)
+    return payload
   })
 }
 
 export function resendVerificationOtp(email) {
-  return request('/auth/resend-verification-otp', {
-    body: JSON.stringify({ email }),
+  return apiRequest('/auth/resend-verification-otp', {
+    auth: false,
+    body: { email },
     method: 'POST',
   })
+}
+
+export function loginUser({ email, password }) {
+  return apiRequest('/auth/login', {
+    auth: false,
+    body: { email, password },
+    method: 'POST',
+  }).then((payload) => {
+    saveAuthSession(payload.data)
+    return payload
+  })
+}
+
+export function loginWithGoogle(idToken) {
+  return apiRequest('/auth/google', {
+    auth: false,
+    body: { idToken },
+    method: 'POST',
+  }).then((payload) => {
+    saveAuthSession(payload.data)
+    return payload
+  })
+}
+
+export function getCurrentUser() {
+  return apiRequest('/auth/me')
+}
+
+export async function logoutUser() {
+  const refreshToken = getRefreshToken()
+  try {
+    if (refreshToken) {
+      await apiRequest('/auth/logout', {
+        auth: false,
+        body: { refreshToken },
+        method: 'POST',
+      })
+    }
+  } finally {
+    clearAuthSession()
+  }
 }

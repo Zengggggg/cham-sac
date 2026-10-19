@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Edit3, Pencil, Save, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '../../components/ui/Button.jsx'
@@ -7,6 +7,8 @@ import Input from '../../components/ui/Input.jsx'
 import authCover from '../../assets/pics/auth_cover.png'
 import elementFlag from '../../assets/elements/IMG_4820.PNG'
 import elementRedFold from '../../assets/elements/IMG_4821.PNG'
+import { getCurrentUser } from '../../services/authService.js'
+import { listMyOrders } from '../../services/shopService.js'
 import './UserProfile.scss'
 
 const initialProfile = {
@@ -30,15 +32,6 @@ const orderStatusLabel = (status) => ({ pending: 'Chờ xác nhận', confirmed:
 const paymentStatusLabel = (status) => ({ unpaid: 'Chưa thanh toán', paid: 'Đã thanh toán', refunded: 'Đã hoàn tiền' }[status] || 'Chưa cập nhật')
 const formatMoney = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(value) || 0)
 
-function readOrders() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('orders') || localStorage.getItem('userOrders') || '[]')
-    return Array.isArray(saved) ? saved : Array.isArray(saved?.data) ? saved.data : []
-  } catch {
-    return []
-  }
-}
-
 function readProfile() {
   try {
     const saved = JSON.parse(localStorage.getItem('user') || 'null')
@@ -51,9 +44,30 @@ function readProfile() {
 export default function UserProfile() {
   const [profile, setProfile] = useState(readProfile)
   const [draft, setDraft] = useState(profile)
-  const [orders] = useState(readOrders)
+  const [orders, setOrders] = useState([])
   const [isEditing, setIsEditing] = useState(false)
   const avatarInputRef = useRef(null)
+
+  useEffect(() => {
+    let active = true
+    Promise.all([getCurrentUser(), listMyOrders()])
+      .then(([userResponse, orderResponse]) => {
+        if (!active) return
+        const user = userResponse.data.user
+        const nextProfile = {
+          ...initialProfile,
+          ...user,
+          fullName: user.fullName || user.name || initialProfile.fullName,
+          authProvider: user.googleId ? 'google' : 'local',
+        }
+        setProfile(nextProfile)
+        setDraft(nextProfile)
+        setOrders(orderResponse.data || [])
+        localStorage.setItem('user', JSON.stringify(user))
+      })
+      .catch((error) => toast.error(error.message || 'Không thể đồng bộ hồ sơ.'))
+    return () => { active = false }
+  }, [])
 
   const handleChange = ({ target }) => setDraft((current) => ({ ...current, [target.name]: target.value }))
   const handleSave = (event) => {

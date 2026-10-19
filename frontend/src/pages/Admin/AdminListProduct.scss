@@ -168,6 +168,39 @@
 .admin-product-page__state strong { color: #211832; font-family: 'Baloo 2', sans-serif; font-size: 23px; }
 .admin-product-page__state p { font-size: 13px; line-height: 1.6; margin: 0 0 8px; max-width: 520px; }
 
+.admin-product-page__list { display: grid; }
+
+.admin-product-page__product {
+  align-items: center;
+  border-bottom: 1px solid #eadfe6;
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px 22px;
+}
+
+.admin-product-page__product:last-child { border-bottom: 0; }
+.admin-product-page__product > div:last-child { min-width: 0; }
+.admin-product-page__product strong { color: #211832; font-size: 14px; }
+.admin-product-page__product p { color: #6b6375; font-size: 12px; line-height: 1.5; margin: 5px 0 0; }
+
+.admin-product-image {
+  background: #fffdf8;
+  border: 1px solid #eadfe6;
+  border-radius: 9px;
+  display: block;
+  object-fit: cover;
+}
+
+.admin-product-image--empty {
+  align-items: center;
+  color: #9c8ea0;
+  display: flex;
+  justify-content: center;
+}
+
+.admin-product-page__thumbnail { flex: 0 0 72px; height: 72px; width: 72px; }
+
 .admin-product-form { display: grid; gap: 18px; }
 .admin-product-form__grid { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .admin-product-form__field { display: grid; gap: 7px; min-width: 0; }
@@ -176,6 +209,72 @@
 .admin-product-form__select { background: #fffdf8; border: 2px solid #d9ccda; border-radius: 8px; color: #211832; font: 400 14px 'Be Vietnam Pro', sans-serif; min-height: 48px; padding: 0 12px; }
 .admin-product-form__textarea { min-height: 96px; resize: vertical; }
 .admin-product-form__error { color: #b12069; font-size: 11px; font-weight: 700; }
+
+.admin-product-form__images { display: grid; gap: 10px; }
+
+.admin-product-form__upload {
+  align-items: center;
+  background: #fffdf8;
+  border: 2px dashed #cdb9cf;
+  border-radius: 10px;
+  color: #72327e;
+  cursor: pointer;
+  display: grid;
+  gap: 4px 10px;
+  grid-template-columns: auto 1fr;
+  padding: 16px;
+  transition: background .18s ease, border-color .18s ease;
+}
+
+.admin-product-form__upload:hover { background: #fff4f8; border-color: #ce337f; }
+.admin-product-form__upload:focus-within { outline: 2px solid #eea53b; outline-offset: 2px; }
+.admin-product-form__upload--disabled { cursor: not-allowed; opacity: .62; }
+.admin-product-form__upload input { height: 1px; opacity: 0; overflow: hidden; position: absolute; width: 1px; }
+.admin-product-form__upload > svg { grid-row: 1 / 3; }
+.admin-product-form__upload > span { color: #211832; font-size: 13px; font-weight: 800; }
+.admin-product-form__upload > small { color: #6b6375; font-size: 10px; }
+
+.admin-product-form__remove-image {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2cdd5;
+  border-radius: 8px;
+  color: #b12069;
+  cursor: pointer;
+  display: inline-flex;
+  height: 42px;
+  justify-content: center;
+}
+
+.admin-product-form__remove-image:hover { background: #fff0f4; border-color: #ce337f; }
+.admin-product-form__remove-image:focus-visible { outline: 2px solid #eea53b; outline-offset: 2px; }
+.admin-product-form__remove-image:disabled { cursor: not-allowed; opacity: .55; }
+.admin-product-form__image-help { color: #6b6375; font-size: 11px; line-height: 1.5; margin: 0; }
+
+.admin-product-form__previews {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+}
+
+.admin-product-form__previews figure { margin: 0; min-width: 0; position: relative; }
+.admin-product-form__previews .admin-product-image { aspect-ratio: 4 / 3; width: 100%; }
+.admin-product-form__previews figcaption { color: #6b6375; font-size: 10px; margin-top: 5px; text-align: center; }
+.admin-product-form__previews .admin-product-form__remove-image {
+  background: rgba(255, 255, 255, .94);
+  height: 30px;
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 30px;
+}
+
+.admin-product-form__upload-status {
+  color: #287f75;
+  font-size: 11px;
+  font-weight: 800;
+  margin: 0;
+}
 
 .admin-product-form__notice {
   align-items: flex-start;
@@ -214,4 +313,6 @@
   .admin-product-form__full { grid-column: auto; }
   .admin-product-form__actions { flex-direction: column-reverse; }
   .admin-product-form__actions .ui-button { width: 100%; }
+  .admin-product-page__product { align-items: flex-start; padding: 14px 16px; }
+  .admin-product-page__thumbnail { flex-basis: 60px; height: 60px; width: 60px; }
 }

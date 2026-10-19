@@ -17,6 +17,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import LogoutModal from "./LogoutModal.jsx";
 import "./ManageSidebar.scss";
+import { logoutUser } from "../../services/authService.js";
 
 const menuItems = [
   { label: "Tổng quan", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -67,8 +68,8 @@ function ManageSidebar({ isCollapsed }) {
       document.removeEventListener("pointerdown", closeOnOutsideClick);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    await logoutUser().catch(() => undefined);
     setUser(null);
     setLogoutModalOpen(false);
     window.dispatchEvent(new Event("auth:logout"));

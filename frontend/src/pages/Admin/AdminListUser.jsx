@@ -1,38 +1,66 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Filter, RefreshCw, Search, ShieldCheck, UsersRound } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '../../components/ui/Button.jsx'
 import Card from '../../components/ui/Card.jsx'
 import Input from '../../components/ui/Input.jsx'
+import { listUsers, updateUserStatus } from '../../services/adminService.js'
 import './AdminListUser.scss'
 
-const emptyUsers = []
-
 function AdminListUser() {
+  const [users, setUsers] = useState([])
   const [searchInput, setSearchInput] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [lastUpdated, setLastUpdated] = useState('Chưa cập nhật')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const loadUsers = useCallback(async () => {
+    setIsLoading(true)
+    setError('')
+    try {
+      const response = await listUsers({ search: searchTerm, status: statusFilter === 'all' ? '' : statusFilter })
+      setUsers(response.data || [])
+      setLastUpdated(new Intl.DateTimeFormat('vi-VN', { timeStyle: 'short' }).format(new Date()))
+    } catch (requestError) {
+      setError(requestError.message || 'Không thể tải danh sách người dùng.')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [searchTerm, statusFilter])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => { void loadUsers() }, 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [loadUsers])
 
   const visibleUsers = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
-    return emptyUsers.filter((user) => {
+    return users.filter((user) => {
       const matchesSearch = !normalizedSearch || [user.name, user.email, user.phone]
         .some((value) => value?.toLowerCase().includes(normalizedSearch))
-      const matchesStatus = statusFilter === 'all' || user.status === statusFilter
-      return matchesSearch && matchesStatus
+      return matchesSearch
     })
-  }, [searchTerm, statusFilter])
+  }, [searchTerm, users])
 
   const handleSearch = (event) => {
     event.preventDefault()
     setSearchTerm(searchInput)
   }
 
-  const handleRefresh = () => {
-    setLastUpdated(new Intl.DateTimeFormat('vi-VN', { timeStyle: 'short' }).format(new Date()))
-    toast('Dữ liệu người dùng sẽ hiển thị khi API quản trị được kết nối.')
+  const handleRefresh = () => { void loadUsers() }
+
+  const toggleStatus = async (user) => {
+    try {
+      const status = user.status === 'blocked' ? 'active' : 'blocked'
+      await updateUserStatus(user.id || user._id, status, user.updatedAt)
+      toast.success(status === 'blocked' ? 'Đã khóa tài khoản.' : 'Đã mở khóa tài khoản.')
+      await loadUsers()
+    } catch (requestError) {
+      toast.error(requestError.message || 'Không thể cập nhật tài khoản.')
+    }
   }
 
   return (
@@ -52,6 +80,7 @@ function AdminListUser() {
           variant="secondary"
           icon={<RefreshCw size={17} aria-hidden="true" />}
           onClick={handleRefresh}
+          loading={isLoading}
         >
           Làm mới
         </Button>
@@ -92,13 +121,17 @@ function AdminListUser() {
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                 <option value="all">Tất cả</option>
                 <option value="active">Đang hoạt động</option>
-                <option value="disabled">Đã khóa</option>
+                <option value="blocked">Đã khóa</option>
               </select>
             </label>
           </div>
         </div>
 
-        {visibleUsers.length === 0 ? (
+        {isLoading ? (
+          <div className="admin-user-page__empty" role="status"><strong>Đang tải danh sách người dùng</strong></div>
+        ) : error ? (
+          <div className="admin-user-page__empty" role="alert"><strong>Không thể tải dữ liệu</strong><p>{error}</p><Button size="sm" onClick={handleRefresh}>Thử lại</Button></div>
+        ) : visibleUsers.length === 0 ? (
           <div className="admin-user-page__empty" role="status">
             <span className="admin-user-page__empty-icon"><UsersRound size={25} aria-hidden="true" /></span>
             <strong>Chưa có dữ liệu người dùng</strong>
@@ -113,15 +146,17 @@ function AdminListUser() {
                   <th>Liên hệ</th>
                   <th>Vai trò</th>
                   <th>Trạng thái</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleUsers.map((user) => (
-                  <tr key={user.id}>
-                    <td><strong>{user.name}</strong></td>
-                    <td>{user.email}<small>{user.phone}</small></td>
+                  <tr key={user.id || user._id}>
+                    <td><strong>{user.fullName || user.name}</strong></td>
+                    <td>{user.email}<small>{user.phone || 'Chưa cập nhật'}</small></td>
                     <td>{user.role}</td>
-                    <td><span className={`admin-user-page__status admin-user-page__status--${user.status}`}>{user.statusLabel}</span></td>
+                    <td><span className={`admin-user-page__status admin-user-page__status--${user.status}`}>{user.status === 'blocked' ? 'Đã khóa' : user.status === 'pending_verification' ? 'Chờ xác minh' : 'Đang hoạt động'}</span></td>
+                    <td>{user.role === 'user' && <Button size="sm" variant="secondary" onClick={() => toggleStatus(user)}>{user.status === 'blocked' ? 'Mở khóa' : 'Khóa'}</Button>}</td>
                   </tr>
                 ))}
               </tbody>

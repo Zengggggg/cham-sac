@@ -85,3 +85,19 @@ export const getShopEnvironment = () => ({
     paymentExpiresInMinutes: getPositiveInteger('ORDER_PAYMENT_EXPIRES_MINUTES', '15'),
     expiryWorkerIntervalSeconds: getPositiveInteger('ORDER_EXPIRY_INTERVAL_SECONDS', '60')
 });
+
+export const getR2Environment = () => {
+    const publicBaseUrl = getRequiredEnvironmentVariable('R2_PUBLIC_BASE_URL').replace(/\/$/, '');
+
+    if (!/^https:\/\/[^\s]+$/i.test(publicBaseUrl)) {
+        throw new Error('R2_PUBLIC_BASE_URL must be a valid HTTPS URL');
+    }
+
+    return {
+        accountId: getRequiredEnvironmentVariable('R2_ACCOUNT_ID'),
+        accessKeyId: getRequiredEnvironmentVariable('R2_ACCESS_KEY_ID'),
+        secretAccessKey: getRequiredEnvironmentVariable('R2_SECRET_ACCESS_KEY'),
+        bucketName: getRequiredEnvironmentVariable('R2_BUCKET_NAME'),
+        publicBaseUrl
+    };
+};

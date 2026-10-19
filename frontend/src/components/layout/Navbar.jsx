@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import PermIdentityIcon from "@mui/icons-material/PermIdentity";
+import { logoutUser } from "../../services/authService.js";
 
 // Các nghiệp vụ cũ được giữ lại dưới dạng comment để có thể bật lại:
 // import { authAPI } from "../apis/authAPI";
@@ -60,6 +61,7 @@ function Navbar() {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(readStoredUser);
   const isAuthenticated = Boolean(currentUser);
+  const visibleNavigationItems = navigationItems.filter((item) => item.href !== "/admin/dashboard" || currentUser?.role === "admin");
 
   useEffect(() => {
     const syncAuthenticationState = () => {
@@ -99,8 +101,8 @@ function Navbar() {
     setLogoutModalOpen(true);
   };
 
-  const handleLogoutConfirm = () => {
-    localStorage.removeItem("user");
+  const handleLogoutConfirm = async () => {
+    await logoutUser().catch(() => undefined);
     setCurrentUser(null);
     setAccountOpen(false);
     setLogoutModalOpen(false);
@@ -120,7 +122,7 @@ function Navbar() {
             />
           </Link>
           <div className="fpt-navbar__desktop-nav">
-            {navigationItems.map((item) => (
+            {visibleNavigationItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
@@ -267,7 +269,7 @@ function Navbar() {
               className="fpt-navbar__mobile-nav"
               aria-label="Điều hướng mobile"
             >
-              {navigationItems.map((item) => (
+              {visibleNavigationItems.map((item) => (
                 <Link
                   key={item.href}
                   to={item.href}

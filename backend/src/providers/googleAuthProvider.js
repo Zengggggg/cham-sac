@@ -11,6 +11,7 @@ export const normalizeGooglePayload = (payload) => {
         : '';
     const name = typeof payload?.name === 'string' ? payload.name.trim() : '';
     const avatarUrl = typeof payload?.picture === 'string' ? payload.picture.trim() : null;
+    const hostedDomain = typeof payload?.hd === 'string' ? payload.hd.trim().toLowerCase() : null;
 
     if (!googleId || !email || payload?.email_verified !== true) {
         throw new AppError('Tài khoản Google không có email đã xác minh.', 401);
@@ -20,7 +21,9 @@ export const normalizeGooglePayload = (payload) => {
         googleId,
         email,
         name: name || email.split('@')[0],
-        avatarUrl
+        avatarUrl,
+        hostedDomain,
+        isEmailAuthoritative: email.endsWith('@gmail.com') || Boolean(hostedDomain)
     };
 };
 

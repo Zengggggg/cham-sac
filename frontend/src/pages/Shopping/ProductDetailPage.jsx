@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -20,6 +20,8 @@ import diceElement from "../../assets/elements/IMG_4818.PNG";
 import diceLightElement from "../../assets/elements/IMG_4819.PNG";
 import elementFour from "../../assets/elements/IMG_4820.PNG";
 import elementFive from "../../assets/elements/IMG_4821.PNG";
+import { getAccessToken } from "../../services/apiClient.js";
+import { addCartItem, getProduct } from "../../services/shopService.js";
 import "./ProductDetailPage.scss";
 
 const products = [
@@ -101,54 +103,68 @@ const formatMoney = (value) =>
 function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const product = products.find((item) => item.id === productId);
+  const [productData, setProductData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const product = productData ? {
+    ...products[0],
+    ...productData,
+    id: productData.id || productData._id,
+    image: productData.images?.[0] || diceElement,
+    detail: productData.description,
+    tag: productData.canPurchase ? "Đang mở bán" : "Tạm hết hàng",
+  } : null;
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [selectedImages, setSelectedImages] = useState({});
   const selectedImage = selectedImages[productId] || product?.image;
 
-  const addToCart = () => {
+  useEffect(() => {
+    let active = true;
+    const timeoutId = window.setTimeout(() => getProduct(productId)
+      .then((response) => {
+        if (active) setProductData(response.data.product);
+      })
+      .catch((error) => {
+        if (active) setLoadError(error.message || "Không thể tải sản phẩm.");
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      }), 0);
+    return () => { active = false; window.clearTimeout(timeoutId); };
+  }, [productId]);
+
+  const addToCart = async () => {
     if (!product) return;
+    if (!getAccessToken()) {
+      toast("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
+      navigate("/login", { state: { from: `/products/${productId}` } });
+      return;
+    }
 
     setIsAddingToCart(true);
     try {
-      const storedCart = JSON.parse(localStorage.getItem("cart") || "[]");
-      const existingItem = storedCart.find(
-        (item) => item.productId === product.id,
-      );
-      const cart = existingItem
-        ? storedCart.map((item) =>
-            item.productId === product.id
-              ? { ...item, quantity: item.quantity + quantity }
-              : item,
-          )
-        : [
-            ...storedCart,
-            {
-              productId: product.id,
-              productName: product.name,
-              unitPrice: product.price,
-              quantity,
-            },
-          ];
-
-      localStorage.setItem("cart", JSON.stringify(cart));
+      await addCartItem(product.id, quantity);
       window.dispatchEvent(new Event("cart:updated"));
       toast.success(`Đã thêm “${product.name}” vào giỏ hàng`);
-    } catch {
-      toast.error("Không thể cập nhật giỏ hàng lúc này.");
+    } catch (error) {
+      toast.error(error.message || "Không thể cập nhật giỏ hàng lúc này.");
     } finally {
       setIsAddingToCart(false);
     }
   };
 
-  if (!product) {
+  if (isLoading) {
+    return <main className="product-detail-page"><div className="product-detail-state" role="status"><Sparkles size={30} aria-hidden="true" /><h1>Đang tải sản phẩm</h1></div></main>;
+  }
+
+  if (!product || loadError) {
     return (
       <main className="product-detail-page">
         <div className="product-detail-state">
           <Sparkles size={30} aria-hidden="true" />
           <h1>Không tìm thấy sản phẩm</h1>
-          <p>Sản phẩm này có thể đã được thay đổi hoặc không còn tồn tại.</p>
+          <p>{loadError || "Sản phẩm này có thể đã được thay đổi hoặc không còn tồn tại."}</p>
           <Button as={Link} to="/products" variant="primary">
             Xem sản phẩm
           </Button>
@@ -189,7 +205,7 @@ function ProductDetailPage() {
             </div>
             <div className="product-detail-gallery">
               <div className="product-detail-thumbnails" aria-label="Ảnh sản phẩm">
-                {[product.image, diceElement, diceLightElement, starElement, elementFour, elementFive]
+                {[...(product.images || []), product.image, diceElement, diceLightElement, starElement, elementFour, elementFive]
                   .filter((image, index, images) => images.indexOf(image) === index)
                   .slice(0, 5)
                   .map((image, index) => (
@@ -224,7 +240,7 @@ function ProductDetailPage() {
           <aside className="product-detail-purchase-column">
             <Card className="product-detail-purchase" aria-label="Thêm sản phẩm vào giỏ hàng">
               <div className="product-detail-status">
-                <span aria-hidden="true" /> Đang mở bán
+                <span aria-hidden="true" /> {product.canPurchase ? "Đang mở bán" : "Tạm hết hàng"}
               </div>
               <div className="product-detail-price-row">
                 <span>Giá sản phẩm</span>
@@ -232,7 +248,7 @@ function ProductDetailPage() {
               </div>
               <div className="product-detail-stock">
                 <span>Còn lại</span>
-                <strong>25</strong>
+                <strong>{product.stock}</strong>
               </div>
               <div className="product-detail-quantity-row">
                 <label htmlFor="product-quantity">Số lượng</label>
@@ -249,8 +265,8 @@ function ProductDetailPage() {
                   <button
                     type="button"
                     aria-label="Tăng số lượng"
-                    disabled={quantity >= 25 || isAddingToCart}
-                    onClick={() => setQuantity((value) => Math.min(25, value + 1))}
+                    disabled={quantity >= product.stock || isAddingToCart}
+                    onClick={() => setQuantity((value) => Math.min(product.stock, value + 1))}
                   >
                     <Plus size={16} aria-hidden="true" />
                   </button>
@@ -265,6 +281,7 @@ function ProductDetailPage() {
                 variant="primary"
                 size="lg"
                 loading={isAddingToCart}
+                disabled={!product.canPurchase}
                 icon={<ShoppingBag size={19} aria-hidden="true" />}
                 iconPosition="right"
                 onClick={addToCart}

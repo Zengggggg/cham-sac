@@ -18,6 +18,7 @@ import ConfirmModal from "../../components/layout/ConfirmModal.jsx";
 import starElement from "../../assets/elements/IMG_4811.PNG";
 import diceElement from "../../assets/elements/IMG_4818.PNG";
 import diceLightElement from "../../assets/elements/IMG_4819.PNG";
+import { createOrder, createPayment, getCart } from "../../services/shopService.js";
 import "./CheckOutPage.scss";
 
 const productCatalog = {
@@ -50,12 +51,18 @@ const readStorage = (key, fallback) => {
   }
 };
 
-const getCheckoutItems = () => {
-  const cart = readStorage("cart", []);
-  const selectedIds = readStorage("selected-cart-items", []);
-  if (!Array.isArray(cart)) return [];
-  if (!Array.isArray(selectedIds) || selectedIds.length === 0) return cart;
-  return cart.filter((item) => selectedIds.includes(item.productId));
+const normalizeCheckoutItems = (cart) => (cart?.items || [])
+  .filter((item) => item.selected)
+  .map((item) => ({
+    ...item,
+    productName: item.product?.name || "Sản phẩm",
+    unitPrice: item.product?.price || 0,
+    image: item.product?.images?.[0] || "",
+  }));
+
+const normalizePhone = (phone) => {
+  const compact = phone.replace(/[\s.-]/g, "");
+  return compact.startsWith("0") ? `+84${compact.slice(1)}` : compact;
 };
 
 const getInitialCustomer = () => {
@@ -69,13 +76,15 @@ const getInitialCustomer = () => {
 
 function CheckOutPage() {
   const navigate = useNavigate();
-  const [checkoutItems] = useState(getCheckoutItems);
+  const [checkoutItems, setCheckoutItems] = useState([]);
+  const [isLoadingCart, setIsLoadingCart] = useState(true);
   const [customer, setCustomer] = useState(getInitialCustomer);
   const [errors, setErrors] = useState({});
   const [coupon, setCoupon] = useState("");
-  const [discount, setDiscount] = useState(0);
+  const [discount] = useState(0);
   const [step, setStep] = useState(1);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [delivery, setDelivery] = useState(() => {
     const saved = readStorage("checkout-info", {});
     return {
@@ -94,8 +103,23 @@ function CheckOutPage() {
   );
   const [locationError, setLocationError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState(
-    () => readStorage("checkout-info", {}).paymentMethod || "cod",
+    "bank",
   );
+
+  useEffect(() => {
+    let active = true;
+    getCart()
+      .then((response) => {
+        if (active) setCheckoutItems(normalizeCheckoutItems(response.data.cart));
+      })
+      .catch((error) => {
+        if (active) toast.error(error.message || "Không thể tải giỏ hàng.");
+      })
+      .finally(() => {
+        if (active) setIsLoadingCart(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -175,13 +199,7 @@ function CheckOutPage() {
   };
 
   const applyCoupon = () => {
-    if (coupon.trim().toUpperCase() === "CHAMSCAC10") {
-      setDiscount(Math.round(subtotal * 0.1));
-      toast.success("Đã áp dụng mã giảm giá 10%.");
-      return;
-    }
-    setDiscount(0);
-    toast.error("Mã giảm giá chưa hợp lệ.");
+    toast("Mã giảm giá chưa được hỗ trợ trong phiên bản này.");
   };
 
   const updateDelivery = ({ target }) => {
@@ -247,19 +265,51 @@ function CheckOutPage() {
       JSON.stringify({ ...customer, ...delivery, paymentMethod, discount }),
     );
 
-    if (paymentMethod === "cod") {
-      sessionStorage.removeItem("cham-sac-payment-expires-at");
-      navigate("/payment");
-      return;
-    }
-
     setIsConfirmOpen(true);
   };
 
-  const handleConfirmOrder = () => {
-    setIsConfirmOpen(false);
-    navigate("/payment");
+  const handleConfirmOrder = async () => {
+    setIsPlacingOrder(true);
+    localStorage.removeItem("current-order");
+    localStorage.removeItem("current-payment");
+    try {
+      const checkoutKey = sessionStorage.getItem("checkout-idempotency-key") || crypto.randomUUID();
+      sessionStorage.setItem("checkout-idempotency-key", checkoutKey);
+      const orderResponse = await createOrder({
+        customer: {
+          fullName: customer.fullName.trim(),
+          email: customer.email.trim(),
+          phone: normalizePhone(customer.phone),
+        },
+        shippingAddress: {
+          addressLine: delivery.address.trim(),
+          ward: delivery.ward.trim(),
+          province: delivery.city.trim(),
+          note: delivery.note.trim(),
+        },
+      }, checkoutKey);
+      const order = orderResponse.data.order;
+      sessionStorage.removeItem("checkout-idempotency-key");
+      localStorage.setItem("current-order", JSON.stringify(order));
+      const paymentResponse = await createPayment(order.id || order._id);
+      localStorage.setItem("current-payment", JSON.stringify(paymentResponse.data.payment));
+      window.dispatchEvent(new Event("cart:updated"));
+      setIsConfirmOpen(false);
+      navigate("/payment");
+    } catch (error) {
+      toast.error(error.message || "Không thể tạo đơn hàng. Vui lòng thử lại.");
+      if (localStorage.getItem("current-order")) {
+        setIsConfirmOpen(false);
+        navigate("/payment");
+      }
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
+
+  if (isLoadingCart) {
+    return <main className="checkout-page"><div className="checkout-state" role="status"><ShieldCheck size={34} aria-hidden="true" /><h1>Đang tải giỏ hàng</h1></div></main>;
+  }
 
   if (checkoutItems.length === 0) {
     return (
@@ -532,6 +582,7 @@ function CheckOutPage() {
                         name="paymentMethod"
                         value="cod"
                         checked={paymentMethod === "cod"}
+                        disabled
                         onChange={() => setPaymentMethod("cod")}
                       />
                       <span className="checkout-payment-option__icon">
@@ -540,7 +591,7 @@ function CheckOutPage() {
                       <span className="checkout-payment-option__copy">
                         <strong>Thanh toán khi nhận hàng</strong>
                         <small>
-                          Trả tiền mặt khi đơn hàng được giao đến bạn.
+                          Chưa hỗ trợ trong phiên bản hiện tại.
                         </small>
                       </span>
                       <span
@@ -590,6 +641,7 @@ function CheckOutPage() {
                       size="lg"
                       icon={<Check size={18} aria-hidden="true" />}
                       iconPosition="right"
+                      loading={isPlacingOrder}
                     >
                       Xác nhận đặt hàng
                     </Button>
@@ -664,6 +716,7 @@ function CheckOutPage() {
         description="Thông tin giao hàng và phương thức thanh toán đã được lưu. Xác nhận để tiếp tục đến bước thanh toán."
         cancelLabel="Kiểm tra lại"
         confirmLabel="Xác nhận"
+        isLoading={isPlacingOrder}
       />
     </main>
   );

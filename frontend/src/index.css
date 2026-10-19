@@ -1,4 +1,20 @@
+@font-face { font-family: "Be Vietnam Pro"; src: url("./assets/font/BeVietnamPro-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Be Vietnam Pro"; src: url("./assets/font/BeVietnamPro-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: "Be Vietnam Pro"; src: url("./assets/font/BeVietnamPro-Black.ttf") format("truetype"); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: "Baloo 2"; src: url("./assets/font/Baloo2-ExtraBold.ttf") format("truetype"); font-weight: 800; font-style: normal; font-display: block; }
+@font-face { font-family: "Coiny"; src: url("./assets/font/Coiny-Regular.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+
 :root {
+  --color-background: #fffaf2;
+  --color-header: #4d3041;
+  --color-surface: #ffffff;
+  --color-text: #514653;
+  --color-text-muted: #6b6375;
+  --color-muted-text: #6b6375;
+  --color-button: #8c3f68;
+  --color-button-text: #ffffff;
+  --color-button-hover: #713252;
+  --color-hover-background: #f4eaf0;
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
@@ -52,14 +68,14 @@
 
 body {
   margin: 0;
+  font-family: "Be Vietnam Pro", var(--sans);
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
+  text-align: initial;
   min-height: 100svh;
   display: flex;
   flex-direction: column;

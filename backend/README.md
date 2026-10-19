@@ -89,6 +89,16 @@ Các biến bắt buộc:
 
 `GOOGLE_CLIENT_ID` là bắt buộc khi bật đăng nhập Google. `MONGODB_DB_NAME` mặc định là `cham_sac_viet`. Xem toàn bộ cấu hình trong `.env.example`.
 
+Shop dùng `SHOP_SHIPPING_FEE_VND` (mặc định `30000`), `ORDER_PAYMENT_EXPIRES_MINUTES` (mặc định `15`) và `ORDER_EXPIRY_INTERVAL_SECONDS` (mặc định `60`). MongoDB phải chạy dưới dạng replica set để checkout, webhook và hủy đơn dùng transaction.
+
+### Upload ảnh sản phẩm lên Cloudflare R2
+
+Endpoint `POST /chamsacviet/admin/uploads/product-images/presign` chỉ dành cho admin. Backend ký URL `PUT` sống 5 phút; trình duyệt tải ảnh trực tiếp lên R2 rồi lưu `publicUrl` vào trường `images` của sản phẩm. Ảnh hỗ trợ JPEG, PNG, WebP và AVIF, tối đa 5 MB mỗi file.
+
+Cấu hình năm biến `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` và `R2_PUBLIC_BASE_URL`. `R2_PUBLIC_BASE_URL` phải là HTTPS public/custom domain dùng để đọc ảnh, không phải S3 API endpoint. Access key phải có quyền ghi đúng bucket và chỉ được lưu ở backend.
+
+Áp dụng CORS cho bucket theo [`r2-cors.example.json`](./r2-cors.example.json), đồng thời thay danh sách `AllowedOrigins` bằng đúng origin frontend của từng môi trường. Header `Content-Type` là một phần của chữ ký nên request `PUT` phải gửi đúng MIME type backend đã ký.
+
 ## Khởi tạo MongoDB
 
 Backend có 7 collections theo `mongodb_database_spec.md`: `users`, `products`, `heritage_sites`, `orders`, `ar_models`, `game_rules`, `payments`. Order items được snapshot và nhúng trực tiếp trong `orders`.
@@ -101,13 +111,27 @@ npm run db:init
 
 Script có thể chạy lặp lại: collection mới sẽ được tạo; collection có sẵn được cập nhật JSON Schema validator bằng `collMod`; index được tạo theo tên cố định. Nếu dữ liệu hiện có vi phạm unique index, script dừng và báo rõ index lỗi để tránh âm thầm làm mất dữ liệu.
 
+Khi nâng cấp database đã có dữ liệu lên schema shop mới, chạy migration idempotent trước khi khởi động phiên bản mới:
+
+```bash
+npm run db:migrate:shop
+```
+
+Migration backfill cart/audit arrays, `expiresAt`, `refundRequired`, `statusHistory` và sau đó đồng bộ validator/index.
+
 Seed development tối thiểu:
 
 ```bash
 npm run db:seed
 ```
 
-Trước khi seed, điền `DEV_ADMIN_EMAIL`, `DEV_ADMIN_PASSWORD` và tùy chọn `DEV_ADMIN_NAME`. Script từ chối chạy khi `NODE_ENV=production` và không chứa mật khẩu mặc định trong source code.
+Để chỉ tạo hoặc cập nhật tài khoản admin development mà không seed dữ liệu mẫu khác:
+
+```bash
+npm run db:create-dev-admin
+```
+
+Trước khi chạy, điền `DEV_ADMIN_EMAIL`, `DEV_ADMIN_PASSWORD` và tùy chọn `DEV_ADMIN_NAME`. Các script từ chối chạy khi `NODE_ENV=production` và không chứa mật khẩu mặc định trong source code.
 
 ## payOS
 
@@ -115,9 +139,53 @@ Backend sử dụng SDK Node chính thức `@payos/node`. Cấu hình các biế
 
 Lớp tích hợp tại `src/providers/payOSProvider.js` hỗ trợ tạo payment link, xác minh chữ ký webhook và xác nhận webhook URL. Models lưu `providerOrderCode` để ánh xạ số đơn của payOS, `paymentLinkId` để tra cứu link và `providerTransactionId` để xử lý webhook idempotent.
 
-Checkout API và webhook route chưa được mount vì nghiệp vụ phí ship và thời điểm trừ tồn kho vẫn cần được chốt. Không cập nhật trạng thái thanh toán từ `returnUrl`; trạng thái phải được xác nhận từ webhook đã qua `payOS.webhooks.verify()`.
+Checkout trừ tồn kho trong MongoDB transaction. Đơn unpaid hết hạn được worker hủy và hoàn tồn đúng một lần. Không cập nhật trạng thái thanh toán từ `returnUrl`; trạng thái chỉ được xác nhận từ webhook đã qua `payOS.webhooks.verify()`.
 
 Trước khi thử đăng ký, tạo API key trên Resend, xác minh domain gửi và điền `RESEND_API_KEY`, `RESEND_FROM_EMAIL`. Backend không log hoặc trả OTP trong API response.
+
+## Shop API
+
+Hai endpoint đọc sản phẩm `/shop/boxes` là public. Các endpoint giỏ hàng, đơn hàng và thanh toán của user yêu cầu access token role `user`; endpoint admin yêu cầu role `admin`.
+
+| Method | Endpoint | Mục đích |
+| --- | --- | --- |
+| `GET` | `/chamsacviet/shop/boxes` | Danh sách sản phẩm đang bán (public) |
+| `GET` | `/chamsacviet/shop/boxes/:id` | Chi tiết sản phẩm (public) |
+| `GET` | `/chamsacviet/cart` | Lấy giỏ hàng với giá/tồn kho hiện tại |
+| `POST` | `/chamsacviet/cart/items` | Thêm/gộp sản phẩm vào giỏ |
+| `PATCH/DELETE` | `/chamsacviet/cart/items/:productId` | Cập nhật hoặc xóa dòng giỏ |
+| `POST` | `/chamsacviet/orders` | Checkout; bắt buộc header `Idempotency-Key` |
+| `GET` | `/chamsacviet/orders/me` | Lịch sử đơn của user |
+| `GET` | `/chamsacviet/orders/:id` | Chi tiết đơn thuộc user |
+| `POST` | `/chamsacviet/payments/payos` | Tạo/lấy payment link payOS |
+| `GET` | `/chamsacviet/payments/:orderId/status` | Trạng thái thanh toán |
+| `POST` | `/chamsacviet/payments/payos/webhook` | Webhook công khai, bắt buộc chữ ký payOS hợp lệ |
+| `GET/POST` | `/chamsacviet/admin/products` | Danh sách/tạo sản phẩm |
+| `GET/PATCH` | `/chamsacviet/admin/products/:id` | Chi tiết/cập nhật sản phẩm với `expectedUpdatedAt` |
+| `GET` | `/chamsacviet/admin/orders` | Lọc và phân trang toàn bộ đơn |
+| `GET` | `/chamsacviet/admin/orders/:id` | Chi tiết đơn và thanh toán |
+| `PATCH` | `/chamsacviet/admin/orders/:id/status` | Chuyển trạng thái với `expectedUpdatedAt` |
+
+Giỏ hàng được nhúng trong user; order items, người nhận và địa chỉ được snapshot. Hệ thống vẫn giữ đúng bảy collections. Hủy đơn đã thanh toán chỉ đánh dấu cần hoàn tiền thủ công, không tự động hoàn tiền.
+
+## Admin API
+
+Toàn bộ endpoint dưới đây yêu cầu access token của role `admin`. Các thao tác cập nhật/xóa yêu cầu `expectedUpdatedAt` để ngăn ghi đè dữ liệu vừa được quản trị viên khác thay đổi.
+
+| Method | Endpoint | Mục đích |
+| --- | --- | --- |
+| `GET` | `/chamsacviet/admin/dashboard` | Tổng quan doanh thu, đơn, user và sản phẩm; chuỗi doanh thu ngày/tháng/năm |
+| `GET` | `/chamsacviet/admin/users` | Lọc, tìm kiếm và phân trang tài khoản |
+| `GET` | `/chamsacviet/admin/users/:id` | Chi tiết tài khoản, tổng hợp và 10 đơn gần nhất |
+| `PATCH` | `/chamsacviet/admin/users/:id/status` | Khóa/mở tài khoản user và thu hồi refresh token khi khóa |
+| `GET/POST` | `/chamsacviet/admin/posts` | Danh sách/tạo luật chơi |
+| `GET/PATCH/DELETE` | `/chamsacviet/admin/posts/:id` | Xem/cập nhật/xóa luật chơi |
+| `GET/POST` | `/chamsacviet/admin/heritage-sites` | Danh sách/tạo nội dung địa danh |
+| `GET/PATCH/DELETE` | `/chamsacviet/admin/heritage-sites/:id` | Xem/cập nhật/xóa địa danh chưa gắn model AR |
+| `GET/POST` | `/chamsacviet/admin/models` | Danh sách/tạo cấu hình model AR |
+| `GET/PATCH/DELETE` | `/chamsacviet/admin/models/:id` | Xem/cập nhật/soft-delete model AR |
+
+Dashboard chỉ tính payment `success` của đơn vẫn có `paymentStatus=paid`, nhóm doanh thu theo `paidAt`; đơn đã hoàn tiền không được tính. Trường `traffic.available=false` cho biết lượt truy cập chưa có dữ liệu vì MVP chưa tích hợp analytics. Endpoint trạng thái user không cho quản trị viên khóa chính mình, không chỉnh trạng thái admin khác và không kích hoạt tài khoản chưa xác minh email.
 
 ## Auth API
 
@@ -166,7 +234,7 @@ Frontend dùng Google Identity Services với cùng `GOOGLE_CLIENT_ID`, lấy `r
 }
 ```
 
-Backend xác minh chữ ký, issuer, expiry và audience bằng thư viện chính thức của Google. Nếu email đã thuộc tài khoản mật khẩu, API Google login trả `409`; người dùng phải đăng nhập bằng mật khẩu rồi gọi `/auth/google/link` để tránh tự động liên kết nhầm tài khoản.
+Backend xác minh chữ ký, issuer, expiry và audience bằng thư viện chính thức của Google. Nếu Gmail hoặc Google Workspace đã thuộc một tài khoản trong hệ thống, Google login tự động liên kết `googleId` vào đúng tài khoản đó, giữ nguyên mật khẩu/role/dữ liệu và đăng nhập. Tài khoản đang chờ OTP được kích hoạt bằng email Google đã xác minh; tài khoản bị khóa vẫn bị từ chối. Với email bên thứ ba mà Google không phải nhà cung cấp email, người dùng phải đăng nhập bằng mật khẩu rồi gọi `/auth/google/link` để tránh chiếm tài khoản bằng email trùng khớp.
 
 ## Kiểm tra
 

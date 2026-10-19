@@ -60,7 +60,8 @@ const issueEmailVerificationOtp = async (user) => {
     return {
         email: user.email,
         verificationRequired: true,
-        expiresInSeconds: emailEnvironment.otpExpiresInMinutes * 60
+        expiresInSeconds: emailEnvironment.otpExpiresInMinutes * 60,
+        resendAvailableInSeconds: emailEnvironment.otpResendCooldownSeconds
     };
 };
 
@@ -190,6 +191,35 @@ export const loginUser = async ({ email, password }) => {
     return buildAuthResponse(user, tokenPair);
 };
 
+export const mergeGoogleProfileIntoExistingUser = (
+    user,
+    googleProfile,
+    verifiedAt = new Date()
+) => {
+    if (user.status === 'blocked') {
+        throw new AppError('Tài khoản đã bị khóa.', 403);
+    }
+    if (!googleProfile.isEmailAuthoritative) {
+        throw new AppError(
+            'Để bảo vệ tài khoản, hãy đăng nhập bằng mật khẩu rồi liên kết Google.',
+            409
+        );
+    }
+    if (user.googleId && user.googleId !== googleProfile.googleId) {
+        throw new AppError('Email đã liên kết với một Google Account khác.', 409);
+    }
+
+    user.googleId = googleProfile.googleId;
+    user.avatarUrl = googleProfile.avatarUrl || user.avatarUrl;
+    user.emailVerifiedAt ||= verifiedAt;
+    if (user.status === 'pending_verification') user.status = 'active';
+    user.emailVerificationOtpHash = null;
+    user.emailVerificationOtpExpiresAt = null;
+    user.emailVerificationOtpAttempts = 0;
+    user.emailVerificationOtpSentAt = null;
+    return user;
+};
+
 export const loginWithGoogle = async (idToken) => {
     const googleProfile = await verifyGoogleIdToken(idToken);
     let user = await getUserWithSecrets({ googleId: googleProfile.googleId });
@@ -198,29 +228,29 @@ export const loginWithGoogle = async (idToken) => {
         const userWithEmail = await getUserWithSecrets({ email: googleProfile.email });
 
         if (userWithEmail) {
-            throw new AppError(
-                'Email đã có tài khoản. Hãy đăng nhập bằng mật khẩu rồi liên kết Google.',
-                409
-            );
+            user = mergeGoogleProfileIntoExistingUser(userWithEmail, googleProfile);
+            await user.save({ validateBeforeSave: false });
         }
 
-        try {
-            user = await User.create({
-                name: googleProfile.name,
-                fullName: googleProfile.name,
-                email: googleProfile.email,
-                googleId: googleProfile.googleId,
-                avatarUrl: googleProfile.avatarUrl,
-                role: 'user',
-                status: 'active',
-                emailVerifiedAt: new Date()
-            });
-        } catch (error) {
-            if (error?.code !== 11000) throw error;
+        if (!user) {
+            try {
+                user = await User.create({
+                    name: googleProfile.name,
+                    fullName: googleProfile.name,
+                    email: googleProfile.email,
+                    googleId: googleProfile.googleId,
+                    avatarUrl: googleProfile.avatarUrl,
+                    role: 'user',
+                    status: 'active',
+                    emailVerifiedAt: new Date()
+                });
+            } catch (error) {
+                if (error?.code !== 11000) throw error;
 
-            user = await getUserWithSecrets({ googleId: googleProfile.googleId });
-            if (!user) {
-                throw new AppError('Email đã được sử dụng.', 409);
+                user = await getUserWithSecrets({ googleId: googleProfile.googleId });
+                if (!user) {
+                    throw new AppError('Email đã được sử dụng.', 409);
+                }
             }
         }
     }

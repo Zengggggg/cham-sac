@@ -1,0 +1,154 @@
+.app-shell:has(.complete-register-page),
+#root:has(.complete-register-page) {
+  height: auto;
+  min-height: 100svh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.complete-register-page {
+  align-items: center;
+  background: #fff9ed;
+  box-sizing: border-box;
+  color: #211832;
+  display: flex;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 28px 18px 36px;
+}
+
+.complete-register-page__form-pane {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.complete-register-page__content {
+  margin: 0 auto;
+  max-width: 540px;
+  text-align: center;
+  width: 100%;
+}
+
+.complete-register-page__logo {
+  display: block;
+  height: auto;
+  margin: 0 auto 16px;
+  max-width: min(175px, 58vw);
+  object-fit: contain;
+  width: 175px;
+}
+
+.complete-register-page__eyebrow {
+  color: #b12069;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+
+.complete-register-page__heading h1 {
+  color: #211832;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: clamp(38px, 4vw, 48px);
+  line-height: 1;
+  margin: 0 0 10px;
+}
+
+.complete-register-page__heading > p:last-child {
+  color: #6b6375;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 auto 20px;
+  max-width: 440px;
+}
+
+.complete-register-page__card {
+  background: #fffefa;
+  border-color: transparent;
+  padding: clamp(24px, 3vw, 32px);
+  text-align: center;
+}
+
+.complete-register-page__card:hover {
+  border-color: #ce337f;
+  box-shadow: 7px 7px 0 rgba(114, 50, 126, .1);
+  transform: none;
+}
+
+.complete-register-page__card .ui-card__body {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.complete-register-page__success-mark {
+  align-items: center;
+  background: #e9f8f3;
+  border-radius: 50%;
+  color: #2b9c76;
+  display: inline-flex;
+  height: 66px;
+  justify-content: center;
+  margin-bottom: 16px;
+  width: 66px;
+}
+
+.complete-register-page__card h2 {
+  color: #211832;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 26px;
+  line-height: 1.15;
+  margin: 0 0 10px;
+}
+
+.complete-register-page__card p {
+  color: #6b6375;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 430px;
+}
+
+.complete-register-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.complete-register-page__actions .ui-button {
+  flex: 1 1 190px;
+  text-decoration: none;
+}
+
+.complete-register-page__actions .ui-button svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 480px) {
+  .complete-register-page {
+    align-items: flex-start;
+    padding: 28px 14px 42px;
+  }
+
+  .complete-register-page__logo {
+    margin-bottom: 12px;
+    width: 170px;
+  }
+
+  .complete-register-page__heading h1 {
+    font-size: 42px;
+  }
+
+  .complete-register-page__actions {
+    flex-direction: column;
+  }
+
+  .complete-register-page__actions .ui-button {
+    flex-basis: auto;
+    width: 100%;
+  }
+}

@@ -1,50 +1,19 @@
 import dotenv from 'dotenv';
-import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import connectDB from '../src/config/mongodb.js';
-import { getAuthEnvironment } from '../src/config/environment.js';
 import { initializeDatabase } from '../src/database/initializeDatabase.js';
 import {
     ArModel,
     GameRule,
     HeritageSite,
-    Product,
-    User
+    Product
 } from '../src/models/index.js';
+import { upsertDevelopmentAdmin } from './developmentAdmin.js';
 
 dotenv.config();
 
-const requireSeedVariable = (name) => {
-    const value = process.env[name]?.trim();
-    if (!value) throw new Error(`Thiếu biến môi trường dùng cho seed: ${name}`);
-    return value;
-};
-
 const seedDevelopmentData = async () => {
-    if (process.env.NODE_ENV === 'production') {
-        throw new Error('Không được chạy seed development trong production.');
-    }
-
-    const adminEmail = requireSeedVariable('DEV_ADMIN_EMAIL').toLowerCase();
-    const adminPassword = requireSeedVariable('DEV_ADMIN_PASSWORD');
-    const adminName = process.env.DEV_ADMIN_NAME?.trim() || 'Quản trị viên';
-    const { bcryptSaltRounds } = getAuthEnvironment();
-    const passwordHash = await bcrypt.hash(adminPassword, bcryptSaltRounds);
-
-    await User.findOneAndUpdate(
-        { email: adminEmail },
-        {
-            $set: {
-                name: adminName,
-                fullName: adminName,
-                passwordHash,
-                role: 'admin',
-                status: 'active',
-                emailVerifiedAt: new Date()
-            }
-        },
-        { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
-    );
+    await upsertDevelopmentAdmin();
 
     const product = await Product.findOneAndUpdate(
         { name: 'Boardgame Chạm Sắc Việt - Dev' },

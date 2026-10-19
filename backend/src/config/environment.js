@@ -28,6 +28,16 @@ const getPositiveInteger = (name, fallback) => {
     return value;
 };
 
+const getNonNegativeInteger = (name, fallback) => {
+    const value = Number.parseInt(process.env[name] || fallback, 10);
+
+    if (!Number.isSafeInteger(value) || value < 0) {
+        throw new Error(`${name} must be a non-negative safe integer`);
+    }
+
+    return value;
+};
+
 export const getAuthEnvironment = () => {
     const jwtSecret = getSecret('JWT_SECRET');
     const refreshTokenSecret = getSecret('REFRESH_TOKEN_SECRET');
@@ -69,3 +79,25 @@ export const getPayOSEnvironment = () => ({
     cancelUrl: getRequiredEnvironmentVariable('PAYOS_CANCEL_URL'),
     webhookUrl: process.env.PAYOS_WEBHOOK_URL?.trim() || null
 });
+
+export const getShopEnvironment = () => ({
+    shippingFee: getNonNegativeInteger('SHOP_SHIPPING_FEE_VND', '30000'),
+    paymentExpiresInMinutes: getPositiveInteger('ORDER_PAYMENT_EXPIRES_MINUTES', '15'),
+    expiryWorkerIntervalSeconds: getPositiveInteger('ORDER_EXPIRY_INTERVAL_SECONDS', '60')
+});
+
+export const getR2Environment = () => {
+    const publicBaseUrl = getRequiredEnvironmentVariable('R2_PUBLIC_BASE_URL').replace(/\/$/, '');
+
+    if (!/^https:\/\/[^\s]+$/i.test(publicBaseUrl)) {
+        throw new Error('R2_PUBLIC_BASE_URL must be a valid HTTPS URL');
+    }
+
+    return {
+        accountId: getRequiredEnvironmentVariable('R2_ACCOUNT_ID'),
+        accessKeyId: getRequiredEnvironmentVariable('R2_ACCESS_KEY_ID'),
+        secretAccessKey: getRequiredEnvironmentVariable('R2_SECRET_ACCESS_KEY'),
+        bucketName: getRequiredEnvironmentVariable('R2_BUCKET_NAME'),
+        publicBaseUrl
+    };
+};

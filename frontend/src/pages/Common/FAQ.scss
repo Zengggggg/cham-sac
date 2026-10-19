@@ -1,0 +1,342 @@
+.faq-page {
+  background: #fff9ed;
+  color: #211832;
+  min-height: 100%;
+  padding: clamp(30px, 5vw, 68px) 20px 88px;
+}
+
+.faq-page__shell {
+  margin: 0 auto;
+  max-width: 1180px;
+}
+.faq-page .ui-card:hover {
+  transform: none;
+}
+.faq-page a,
+.faq-page .ui-button {
+  text-decoration: none;
+}
+.faq-page__hero {
+  align-items: center;
+  display: grid;
+  gap: 26px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
+  margin-bottom: 34px;
+}
+.faq-page__hero-copy {
+  padding: 18px 0;
+}
+.faq-page__eyebrow {
+  align-items: center;
+  color: #b12069;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 7px;
+  letter-spacing: 0.14em;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+.faq-page__hero h1 {
+  color: #211832;
+  font-family: "Baloo 2", sans-serif;
+  font-size: clamp(42px, 6vw, 76px);
+  letter-spacing: -0.04em;
+  line-height: 0.94;
+  margin: 0;
+  max-width: 700px;
+}
+.faq-page__intro {
+  color: #6b6375;
+  font-size: 17px;
+  line-height: 1.65;
+  margin: 18px 0 0;
+  max-width: 640px;
+}
+.faq-page__hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+.faq-page__hero-note {
+  min-height: 0;
+}
+.faq-page__hero-note .ui-card__body {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+.faq-page__hero-note-head {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+.faq-page__hero-note-icon {
+  color: #52bcbf;
+  display: flex;
+}
+.faq-page__hero-note-divider {
+  border-top: 1px solid #eadfe6;
+  margin: 18px 0 24px;
+}
+.faq-page__hero-note strong {
+  color: #211832;
+  font-size: 15px;
+}
+.faq-page__hero-note p {
+  color: #6b6375;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 8px 0 0;
+}
+.faq-page__layout {
+  align-items: start;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(230px, 0.72fr) minmax(0, 1.28fr);
+}
+.faq-page__rail {
+  position: sticky;
+  top: 24px;
+}
+.faq-page__rail .ui-card__body {
+  margin-top: 18px;
+}
+.faq-page__facts {
+  display: grid;
+  gap: 16px;
+}
+.faq-page__facts > div {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+}
+.faq-page__facts svg {
+  color: #ce337f;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+.faq-page__facts span {
+  display: grid;
+  gap: 2px;
+}
+.faq-page__facts strong {
+  color: #211832;
+  font-size: 13px;
+}
+.faq-page__facts small {
+  color: #6b6375;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.faq-page__rail-links {
+  border-top: 1px solid #eadfe6;
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+}
+.faq-page__rail-links a {
+  align-items: center;
+  color: #72327e;
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 5px;
+  justify-content: space-between;
+  text-decoration: none;
+}
+.faq-page__rail-links a:hover {
+  color: #b12069;
+}
+.faq-page__groups {
+  display: grid;
+  gap: 18px;
+}
+.faq-page__group {
+  padding: 22px;
+}
+.faq-page__group .ui-card__heading {
+  display: none;
+}
+.faq-page__group .ui-card__body {
+  margin-top: 0;
+  padding-top: 0;
+}
+.faq-page__group-heading {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+.faq-page__group-heading > span {
+  align-items: center;
+  background: #f8e8f0;
+  border-radius: 10px;
+  color: #b12069;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+.faq-page__group-heading p {
+  color: #b12069;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  margin: 0 0 3px;
+}
+.faq-page__group-heading h2 {
+  color: #211832;
+  font-family: "Baloo 2", sans-serif;
+  font-size: 25px;
+  line-height: 1.1;
+  margin: 0;
+}
+.faq-page__questions {
+  border-top: 1px solid #eadfe6;
+  margin-top: 18px;
+}
+.faq-page__item {
+  border-bottom: 1px solid #eadfe6;
+}
+.faq-page__question {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #211832;
+  cursor: pointer;
+  display: flex;
+  font:
+    700 14px/1.45 "Be Vietnam Pro",
+    sans-serif;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 16px 2px;
+  text-align: left;
+  width: 100%;
+}
+.faq-page__question > span {
+  align-items: center;
+  display: flex;
+  gap: 9px;
+}
+.faq-page__question > span svg {
+  color: #ce337f;
+  flex: 0 0 auto;
+}
+.faq-page__question > svg {
+  color: #72327e;
+  flex: 0 0 auto;
+  transition: transform 180ms ease;
+}
+.faq-page__item.is-open .faq-page__question > svg {
+  transform: rotate(180deg);
+}
+.faq-page__question:hover {
+  color: #b12069;
+}
+.faq-page__question:focus-visible {
+  border-radius: 6px;
+  outline: 3px solid #eea53b;
+  outline-offset: 2px;
+}
+.faq-page__answer {
+  padding: 0 34px 16px 27px;
+}
+.faq-page__answer p {
+  color: #6b6375;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+}
+.faq-page__contact {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+.faq-page__contact .ui-card__heading {
+  display: none;
+}
+.faq-page__contact .ui-card__body {
+  border-top: 0;
+  flex: 1;
+  margin-top: 0;
+  padding-top: 0;
+  width: auto;
+}
+.faq-page__contact .ui-card__actions {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+.faq-page__contact-content {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+.faq-page__contact > div {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+.faq-page__contact-icon {
+  align-items: center;
+  background: #f8e8f0;
+  border-radius: 50%;
+  color: #b12069;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+.faq-page__contact strong {
+  color: #211832;
+  font-size: 15px;
+}
+.faq-page__contact p {
+  color: #6b6375;
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+@media (max-width: 800px) {
+  .faq-page__hero,
+  .faq-page__layout {
+    grid-template-columns: 1fr;
+  }
+  .faq-page__hero-note {
+    min-height: auto;
+  }
+  .faq-page__rail {
+    position: static;
+  }
+}
+
+@media (max-width: 520px) {
+  .faq-page {
+    padding: 28px 12px 60px;
+  }
+  .faq-page__hero h1 {
+    font-size: 48px;
+  }
+  .faq-page__hero-actions,
+  .faq-page__contact {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .faq-page__hero-actions .ui-button,
+  .faq-page__contact .ui-button {
+    width: 100%;
+  }
+  .faq-page__group {
+    padding: 18px;
+  }
+  .faq-page__contact > div {
+    align-items: flex-start;
+  }
+  .faq-page__contact .ui-card__actions {
+    margin-top: 12px;
+  }
+}

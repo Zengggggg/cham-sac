@@ -1,0 +1,26 @@
+.ui-card {
+  background: #fffefa;
+  border: 2px solid #eadfe6;
+  border-radius: 14px;
+  box-shadow: 7px 7px 0 rgba(114, 50, 126, .12);
+  color: #211832;
+  padding: 24px;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+.ui-card:hover { border-color: #ce337f; box-shadow: 9px 9px 0 rgba(114, 50, 126, .18); transform: translateY(-3px); }
+.ui-card--featured { background: #ce337f; border-color: #72327e; color: #fffdf8; }
+.ui-card--success { border-color: #52bcbf; }
+.ui-card--error { border-color: #d52841; }
+.ui-card__eyebrow { color: #b12069; font-size: 12px; font-weight: 800; letter-spacing: .12em; margin: 0 0 8px; text-transform: uppercase; }
+.ui-card--featured .ui-card__eyebrow { color: #fff4d9; }
+.ui-card__heading { align-items: flex-start; display: flex; gap: 12px; justify-content: space-between; }
+.ui-card h3 { font-family: 'Baloo 2', sans-serif; font-size: 25px; line-height: 1.1; margin: 0; }
+.ui-card__description { color: #6b6375; font-size: 14px; line-height: 1.55; margin: 8px 0 0; }
+.ui-card--featured .ui-card__description { color: #fffdf8; }
+.ui-card__status-icon { flex: 0 0 auto; color: #52bcbf; }
+.ui-card--error .ui-card__status-icon { color: #d52841; }
+.ui-card__body { border-top: 1px solid rgba(114, 50, 126, .16); margin-top: 18px; padding-top: 18px; }
+.ui-card--featured .ui-card__body { border-color: rgba(255,255,255,.42); }
+.ui-card--featured .ui-card__body .ui-demo__card-copy,
+.ui-card--featured .ui-card__body p { color: #fff4d9; }
+.ui-card__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }

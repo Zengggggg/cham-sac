@@ -72,7 +72,9 @@ const swaggerDefinition = {
     ],
     tags: [
         { name: 'System', description: 'Trạng thái hệ thống' },
-        { name: 'Auth', description: 'Đăng ký, đăng nhập và quản lý phiên' }
+        { name: 'Auth', description: 'Đăng ký, đăng nhập và quản lý phiên' },
+        { name: 'Admin', description: 'Dashboard, tài khoản, nội dung và AR' },
+        { name: 'Admin Shop', description: 'Sản phẩm, tồn kho và đơn hàng' }
     ],
     components: {
         securitySchemes: {
@@ -156,7 +158,8 @@ const swaggerDefinition = {
                         properties: {
                             email: { type: 'string', format: 'email', example: 'an@example.com' },
                             verificationRequired: { type: 'boolean', example: true },
-                            expiresInSeconds: { type: 'integer', example: 600 }
+                            expiresInSeconds: { type: 'integer', example: 600 },
+                            resendAvailableInSeconds: { type: 'integer', example: 60 }
                         }
                     }
                 }
@@ -366,7 +369,7 @@ const swaggerDefinition = {
                     200: authResponse,
                     401: errorResponse('Google ID token không hợp lệ.'),
                     403: errorResponse('Tài khoản đã bị khóa.'),
-                    409: errorResponse('Email đã thuộc một tài khoản khác.'),
+                    409: errorResponse('Email không thể tự động liên kết với Google.'),
                     422: errorResponse('Thiếu Google ID token.'),
                     429: errorResponse('Đã vượt quá giới hạn request xác thực.')
                 }
@@ -472,6 +475,367 @@ const swaggerDefinition = {
         }
     }
 };
+
+swaggerDefinition.tags.push(
+    { name: 'Shop', description: 'Danh mục sản phẩm cho user' },
+    { name: 'Cart', description: 'Giỏ hàng của user' },
+    { name: 'Orders', description: 'Checkout và đơn hàng của user' },
+    { name: 'Payments', description: 'Thanh toán payOS' },
+    { name: 'Admin Shop', description: 'Quản trị sản phẩm và đơn hàng' }
+);
+
+Object.assign(swaggerDefinition.components.schemas, {
+    Product: {
+        type: 'object',
+        required: ['id', 'name', 'price', 'stock', 'status'],
+        properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            description: { type: 'string' },
+            price: { type: 'integer', minimum: 0 },
+            stock: { type: 'integer', minimum: 0 },
+            images: { type: 'array', items: { type: 'string', format: 'uri' } },
+            status: { type: 'string', enum: ['active', 'inactive', 'sold_out'] },
+            availabilityStatus: { type: 'string', enum: ['active', 'inactive', 'sold_out'] },
+            canPurchase: { type: 'boolean' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
+        }
+    },
+    Order: {
+        type: 'object',
+        required: ['id', 'orderCode', 'items', 'totalAmount', 'paymentStatus', 'orderStatus'],
+        properties: {
+            id: { type: 'string' },
+            orderCode: { type: 'string' },
+            items: { type: 'array', items: { type: 'object', additionalProperties: true } },
+            shippingFee: { type: 'integer', minimum: 0 },
+            totalAmount: { type: 'integer', minimum: 0 },
+            paymentStatus: { type: 'string', enum: ['unpaid', 'paid', 'refunded'] },
+            orderStatus: {
+                type: 'string',
+                enum: ['pending', 'confirmed', 'shipping', 'done', 'cancelled']
+            },
+            expiresAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
+        }
+    },
+    ShopObjectResponse: {
+        type: 'object',
+        required: responseRequiredFields,
+        properties: {
+            ...successProperties('Thao tác shop thành công.'),
+            data: { type: 'object', additionalProperties: true }
+        }
+    },
+    ShopListResponse: {
+        type: 'object',
+        required: responseRequiredFields,
+        properties: {
+            ...successProperties('Lấy danh sách thành công.'),
+            data: { type: 'array', items: { type: 'object', additionalProperties: true } }
+        }
+    }
+});
+
+const bearerSecurity = [{ bearerAuth: [] }];
+const shopObjectResponse = {
+    description: 'Thao tác thành công.',
+    content: { 'application/json': { schema: { $ref: '#/components/schemas/ShopObjectResponse' } } }
+};
+const shopListResponse = {
+    description: 'Lấy danh sách thành công.',
+    content: { 'application/json': { schema: { $ref: '#/components/schemas/ShopListResponse' } } }
+};
+const objectIdParameter = (name) => ({
+    in: 'path',
+    name,
+    required: true,
+    schema: { type: 'string' }
+});
+
+Object.assign(swaggerDefinition.paths, {
+    [`${API_PREFIX}/shop/boxes`]: {
+        get: {
+            tags: ['Shop'], summary: 'Danh sách sản phẩm đang bán',
+            responses: { 200: shopListResponse }
+        }
+    },
+    [`${API_PREFIX}/shop/boxes/{id}`]: {
+        get: {
+            tags: ['Shop'], summary: 'Chi tiết sản phẩm',
+            parameters: [objectIdParameter('id')],
+            responses: { 200: shopObjectResponse, 404: errorResponse('Sản phẩm không tồn tại.') }
+        }
+    },
+    [`${API_PREFIX}/cart`]: {
+        get: {
+            tags: ['Cart'], summary: 'Lấy giỏ hàng', security: bearerSecurity,
+            responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/cart/items`]: {
+        post: {
+            tags: ['Cart'], summary: 'Thêm sản phẩm vào giỏ', security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object', required: ['productId', 'quantity'],
+                properties: { productId: { type: 'string' }, quantity: { type: 'integer', minimum: 1 } }
+            }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Số lượng vượt tồn kho.') }
+        }
+    },
+    [`${API_PREFIX}/cart/items/{productId}`]: {
+        patch: {
+            tags: ['Cart'], summary: 'Cập nhật dòng giỏ', security: bearerSecurity,
+            parameters: [objectIdParameter('productId')],
+            requestBody: jsonRequest({ type: 'object', additionalProperties: true }),
+            responses: { 200: shopObjectResponse }
+        },
+        delete: {
+            tags: ['Cart'], summary: 'Xóa dòng giỏ', security: bearerSecurity,
+            parameters: [objectIdParameter('productId')], responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/orders`]: {
+        post: {
+            tags: ['Orders'], summary: 'Checkout và tạo đơn', security: bearerSecurity,
+            parameters: [{
+                in: 'header', name: 'Idempotency-Key', required: true, schema: { type: 'string' }
+            }],
+            requestBody: jsonRequest({ type: 'object', required: ['customer', 'shippingAddress'] }),
+            responses: { 201: shopObjectResponse, 409: errorResponse('Giỏ hàng hoặc tồn kho đã thay đổi.') }
+        }
+    },
+    [`${API_PREFIX}/orders/me`]: {
+        get: {
+            tags: ['Orders'], summary: 'Lịch sử đơn của user', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        }
+    },
+    [`${API_PREFIX}/orders/{id}`]: {
+        get: {
+            tags: ['Orders'], summary: 'Chi tiết đơn của user', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/payments/payos`]: {
+        post: {
+            tags: ['Payments'], summary: 'Tạo payment link payOS', security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object', required: ['orderId'], properties: { orderId: { type: 'string' } }
+            }),
+            responses: { 200: shopObjectResponse, 410: errorResponse('Đơn đã hết hạn.') }
+        }
+    },
+    [`${API_PREFIX}/payments/payos/webhook`]: {
+        post: {
+            tags: ['Payments'], summary: 'Webhook payOS đã ký',
+            requestBody: jsonRequest({ type: 'object', additionalProperties: true }),
+            responses: { 200: shopObjectResponse, 400: errorResponse('Chữ ký webhook không hợp lệ.') }
+        }
+    },
+    [`${API_PREFIX}/payments/{orderId}/status`]: {
+        get: {
+            tags: ['Payments'], summary: 'Trạng thái thanh toán', security: bearerSecurity,
+            parameters: [objectIdParameter('orderId')], responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/products`]: {
+        get: {
+            tags: ['Admin Shop'], summary: 'Danh sách sản phẩm quản trị', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        },
+        post: {
+            tags: ['Admin Shop'], summary: 'Tạo sản phẩm', security: bearerSecurity,
+            requestBody: jsonRequest({ type: 'object', required: ['name', 'price', 'stock'] }),
+            responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/uploads/product-images/presign`]: {
+        post: {
+            tags: ['Admin Shop'],
+            summary: 'Tạo presigned URL để admin tải ảnh sản phẩm thẳng lên R2',
+            security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object',
+                required: ['fileName', 'contentType', 'size'],
+                additionalProperties: false,
+                properties: {
+                    fileName: { type: 'string', maxLength: 255 },
+                    contentType: {
+                        type: 'string',
+                        enum: ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
+                    },
+                    size: { type: 'integer', minimum: 1, maximum: 5242880 }
+                }
+            }),
+            responses: {
+                201: shopObjectResponse,
+                422: errorResponse('Ảnh không đúng định dạng hoặc vượt quá 5 MB.')
+            }
+        }
+    },
+    [`${API_PREFIX}/admin/products/{id}`]: {
+        get: {
+            tags: ['Admin Shop'], summary: 'Chi tiết sản phẩm quản trị', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        },
+        patch: {
+            tags: ['Admin Shop'], summary: 'Cập nhật sản phẩm', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        }
+    },
+    [`${API_PREFIX}/admin/orders`]: {
+        get: {
+            tags: ['Admin Shop'], summary: 'Danh sách đơn quản trị', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/orders/{id}`]: {
+        get: {
+            tags: ['Admin Shop'], summary: 'Chi tiết đơn quản trị', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/orders/{id}/status`]: {
+        patch: {
+            tags: ['Admin Shop'], summary: 'Cập nhật trạng thái đơn', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['status', 'expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Bước chuyển không hợp lệ.') }
+        }
+    },
+    [`${API_PREFIX}/admin/dashboard`]: {
+        get: {
+            tags: ['Admin'], summary: 'Tổng quan vận hành và doanh thu', security: bearerSecurity,
+            responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/users`]: {
+        get: {
+            tags: ['Admin'], summary: 'Danh sách tài khoản', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/users/{id}`]: {
+        get: {
+            tags: ['Admin'], summary: 'Chi tiết tài khoản và lịch sử đơn gần đây', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/users/{id}/status`]: {
+        patch: {
+            tags: ['Admin'], summary: 'Cập nhật trạng thái tài khoản', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({
+                type: 'object',
+                required: ['status', 'expectedUpdatedAt'],
+                properties: {
+                    status: { type: 'string', enum: ['pending_verification', 'active', 'blocked'] },
+                    expectedUpdatedAt: { type: 'string', format: 'date-time' }
+                }
+            }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Không thể đổi trạng thái.') }
+        }
+    },
+    [`${API_PREFIX}/admin/posts`]: {
+        get: {
+            tags: ['Admin'], summary: 'Danh sách luật chơi', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        },
+        post: {
+            tags: ['Admin'], summary: 'Tạo luật chơi', security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object',
+                required: ['productId', 'title', 'summary', 'content']
+            }),
+            responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/posts/{id}`]: {
+        get: {
+            tags: ['Admin'], summary: 'Chi tiết luật chơi', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        },
+        patch: {
+            tags: ['Admin'], summary: 'Cập nhật luật chơi', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        },
+        delete: {
+            tags: ['Admin'], summary: 'Xóa luật chơi', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        }
+    },
+    [`${API_PREFIX}/admin/heritage-sites`]: {
+        get: {
+            tags: ['Admin'], summary: 'Danh sách nội dung địa danh', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        },
+        post: {
+            tags: ['Admin'], summary: 'Tạo nội dung địa danh', security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object',
+                required: ['name', 'shortDescription', 'content', 'targetImageUrl']
+            }),
+            responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/heritage-sites/{id}`]: {
+        get: {
+            tags: ['Admin'], summary: 'Chi tiết nội dung địa danh', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        },
+        patch: {
+            tags: ['Admin'], summary: 'Cập nhật nội dung địa danh', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        },
+        delete: {
+            tags: ['Admin'], summary: 'Xóa địa danh chưa gắn model AR', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Địa danh đang được sử dụng.') }
+        }
+    },
+    [`${API_PREFIX}/admin/models`]: {
+        get: {
+            tags: ['Admin'], summary: 'Danh sách model AR', security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        },
+        post: {
+            tags: ['Admin'], summary: 'Tạo cấu hình model AR', security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object', required: ['heritageSiteId', 'model3dUrl']
+            }),
+            responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/models/{id}`]: {
+        get: {
+            tags: ['Admin'], summary: 'Chi tiết model AR', security: bearerSecurity,
+            parameters: [objectIdParameter('id')], responses: { 200: shopObjectResponse }
+        },
+        patch: {
+            tags: ['Admin'], summary: 'Cập nhật cấu hình model AR', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        },
+        delete: {
+            tags: ['Admin'], summary: 'Đánh dấu model AR đã xóa', security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        }
+    }
+});
 
 const swaggerSpec = swaggerJSDoc({
     definition: swaggerDefinition,

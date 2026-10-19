@@ -11,6 +11,18 @@ test('Swagger spec exposes the current API routes and Bearer authentication', ()
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/verify-email`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/resend-verification-otp`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/me`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/shop/boxes`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/cart/items`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/orders`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/payments/payos/webhook`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/products`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/uploads/product-images/presign`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/orders/{id}/status`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/dashboard`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/users/{id}/status`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/posts/{id}`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/heritage-sites/{id}`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/models/{id}`]);
     assert.equal(swaggerSpec.components.securitySchemes.bearerAuth.scheme, 'bearer');
 });
 
@@ -22,7 +34,9 @@ test('Swagger response schemas enforce the backend-to-frontend contract', () => 
         'UserResponse',
         'StatusResponse',
         'EmptySuccessResponse',
-        'ErrorResponse'
+        'ErrorResponse',
+        'ShopObjectResponse',
+        'ShopListResponse'
     ];
 
     for (const schemaName of schemaNames) {

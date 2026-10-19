@@ -1,0 +1,114 @@
+.logout-modal__overlay {
+  align-items: center;
+  backdrop-filter: blur(4px);
+  background: rgba(33, 24, 50, 0.48);
+  display: grid;
+  inset: 0;
+  justify-items: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 11000;
+}
+
+.logout-modal__card {
+  background: #fffefa;
+  border-color: transparent;
+  max-width: 420px;
+  padding: 32px 28px 28px;
+  position: relative;
+  text-align: center;
+  width: 100%;
+}
+
+.logout-modal__card:hover {
+  border-color: #ce337f;
+  box-shadow: 7px 7px 0 rgba(114, 50, 126, 0.12);
+  transform: none;
+}
+
+.logout-modal__card .ui-card__body {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.logout-modal__close {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: #6b6375;
+  cursor: pointer;
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 36px;
+}
+
+.logout-modal__close:hover {
+  background: #f8e8f0;
+  color: #b12069;
+}
+
+.logout-modal__close:focus-visible {
+  outline: 3px solid #eea53b;
+  outline-offset: 2px;
+}
+
+.logout-modal__logo {
+  display: block;
+  height: auto;
+  margin: 0 auto 16px;
+  object-fit: contain;
+  width: 112px;
+}
+
+.logout-modal__title {
+  color: #211832;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+.logout-modal__description {
+  color: #6b6375;
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 auto 24px;
+  max-width: 320px;
+}
+
+.logout-modal__actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.logout-modal__actions .ui-button {
+  flex: 1 1 0;
+  min-width: 0;
+  text-decoration: none;
+}
+
+@media (max-width: 480px) {
+  .logout-modal__overlay {
+    padding: 16px;
+  }
+
+  .logout-modal__card {
+    padding: 28px 20px 22px;
+  }
+
+  .logout-modal__actions {
+    flex-direction: column-reverse;
+  }
+
+  .logout-modal__actions .ui-button {
+    width: 100%;
+  }
+}

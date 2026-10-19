@@ -1,0 +1,13 @@
+.ui-modal { align-items: center; background: rgba(33, 24, 50, .62); display: flex; inset: 0; justify-content: center; padding: 20px; position: fixed; z-index: 1000; }
+.ui-modal__dialog { animation: ui-modal-in 180ms ease-out; background: #fffdf8; border: 3px solid #72327e; border-radius: 14px; box-shadow: 10px 10px 0 #b12069; color: #211832; max-height: min(720px, calc(100vh - 40px)); overflow: auto; width: min(100%, 520px); }
+.ui-modal__dialog--sm { max-width: 380px; }
+.ui-modal__dialog--lg { max-width: 720px; }
+.ui-modal__header { align-items: flex-start; background: #ce337f; color: #fffdf8; display: flex; gap: 16px; justify-content: space-between; padding: 22px 24px; }
+.ui-modal__header h2 { color: #fffdf8 !important; font-family: 'Baloo 2', sans-serif; font-size: 28px; line-height: 1.1; margin: 0; }
+.ui-modal__header p { color: #fff4f8; font-size: 14px; margin: 7px 0 0; }
+.ui-modal__close { background: transparent; border: 0; color: inherit; cursor: pointer; padding: 4px; }
+.ui-modal__close:focus-visible { outline: 3px solid #eea53b; outline-offset: 2px; }
+.ui-modal__body { font-size: 15px; line-height: 1.6; padding: 24px; }
+.ui-modal__footer { border-top: 1px solid #eadfe6; display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px 20px; }
+@keyframes ui-modal-in { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .ui-modal__dialog { animation: none; } }

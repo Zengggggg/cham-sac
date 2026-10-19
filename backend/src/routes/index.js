@@ -6,6 +6,11 @@
 import express from 'express';
 import { API_STATUS_MESSAGE } from '../config/api.js';
 import authRouter from './authRoutes.js';
+import adminRouter from './adminRoutes.js';
+import cartRouter from './cartRoutes.js';
+import orderRouter from './orderRoutes.js';
+import paymentRouter from './paymentRoutes.js';
+import shopRouter from './shopRoutes.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 
 const router = express.Router();
@@ -20,5 +25,10 @@ router.get('/status', (req, res) => {
 });
 
 router.use('/auth', authRouter);
+router.use('/shop', shopRouter);
+router.use('/cart', cartRouter);
+router.use('/orders', orderRouter);
+router.use('/payments', paymentRouter);
+router.use('/admin', adminRouter);
 
 export default router;

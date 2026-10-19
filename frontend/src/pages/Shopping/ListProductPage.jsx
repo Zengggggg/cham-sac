@@ -1,69 +1,38 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowUpRight,
+  AlertCircle,
+  LoaderCircle,
   Search,
   ShoppingBag,
   Sparkles,
   Star,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import Input from "../../components/ui/Input.jsx";
 import starElement from "../../assets/elements/IMG_4811.PNG";
 import diceElement from "../../assets/elements/IMG_4818.PNG";
 import diceLightElement from "../../assets/elements/IMG_4819.PNG";
+import { getAccessToken } from "../../services/apiClient.js";
+import { addCartItem, listProducts } from "../../services/shopService.js";
 import "./ListProductPage.scss";
 
 const categories = ["Tất cả", "Boardgame", "Thẻ trải nghiệm", "Quà lưu niệm"];
 
-const products = [
-  {
-    id: "boardgame-cham-sac-viet",
-    name: "Boardgame Chạm Sắc Việt",
-    category: "Boardgame",
-    price: 299000,
-    description:
-      "Cùng bạn bè mở những câu chuyện văn hóa Việt qua từng lượt chơi.",
-    image: diceElement,
-    tone: "purple",
-    tag: "Bán chạy",
-  },
-  {
-    id: "bo-the-di-san",
-    name: "Bộ thẻ bài mini Di sản Việt",
-    category: "Thẻ trải nghiệm",
-    price: 149000,
-    description:
-      "Bộ thẻ nhỏ gọn để khám phá địa danh, chất liệu và chuyện xưa.",
-    image: diceLightElement,
-    tone: "teal",
-    tag: "Mới ra mắt",
-  },
-  {
-    id: "so-tay-hanh-trinh",
-    name: "Sổ tay hành trình di sản Việt",
-    category: "Quà lưu niệm",
-    price: 89000,
-    description:
-      "Ghi lại những điểm chạm đáng nhớ trong hành trình khám phá của bạn.",
-    image: starElement,
-    tone: "yellow",
-    tag: "Gợi ý cho bạn",
-  },
-  {
-    id: "combo-kham-pha",
-    name: "Combo Khám phá Việt Nam",
-    category: "Boardgame",
-    price: 399000,
-    description:
-      "Một bộ sưu tập trọn vẹn cho buổi chơi cùng gia đình và bạn bè.",
-    image: diceElement,
-    tone: "red",
-    tag: "Tiết kiệm hơn",
-  },
-];
+const productFallbackImages = [diceElement, diceLightElement, starElement];
+const productTones = ["purple", "teal", "yellow", "red"];
+
+const presentProduct = (product, index) => ({
+  ...product,
+  id: product.id || product._id,
+  category: "Boardgame",
+  image: product.images?.[0] || productFallbackImages[index % productFallbackImages.length],
+  tone: productTones[index % productTones.length],
+  tag: product.canPurchase ? "Đang mở bán" : "Tạm hết hàng",
+});
 
 const formatMoney = (value) =>
   `${new Intl.NumberFormat("vi-VN").format(value)}đ`;
@@ -124,7 +93,7 @@ function ProductCard({ product, onAdd }) {
         <strong className="product-card__price">
           {formatMoney(product.price)}
         </strong>
-        <p className="product-card__description">Còn lại: 25 sản phẩm</p>
+        <p className="product-card__description">Còn lại: {product.stock} sản phẩm</p>
         <div className="product-card__actions">
           <Button
             as={Link}
@@ -137,6 +106,7 @@ function ProductCard({ product, onAdd }) {
           <Button
             variant="primary"
             size="sm"
+            disabled={!product.canPurchase}
             onClick={() => onAdd(product)}
           >
             Thêm vào giỏ
@@ -148,8 +118,30 @@ function ProductCard({ product, onAdd }) {
 }
 
 function ListProductPage() {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState("");
+
+  const loadProducts = async () => {
+    setIsLoading(true);
+    setLoadError("");
+    try {
+      const response = await listProducts();
+      setProducts((response.data || []).map(presentProduct));
+    } catch (error) {
+      setLoadError(error.message || "Không thể tải danh sách sản phẩm.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => { void loadProducts(); }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   const visibleProducts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -163,34 +155,20 @@ function ListProductPage() {
           .includes(normalizedSearch);
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, searchTerm]);
+  }, [activeCategory, products, searchTerm]);
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = async (product) => {
+    if (!getAccessToken()) {
+      toast("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
+      navigate("/login", { state: { from: "/products" } });
+      return;
+    }
     try {
-      const storedCart = JSON.parse(localStorage.getItem("cart") || "[]");
-      const existingItem = storedCart.find(
-        (item) => item.productId === product.id,
-      );
-      const cart = existingItem
-        ? storedCart.map((item) =>
-            item.productId === product.id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item,
-          )
-        : [
-            ...storedCart,
-            {
-              productId: product.id,
-              productName: product.name,
-              unitPrice: product.price,
-              quantity: 1,
-            },
-          ];
-      localStorage.setItem("cart", JSON.stringify(cart));
+      await addCartItem(product.id, 1);
       window.dispatchEvent(new Event("cart:updated"));
       toast.success(`Đã thêm “${product.name}” vào giỏ hàng`);
-    } catch {
-      toast.error("Không thể cập nhật giỏ hàng lúc này.");
+    } catch (error) {
+      toast.error(error.message || "Không thể cập nhật giỏ hàng lúc này.");
     }
   };
 
@@ -322,7 +300,11 @@ function ListProductPage() {
             ))}
           </div>
         </div>
-        {visibleProducts.length ? (
+        {isLoading ? (
+          <div className="product-list-empty" role="status"><LoaderCircle size={30} aria-hidden="true" /><h3>Đang tải sản phẩm</h3></div>
+        ) : loadError ? (
+          <div className="product-list-empty" role="alert"><AlertCircle size={30} aria-hidden="true" /><h3>Không thể tải sản phẩm</h3><p>{loadError}</p><Button variant="secondary" onClick={loadProducts}>Thử lại</Button></div>
+        ) : visibleProducts.length ? (
           <div className="product-list-grid">
             {visibleProducts.map((product) => (
               <ProductCard

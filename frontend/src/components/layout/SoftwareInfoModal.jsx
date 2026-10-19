@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, Mail, Phone, UserRound } from "lucide-react";
+import { BriefcaseBusiness, Phone, UserRound } from "lucide-react";
 import Modal from "../ui/Modal.jsx";
 import "./SoftwareInfoModal.scss";
 

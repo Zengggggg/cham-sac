@@ -1,14 +1,12 @@
 import { useState } from "react";
 import {
   ArrowUpRight,
-  Dices,
   Ghost,
   Mail,
   MapPin,
   Phone,
   Send,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";

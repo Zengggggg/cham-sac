@@ -158,7 +158,8 @@ const swaggerDefinition = {
                         properties: {
                             email: { type: 'string', format: 'email', example: 'an@example.com' },
                             verificationRequired: { type: 'boolean', example: true },
-                            expiresInSeconds: { type: 'integer', example: 600 }
+                            expiresInSeconds: { type: 'integer', example: 600 },
+                            resendAvailableInSeconds: { type: 'integer', example: 60 }
                         }
                     }
                 }
@@ -368,7 +369,7 @@ const swaggerDefinition = {
                     200: authResponse,
                     401: errorResponse('Google ID token không hợp lệ.'),
                     403: errorResponse('Tài khoản đã bị khóa.'),
-                    409: errorResponse('Email đã thuộc một tài khoản khác.'),
+                    409: errorResponse('Email không thể tự động liên kết với Google.'),
                     422: errorResponse('Thiếu Google ID token.'),
                     429: errorResponse('Đã vượt quá giới hạn request xác thực.')
                 }
@@ -556,13 +557,13 @@ const objectIdParameter = (name) => ({
 Object.assign(swaggerDefinition.paths, {
     [`${API_PREFIX}/shop/boxes`]: {
         get: {
-            tags: ['Shop'], summary: 'Danh sách sản phẩm đang bán', security: bearerSecurity,
-            responses: { 200: shopListResponse, 401: errorResponse('Chưa đăng nhập.') }
+            tags: ['Shop'], summary: 'Danh sách sản phẩm đang bán',
+            responses: { 200: shopListResponse }
         }
     },
     [`${API_PREFIX}/shop/boxes/{id}`]: {
         get: {
-            tags: ['Shop'], summary: 'Chi tiết sản phẩm', security: bearerSecurity,
+            tags: ['Shop'], summary: 'Chi tiết sản phẩm',
             parameters: [objectIdParameter('id')],
             responses: { 200: shopObjectResponse, 404: errorResponse('Sản phẩm không tồn tại.') }
         }
@@ -648,6 +649,30 @@ Object.assign(swaggerDefinition.paths, {
             tags: ['Admin Shop'], summary: 'Tạo sản phẩm', security: bearerSecurity,
             requestBody: jsonRequest({ type: 'object', required: ['name', 'price', 'stock'] }),
             responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/uploads/product-images/presign`]: {
+        post: {
+            tags: ['Admin Shop'],
+            summary: 'Tạo presigned URL để admin tải ảnh sản phẩm thẳng lên R2',
+            security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object',
+                required: ['fileName', 'contentType', 'size'],
+                additionalProperties: false,
+                properties: {
+                    fileName: { type: 'string', maxLength: 255 },
+                    contentType: {
+                        type: 'string',
+                        enum: ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
+                    },
+                    size: { type: 'integer', minimum: 1, maximum: 5242880 }
+                }
+            }),
+            responses: {
+                201: shopObjectResponse,
+                422: errorResponse('Ảnh không đúng định dạng hoặc vượt quá 5 MB.')
+            }
         }
     },
     [`${API_PREFIX}/admin/products/{id}`]: {

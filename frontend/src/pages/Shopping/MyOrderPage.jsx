@@ -11,6 +11,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
+import { listMyOrders } from "../../services/shopService.js";
 import "./MyOrderPage.scss";
 
 const ORDER_STATUS = {
@@ -36,18 +37,6 @@ const formatDate = (value) => {
   if (Number.isNaN(date.getTime())) return "Ngày đặt chưa cập nhật";
   return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium" }).format(date);
 };
-
-function readOrders() {
-  try {
-    const saved = JSON.parse(
-      localStorage.getItem("orders") || localStorage.getItem("userOrders") || "[]",
-    );
-    if (Array.isArray(saved)) return saved;
-    return Array.isArray(saved?.data) ? saved.data : [];
-  } catch {
-    return [];
-  }
-}
 
 function OrderCard({ order }) {
   const status = ORDER_STATUS[order.orderStatus] || {
@@ -117,17 +106,24 @@ function OrderCard({ order }) {
 
 function MyOrderPage() {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState(readOrders);
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-    const syncOrders = () => setOrders(readOrders());
-    window.addEventListener("storage", syncOrders);
-    window.addEventListener("orders:updated", syncOrders);
-    return () => {
-      window.removeEventListener("storage", syncOrders);
-      window.removeEventListener("orders:updated", syncOrders);
-    };
+    let active = true;
+    listMyOrders()
+      .then((response) => {
+        if (active) setOrders(response.data || []);
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message || "Không thể tải đơn hàng.");
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
   const visibleOrders = useMemo(
@@ -186,7 +182,11 @@ function MyOrderPage() {
           </div>
         </section>
 
-        {visibleOrders.length === 0 ? (
+        {isLoading ? (
+          <Card className="my-order-empty" role="status"><h2>Đang tải đơn hàng</h2></Card>
+        ) : error ? (
+          <Card className="my-order-empty" role="alert"><CircleAlert size={26} aria-hidden="true" /><h2>Không thể tải đơn hàng</h2><p>{error}</p><Button variant="primary" onClick={() => navigate("/login")}>Đăng nhập lại</Button></Card>
+        ) : visibleOrders.length === 0 ? (
           <Card className="my-order-empty">
             <span className="my-order-empty__icon"><CircleAlert size={26} aria-hidden="true" /></span>
             <h2>{emptyTitle}</h2>

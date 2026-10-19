@@ -146,7 +146,7 @@ Payment: pending -> success
 | payOS provider/webhook | Đã có payment link, webhook xác minh chữ ký và xử lý idempotent |
 | Nội dung di sản | Đã có backend admin CRUD; public API chưa triển khai |
 | Image tracking/WebAR | Đã có backend admin cấu hình model AR; trải nghiệm WebAR công khai chưa triển khai |
-| R2/CDN integration | Chưa triển khai |
+| R2/CDN integration | Đã có upload ảnh sản phẩm trực tiếp từ frontend bằng presigned URL do backend cấp; cần cấu hình bucket, credential, public domain và CORS theo môi trường |
 | Admin | Đã có backend dashboard, quản lý user, sản phẩm, tồn kho, đơn, luật chơi, địa danh và cấu hình model AR; frontend chưa triển khai |
 | Automated tests | Đã có test cho auth, response contract, MongoDB, shop rules, order state và payOS |
 
@@ -160,7 +160,7 @@ Prefix API chính thức của dự án là `/chamsacviet`; không duy trì alia
 | Backend | Node.js, Express 4, Mongoose 8, MongoDB, ES modules, JWT, bcrypt, Google Auth Library, Resend |
 | Package manager | npm với lockfile riêng cho `frontend` và `backend` |
 
-Frontend hiện chưa cài router, AR engine, state manager, data-fetching library hay thư viện component. Backend dùng validation thủ công và Node.js test runner; auth, shop và các API admin cho nội dung/AR đã được triển khai, còn public API nội dung và trải nghiệm WebAR chưa triển khai.
+Frontend dùng React Router, Material UI, Lucide, React Hot Toast và API client dựa trên `fetch`; chưa cài AR engine, state manager hay thư viện data-fetching. Backend dùng validation thủ công và Node.js test runner; auth, shop và các API admin cho nội dung/AR đã được triển khai, còn public API nội dung và trải nghiệm WebAR chưa triển khai.
 
 ## Yêu cầu môi trường local
 
@@ -203,6 +203,11 @@ PAYOS_RETURN_URL=http://localhost:5173/payment/success
 PAYOS_CANCEL_URL=http://localhost:5173/payment/cancel
 PORT=8080
 FRONTEND_URL=http://localhost:5173
+R2_ACCOUNT_ID=your_cloudflare_account_id
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+R2_BUCKET_NAME=your_r2_bucket_name
+R2_PUBLIC_BASE_URL=https://assets.example.com
 ```
 
 Khởi động development server:
@@ -244,7 +249,16 @@ npm ci
 npm run dev
 ```
 
-Mở địa chỉ do Vite in trên terminal, mặc định là `http://localhost:5173`.
+Mở địa chỉ do Vite in trên terminal, mặc định là `http://localhost:5173`. Vite proxy các request `/chamsacviet` sang backend local tại `http://localhost:8080`.
+
+Để Google login hoạt động local, OAuth 2.0 Web Client trong Google Cloud Console phải có Authorized JavaScript origin `http://localhost:5173` (chỉ origin, không thêm `/login` và không có dấu `/` cuối). Vite được cố định ở cổng `5173`; nếu cổng này đang bận, hãy giải phóng cổng thay vì đổi sang cổng khác chưa được đăng ký với Google.
+
+Khi frontend và backend được deploy ở hai domain khác nhau, tạo `frontend/.env`:
+
+```dotenv
+VITE_API_URL=https://api.example.com
+VITE_GOOGLE_CLIENT_ID=your_web_client_id.apps.googleusercontent.com
+```
 
 ## Biến môi trường hiện tại
 
@@ -273,12 +287,20 @@ Mở địa chỉ do Vite in trên terminal, mặc định là `http://localhost
 | `SHOP_SHIPPING_FEE_VND` | Không | `30000` | Phí giao hàng cố định của shop, đơn vị VND |
 | `ORDER_PAYMENT_EXPIRES_MINUTES` | Không | `15` | Thời hạn thanh toán trước khi đơn tự hủy |
 | `ORDER_EXPIRY_INTERVAL_SECONDS` | Không | `60` | Chu kỳ worker quét đơn hết hạn |
+| `R2_ACCOUNT_ID` | Có khi bật upload R2 | Không có | Cloudflare Account ID dùng để tạo S3 API endpoint |
+| `R2_ACCESS_KEY_ID` | Có khi bật upload R2 | Không có | Access Key ID có quyền ghi vào bucket ảnh |
+| `R2_SECRET_ACCESS_KEY` | Có khi bật upload R2 | Không có | Secret Access Key của R2, chỉ lưu ở backend |
+| `R2_BUCKET_NAME` | Có khi bật upload R2 | Không có | Bucket lưu ảnh sản phẩm |
+| `R2_PUBLIC_BASE_URL` | Có khi bật upload R2 | Không có | HTTPS public/custom domain dùng để hiển thị object đã upload |
 | `PORT` | Không | `8080` | Cổng HTTP của backend |
 | `FRONTEND_URL` | Không | `http://localhost:5173` | Origin được phép truy cập API qua CORS |
+| `VITE_GOOGLE_CLIENT_ID` | Có khi bật Google login | Không có | OAuth 2.0 Web Client ID công khai để frontend khởi tạo Google Identity Services; phải khớp `GOOGLE_CLIENT_ID` của backend |
 
-Frontend chưa đọc biến môi trường. Khi bổ sung API client, dùng biến có tiền tố `VITE_`, ví dụ `VITE_API_URL`.
+Frontend dùng `VITE_API_URL` làm origin của backend; để trống khi chạy local bằng Vite proxy. API client tự gắn access token, làm mới phiên bằng refresh token và dùng prefix `/chamsacviet`.
 
 Thông tin payOS và R2 phải được lưu trong biến môi trường; không commit credential vào repository.
+
+Admin upload ảnh sản phẩm theo luồng presigned URL: frontend gọi `POST /chamsacviet/admin/uploads/product-images/presign`, backend kiểm tra role và ký URL `PUT` sống 5 phút, sau đó frontend tải file thẳng lên R2 và gửi `publicUrl` khi tạo sản phẩm. Cấu hình CORS bucket theo `backend/r2-cors.example.json`; thay `AllowedOrigins` bằng đúng origin frontend local/production.
 
 ## Scripts
 
@@ -295,6 +317,7 @@ Chạy trong `backend/`:
 | `npm test` | Chạy test backend bằng Node.js test runner |
 | `npm run db:init` | Tạo/cập nhật 7 collections, JSON Schema validators và indexes |
 | `npm run db:migrate:shop` | Backfill dữ liệu cũ và áp dụng schema/index của backend shop |
+| `npm run db:create-dev-admin` | Tạo/cập nhật riêng tài khoản admin development từ `DEV_ADMIN_*` |
 | `npm run db:seed` | Seed dữ liệu tối thiểu cho development; cần biến `DEV_ADMIN_*` |
 
 Chi tiết request/response của auth API nằm trong `backend/README.md`.
@@ -324,7 +347,7 @@ AR_WEB/
 │   │   ├── controllers/       # HTTP request/response handling
 │   │   ├── middlewares/       # Express middleware
 │   │   ├── models/            # Mongoose schemas/models
-│   │   ├── providers/         # Google auth, email Resend, payOS; R2 trong tương lai
+│   │   ├── providers/         # Google auth, email Resend, payOS và Cloudflare R2
 │   │   ├── routes/            # API routes
 │   │   ├── services/          # Business logic
 │   │   ├── sockets/           # Realtime nếu có yêu cầu
@@ -370,8 +393,7 @@ Không tự quyết các điểm sau nếu implementation phụ thuộc trực t
 3. Quy tắc tính phí vận chuyển.
 4. Danh sách chính thức của 9 địa danh.
 5. Giới hạn dung lượng, polygon và texture cho model `.glb`.
-6. Admin upload qua backend hay presigned URL của R2.
-7. Trừ tồn kho khi tạo đơn hay khi thanh toán thành công.
+6. Trừ tồn kho khi tạo đơn hay khi thanh toán thành công.
 
 ### Quyết định database đã chốt
 

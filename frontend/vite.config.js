@@ -8,4 +8,11 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  server: {
+    port: 5173,
+    strictPort: true,
+    proxy: {
+      '/chamsacviet': 'http://localhost:8080',
+    },
+  },
 })

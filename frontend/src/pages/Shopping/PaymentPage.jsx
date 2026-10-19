@@ -9,11 +9,11 @@ import {
   RotateCcw,
   ShoppingBag,
   Timer,
-  XCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
+import { createPayment, getPaymentStatus } from "../../services/shopService.js";
 import "./PaymentPage.scss";
 
 const readStorage = (key, fallback) => {
@@ -25,16 +25,9 @@ const readStorage = (key, fallback) => {
 };
 
 const getPaymentContext = () => {
-  const checkout = readStorage("checkout-info", null);
-  const cart = readStorage("cart", []);
-  const selectedIds = readStorage("selected-cart-items", []);
-  const items = Array.isArray(cart)
-    ? Array.isArray(selectedIds) && selectedIds.length > 0
-      ? cart.filter((item) => selectedIds.includes(item.productId))
-      : cart
-    : [];
-
-  return { checkout, items };
+  const order = readStorage("current-order", null);
+  const payment = readStorage("current-payment", null);
+  return { checkout: order ? { paymentMethod: "bank" } : null, items: order?.items || [], order, payment };
 };
 
 const formatMoney = (value) =>
@@ -59,7 +52,7 @@ const formatCountdown = (milliseconds) => {
   return `${String(minutesPart).padStart(2, "0")}:${String(secondsPart).padStart(2, "0")}`;
 };
 
-function PaymentVisual() {
+function PaymentVisual({ payment }) {
   return (
     <section
       className="payment-visual payment-visual--bank"
@@ -68,14 +61,13 @@ function PaymentVisual() {
       <div className="payment-visual__placeholder">
         <QrCode size={76} strokeWidth={1.3} aria-hidden="true" />
         <strong>Mã QR thanh toán</strong>
-        <span>Mã QR sẽ hiển thị khi cổng thanh toán được kết nối.</span>
+        <span>{payment?.qrCode ? "Mã VietQR đã được tạo. Mở cổng payOS để quét và thanh toán." : "Mở cổng payOS để hoàn tất thanh toán."}</span>
       </div>
     </section>
   );
 }
 
-function PaymentDetails({ total, remainingMs, onResetTimer, onTestResult }) {
-  const [showTestOptions, setShowTestOptions] = useState(false);
+function PaymentDetails({ total, remainingMs, onResetTimer, payment }) {
   const isExpired = remainingMs <= 0;
 
   return (
@@ -107,19 +99,19 @@ function PaymentDetails({ total, remainingMs, onResetTimer, onTestResult }) {
         <h2>Thông tin chuyển khoản</h2>
         <div className="payment-information__row payment-information__row--placeholder">
           <span>Ngân hàng</span>
-          <strong>Đang cập nhật</strong>
+          <strong>payOS</strong>
         </div>
         <div className="payment-information__row payment-information__row--placeholder">
-          <span>Số tài khoản</span>
-          <strong>Chưa cấu hình</strong>
+          <span>Mã giao dịch</span>
+          <strong>{payment?.providerOrderCode || "—"}</strong>
         </div>
         <div className="payment-information__row payment-information__row--placeholder">
           <span>Tên tài khoản</span>
-          <strong>Chưa cấu hình</strong>
+          <strong>Chạm Sắc Việt</strong>
         </div>
         <div className="payment-information__row payment-information__row--placeholder">
           <span>Nội dung chuyển khoản</span>
-          <strong>Sẽ được cung cấp sau</strong>
+          <strong>{payment?.transferContent || "—"}</strong>
         </div>
         <div className="payment-information__row payment-information__row--total">
           <span>Tổng cộng</span>
@@ -130,13 +122,11 @@ function PaymentDetails({ total, remainingMs, onResetTimer, onTestResult }) {
       <div className="payment-actions">
         <Button
           variant="primary"
-          disabled={isExpired}
+          disabled={isExpired || !payment?.checkoutUrl}
           icon={<CreditCard size={18} aria-hidden="true" />}
-          onClick={() => setShowTestOptions((isOpen) => !isOpen)}
+          onClick={() => window.location.assign(payment.checkoutUrl)}
         >
-          {showTestOptions
-            ? "Đóng thanh toán thử nghiệm"
-            : "Thanh toán thử nghiệm"}
+          Mở cổng thanh toán payOS
         </Button>
       </div>
 
@@ -144,44 +134,18 @@ function PaymentDetails({ total, remainingMs, onResetTimer, onTestResult }) {
         <div className="payment-expiry-notice" role="status">
           <AlertCircle size={19} aria-hidden="true" />
           <span>
-            Phiên thanh toán đã hết hạn. Bắt đầu lại thời gian để tiếp tục kiểm
-            thử.
+            Đơn hàng đã hết thời hạn thanh toán. Vui lòng xem trạng thái đơn hàng của bạn.
           </span>
           <Button
             variant="secondary"
             icon={<RotateCcw size={16} aria-hidden="true" />}
             onClick={onResetTimer}
           >
-            Bắt đầu lại 15 phút
+            Xem đơn hàng
           </Button>
         </div>
       )}
 
-      {showTestOptions && !isExpired && (
-        <div
-          className="payment-test-panel"
-          aria-label="Tùy chọn kiểm thử thanh toán"
-        >
-          <div className="payment-test-panel__heading">
-            <strong>Chọn kết quả giao dịch thử nghiệm</strong>
-            <span>Chỉ mô phỏng trên giao diện, không thu tiền thật.</span>
-          </div>
-          <Button
-            variant="primary"
-            icon={<CheckCircle2 size={18} aria-hidden="true" />}
-            onClick={() => onTestResult("success")}
-          >
-            Thẻ thử nghiệm · Thành công
-          </Button>
-          <Button
-            variant="secondary"
-            icon={<XCircle size={18} aria-hidden="true" />}
-            onClick={() => onTestResult("failure")}
-          >
-            Thẻ thử nghiệm · Thất bại
-          </Button>
-        </div>
-      )}
     </section>
   );
 }
@@ -206,14 +170,14 @@ function PaymentResultCard({
         <ResultIcon size={38} strokeWidth={1.8} aria-hidden="true" />
       </span>
       <p className="payment-result-card__eyebrow">
-        {isCashOnDelivery ? "Xác nhận đơn hàng" : "Kết quả kiểm thử"}
+        Kết quả thanh toán
       </p>
       <h2>
         {isCashOnDelivery
           ? "Đặt hàng thành công"
           : isSuccess
-            ? "Thanh toán thử nghiệm thành công"
-            : "Thanh toán thử nghiệm thất bại"}
+            ? "Thanh toán thành công"
+            : "Thanh toán chưa hoàn tất"}
       </h2>
       {isCashOnDelivery && (
         <p className="payment-result-card__followup">
@@ -222,16 +186,16 @@ function PaymentResultCard({
       )}
       <div className="payment-result-card__amount">
         <span>
-          {isCashOnDelivery ? "Tổng giá trị đơn hàng" : "Số tiền kiểm thử"}
+          Tổng giá trị đơn hàng
         </span>
         <strong>{formatMoney(total)}</strong>
       </div>
       <Button
         variant="primary"
-        onClick={isCashOnDelivery ? onContinueShopping : onBackToPayment}
+        onClick={isSuccess ? onContinueShopping : onBackToPayment}
       >
-        {isCashOnDelivery
-          ? "Tiếp tục mua sắm"
+        {isSuccess
+          ? "Xem đơn hàng của tôi"
           : "Quay lại thông tin chuyển khoản"}
       </Button>
     </div>
@@ -240,15 +204,15 @@ function PaymentResultCard({
 
 function PaymentPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [paymentContext] = useState(getPaymentContext);
-  const { checkout, items } = paymentContext;
-  const isCashOnDelivery = checkout?.paymentMethod === "cod";
-  const [paymentResult, setPaymentResult] = useState(() =>
-    isCashOnDelivery ? "cod" : null,
-  );
-  const [expiresAt, setExpiresAt] = useState(() =>
+  const { checkout, items, order, payment: storedPayment } = paymentContext;
+  const [payment, setPayment] = useState(storedPayment);
+  const isCashOnDelivery = false;
+  const [paymentResult, setPaymentResult] = useState(() => location.pathname.endsWith("/cancel") ? "failure" : null);
+  const [expiresAt] = useState(() =>
     checkout && items.length > 0 && !isCashOnDelivery
-      ? getPaymentExpiry()
+      ? Number.isNaN(Date.parse(order?.expiresAt)) ? getPaymentExpiry() : Date.parse(order.expiresAt)
       : Date.now() + PAYMENT_DURATION_MS,
   );
   const [remainingMs, setRemainingMs] = useState(() =>
@@ -263,6 +227,36 @@ function PaymentPage() {
     return () => window.clearInterval(intervalId);
   }, [expiresAt]);
 
+  useEffect(() => {
+    if (!order || payment) return undefined;
+    let active = true;
+    createPayment(order.id || order._id)
+      .then((response) => {
+        if (!active) return;
+        setPayment(response.data.payment);
+        localStorage.setItem("current-payment", JSON.stringify(response.data.payment));
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [order, payment]);
+
+  useEffect(() => {
+    if (!order || paymentResult) return undefined;
+    const orderId = order.id || order._id;
+    const checkStatus = async () => {
+      try {
+        const response = await getPaymentStatus(orderId);
+        if (response.data.paymentStatus === "paid") setPaymentResult("success");
+        else if (response.data.orderStatus === "cancelled") setPaymentResult("failure");
+      } catch {
+        // Polling errors are transient; the main payment link remains usable.
+      }
+    };
+    void checkStatus();
+    const intervalId = window.setInterval(checkStatus, 5000);
+    return () => window.clearInterval(intervalId);
+  }, [order, paymentResult]);
+
   const subtotal = useMemo(
     () =>
       items.reduce(
@@ -276,14 +270,7 @@ function PaymentPage() {
     subtotal,
     Math.max(0, Number(checkout?.discount) || 0),
   );
-  const total = Math.max(0, subtotal - discount);
-
-  const resetTimer = () => {
-    const nextExpiry = Date.now() + PAYMENT_DURATION_MS;
-    sessionStorage.setItem(PAYMENT_TIMER_KEY, String(nextExpiry));
-    setExpiresAt(nextExpiry);
-    setRemainingMs(PAYMENT_DURATION_MS);
-  };
+  const total = Number(order?.totalAmount) || Math.max(0, subtotal - discount);
 
   const editOrder = () => {
     sessionStorage.removeItem(PAYMENT_TIMER_KEY);
@@ -349,16 +336,16 @@ function PaymentPage() {
               result={paymentResult}
               total={total}
               onBackToPayment={() => setPaymentResult(null)}
-              onContinueShopping={() => navigate("/products")}
+              onContinueShopping={() => { localStorage.removeItem("current-order"); localStorage.removeItem("current-payment"); navigate("/my-orders"); }}
             />
           ) : (
             <div className="payment-card__layout">
-              <PaymentVisual />
+              <PaymentVisual payment={payment} />
               <PaymentDetails
                 total={total}
                 remainingMs={remainingMs}
-                onResetTimer={resetTimer}
-                onTestResult={setPaymentResult}
+                onResetTimer={() => navigate("/my-orders")}
+                payment={payment}
               />
             </div>
           )}

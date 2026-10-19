@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Activity,
   Archive,
@@ -13,28 +13,45 @@ import {
 import toast from 'react-hot-toast'
 import Button from '../../components/ui/Button.jsx'
 import Card from '../../components/ui/Card.jsx'
+import { getDashboard } from '../../services/adminService.js'
 import './AdminDashboard.scss'
 
-const dashboardStats = [
-  { label: 'Người dùng', value: '—', hint: 'Chờ dữ liệu đồng bộ', icon: UsersRound, tone: 'pink' },
-  { label: 'Đơn hàng', value: '—', hint: 'Chưa kết nối dữ liệu', icon: ClipboardList, tone: 'blue' },
-  { label: 'Nội dung di sản', value: '—', hint: 'Chờ dữ liệu xuất bản', icon: FileText, tone: 'gold' },
-  { label: 'Trải nghiệm AR', value: '—', hint: 'Chưa có trạng thái', icon: Sparkles, tone: 'turquoise' },
-]
-
 const workItems = [
-  { label: 'Sản phẩm và nội dung', value: 'Đang chờ kết nối API', icon: Archive },
-  { label: 'Câu hỏi cộng đồng', value: 'Đang chờ kết nối API', icon: Activity },
-  { label: 'Đơn hàng mới', value: 'Đang chờ kết nối API', icon: ClipboardList },
+  { label: 'Sản phẩm và nội dung', value: 'Đã kết nối dữ liệu quản trị', icon: Archive },
+  { label: 'Người dùng', value: 'Đã kết nối dữ liệu quản trị', icon: Activity },
+  { label: 'Đơn hàng mới', value: 'Đã kết nối dữ liệu quản trị', icon: ClipboardList },
 ]
 
 function AdminDashboard() {
   const [lastUpdated, setLastUpdated] = useState('Chưa cập nhật')
+  const [dashboard, setDashboard] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleRefresh = () => {
-    setLastUpdated(new Intl.DateTimeFormat('vi-VN', { timeStyle: 'short' }).format(new Date()))
-    toast('Dashboard sẽ đồng bộ dữ liệu khi API quản trị được kết nối.')
-  }
+  const handleRefresh = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const response = await getDashboard()
+      setDashboard(response.data)
+      setLastUpdated(new Intl.DateTimeFormat('vi-VN', { timeStyle: 'short' }).format(new Date()))
+    } catch (error) {
+      toast.error(error.message || 'Không thể tải dữ liệu tổng quan.')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => { void handleRefresh() }, 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [handleRefresh])
+
+  const summary = dashboard?.summary || {}
+  const dashboardStats = [
+    { label: 'Người dùng', value: isLoading ? '…' : summary.totalUsers ?? 0, hint: 'Tổng tài khoản', icon: UsersRound, tone: 'pink' },
+    { label: 'Đơn hàng', value: isLoading ? '…' : summary.totalOrders ?? 0, hint: `${summary.pendingOrders ?? 0} đơn đang chờ`, icon: ClipboardList, tone: 'blue' },
+    { label: 'Sản phẩm', value: isLoading ? '…' : summary.totalProducts ?? 0, hint: 'Trong hệ thống', icon: FileText, tone: 'gold' },
+    { label: 'Doanh thu', value: isLoading ? '…' : new Intl.NumberFormat('vi-VN').format(summary.totalRevenue ?? 0), hint: 'VND đã thanh toán', icon: Sparkles, tone: 'turquoise' },
+  ]
 
   return (
     <div className="admin-dashboard">
@@ -44,7 +61,7 @@ function AdminDashboard() {
           <h1>Tổng quan hệ thống</h1>
           <p className="admin-dashboard__lead">Quản lý nội dung, người dùng và hành trình khám phá di sản trong một không gian.</p>
         </div>
-        <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={handleRefresh}>
+        <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={handleRefresh} loading={isLoading}>
           Làm mới
         </Button>
       </header>

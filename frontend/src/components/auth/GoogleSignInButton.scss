@@ -1,0 +1,28 @@
+.google-sign-in {
+  min-height: 44px;
+  position: relative;
+  width: 100%;
+}
+
+.google-sign-in__button {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+  width: 100%;
+}
+
+.google-sign-in--disabled .google-sign-in__button {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.google-sign-in__status {
+  color: #6b6375;
+  font-size: 13px;
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+.google-sign-in__status--error {
+  color: #b42318;
+}

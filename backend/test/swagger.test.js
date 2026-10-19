@@ -16,6 +16,7 @@ test('Swagger spec exposes the current API routes and Bearer authentication', ()
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/orders`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/payments/payos/webhook`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/products`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/uploads/product-images/presign`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/orders/{id}/status`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/dashboard`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/users/{id}/status`]);

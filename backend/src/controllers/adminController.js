@@ -29,6 +29,20 @@ import {
     updateAdminUserStatus
 } from '../services/adminManagementService.js';
 import { sendSuccess } from '../utils/apiResponse.js';
+import { createProductImageUpload } from '../services/uploadService.js';
+
+export const presignProductImageUpload = async (req, res, next) => {
+    try {
+        const upload = await createProductImageUpload(req.body);
+        return sendSuccess(res, {
+            statusCode: 201,
+            message: 'Tạo URL tải ảnh lên thành công.',
+            data: { upload }
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
 
 export const listProducts = async (req, res, next) => {
     try {

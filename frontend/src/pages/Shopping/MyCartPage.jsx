@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,8 @@ import starElement from "../../assets/elements/IMG_4811.PNG";
 import diceElement from "../../assets/elements/IMG_4818.PNG";
 import diceLightElement from "../../assets/elements/IMG_4819.PNG";
 import redElement from "../../assets/elements/IMG_4820.PNG";
+import { getAccessToken } from "../../services/apiClient.js";
+import { getCart, removeCartItem, updateCartItem } from "../../services/shopService.js";
 import "./MyCartPage.scss";
 
 const productCatalog = {
@@ -20,38 +22,58 @@ const productCatalog = {
 const formatMoney = (value) =>
   `${new Intl.NumberFormat("vi-VN").format(Number(value) || 0)}đ`;
 
-const readCart = () => {
-  try {
-    const storedCart = JSON.parse(localStorage.getItem("cart") || "[]");
-    return Array.isArray(storedCart) ? storedCart : [];
-  } catch {
-    return [];
-  }
-};
+const normalizeCart = (cart) => (cart?.items || []).map((item) => ({
+  ...item,
+  productName: item.product?.name || "Sản phẩm",
+  unitPrice: item.product?.price || 0,
+  stock: item.product?.stock || 0,
+  image: item.product?.images?.[0] || "",
+}));
 
 function MyCartPage() {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState(readCart);
-  const [selectedIds, setSelectedIds] = useState(() =>
-    readCart().map((item) => item.productId),
-  );
+  const [cartItems, setCartItems] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const applyCart = useCallback((cart) => {
+    const items = normalizeCart(cart);
+    setCartItems(items);
+    setSelectedIds(items.filter((item) => item.selected).map((item) => item.productId));
+  }, []);
+
+  const loadCart = useCallback(async () => {
+    if (!getAccessToken()) {
+      setIsLoading(false);
+      setError("Vui lòng đăng nhập để xem giỏ hàng.");
+      return;
+    }
+    setIsLoading(true);
+    setError("");
+    try {
+      const response = await getCart();
+      applyCart(response.data.cart);
+    } catch (requestError) {
+      setError(requestError.message || "Không thể tải giỏ hàng.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [applyCart]);
 
   useEffect(() => {
-    const syncCart = () => {
-      const nextCart = readCart();
-      setCartItems(nextCart);
-      setSelectedIds((currentIds) =>
-        currentIds.filter((id) => nextCart.some((item) => item.productId === id)),
-      );
-    };
+    const syncCart = () => { void loadCart(); };
+
+    const timeoutId = window.setTimeout(syncCart, 0);
 
     window.addEventListener("cart:updated", syncCart);
     window.addEventListener("storage", syncCart);
     return () => {
       window.removeEventListener("cart:updated", syncCart);
       window.removeEventListener("storage", syncCart);
+      window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [loadCart]);
 
   const selectedItems = useMemo(
     () => cartItems.filter((item) => selectedIds.includes(item.productId)),
@@ -70,45 +92,58 @@ function MyCartPage() {
   );
   const allSelected = cartItems.length > 0 && selectedItems.length === cartItems.length;
 
-  const persistCart = (nextCart) => {
-    setCartItems(nextCart);
-    localStorage.setItem("cart", JSON.stringify(nextCart));
-    window.dispatchEvent(new Event("cart:updated"));
+  const toggleAll = async () => {
+    const selected = !allSelected;
+    try {
+      await Promise.all(cartItems.map((item) => updateCartItem(item.productId, { selected })));
+      await loadCart();
+    } catch (requestError) {
+      toast.error(requestError.message || "Không thể cập nhật giỏ hàng.");
+    }
   };
 
-  const toggleAll = () => {
-    setSelectedIds(allSelected ? [] : cartItems.map((item) => item.productId));
+  const toggleItem = async (productId) => {
+    try {
+      const response = await updateCartItem(productId, { selected: !selectedIds.includes(productId) });
+      applyCart(response.data.cart);
+    } catch (requestError) {
+      toast.error(requestError.message || "Không thể cập nhật giỏ hàng.");
+    }
   };
 
-  const toggleItem = (productId) => {
-    setSelectedIds((currentIds) =>
-      currentIds.includes(productId)
-        ? currentIds.filter((id) => id !== productId)
-        : [...currentIds, productId],
-    );
+  const updateQuantity = async (productId, nextQuantity) => {
+    const item = cartItems.find((entry) => entry.productId === productId);
+    const safeQuantity = Math.max(1, Math.min(item?.stock || 1, nextQuantity));
+    try {
+      const response = await updateCartItem(productId, { quantity: safeQuantity });
+      applyCart(response.data.cart);
+    } catch (requestError) {
+      toast.error(requestError.message || "Không thể cập nhật số lượng.");
+    }
   };
 
-  const updateQuantity = (productId, nextQuantity) => {
-    const safeQuantity = Math.max(1, Math.min(25, nextQuantity));
-    persistCart(cartItems.map((item) =>
-      item.productId === productId ? { ...item, quantity: safeQuantity } : item,
-    ));
+  const removeItem = async (productId) => {
+    try {
+      const response = await removeCartItem(productId);
+      applyCart(response.data.cart);
+      toast.success("Đã xóa sản phẩm khỏi giỏ hàng.");
+    } catch (requestError) {
+      toast.error(requestError.message || "Không thể xóa sản phẩm.");
+    }
   };
 
-  const removeItem = (productId) => {
-    persistCart(cartItems.filter((item) => item.productId !== productId));
-    setSelectedIds((currentIds) => currentIds.filter((id) => id !== productId));
-    toast.success("Đã xóa sản phẩm khỏi giỏ hàng.");
-  };
-
-  const removeAll = () => {
-    persistCart([]);
-    setSelectedIds([]);
-    toast.success("Đã làm trống giỏ hàng.");
+  const removeAll = async () => {
+    try {
+      await Promise.all(cartItems.map((item) => removeCartItem(item.productId)));
+      applyCart({ items: [] });
+      toast.success("Đã làm trống giỏ hàng.");
+    } catch (requestError) {
+      toast.error(requestError.message || "Không thể làm trống giỏ hàng.");
+      await loadCart();
+    }
   };
 
   const continueToCheckout = () => {
-    localStorage.setItem("selected-cart-items", JSON.stringify(selectedIds));
     navigate("/checkout");
   };
 
@@ -129,7 +164,11 @@ function MyCartPage() {
           )}
         </header>
 
-        {cartItems.length === 0 ? (
+        {isLoading ? (
+          <Card className="shopping-cart-empty" role="status"><h2>Đang tải giỏ hàng</h2></Card>
+        ) : error ? (
+          <Card className="shopping-cart-empty" role="alert"><h2>Không thể mở giỏ hàng</h2><p>{error}</p><Button variant="primary" onClick={() => getAccessToken() ? loadCart() : navigate("/login")}>{getAccessToken() ? "Thử lại" : "Đăng nhập"}</Button></Card>
+        ) : cartItems.length === 0 ? (
           <Card className="shopping-cart-empty">
             <span className="shopping-cart-empty__icon"><ShoppingBag size={28} aria-hidden="true" /></span>
             <h2>Giỏ hàng đang trống</h2>
@@ -160,7 +199,7 @@ function MyCartPage() {
                         <input type="checkbox" checked={selectedIds.includes(item.productId)} onChange={() => toggleItem(item.productId)} aria-label={`Chọn ${item.productName}`} />
                       </label>
                       <div className={`shopping-cart-item__visual shopping-cart-item__visual--${meta.tone}`}>
-                        <img src={meta.image} alt="" aria-hidden="true" />
+                        <img src={item.image || meta.image} alt="" aria-hidden="true" />
                       </div>
                       <div className="shopping-cart-item__content">
                         <div className="shopping-cart-item__heading">
@@ -169,12 +208,12 @@ function MyCartPage() {
                             <Trash2 size={17} aria-hidden="true" />
                           </button>
                         </div>
-                        <p className="shopping-cart-item__stock">Còn lại: 25 sản phẩm</p>
+                        <p className="shopping-cart-item__stock">Còn lại: {item.stock} sản phẩm</p>
                         <div className="shopping-cart-item__footer">
                           <div className="shopping-cart-quantity" aria-label="Số lượng sản phẩm">
                             <button type="button" aria-label="Giảm số lượng" disabled={item.quantity <= 1} onClick={() => updateQuantity(item.productId, item.quantity - 1)}><Minus size={15} aria-hidden="true" /></button>
                             <output aria-live="polite">{item.quantity}</output>
-                            <button type="button" aria-label="Tăng số lượng" disabled={item.quantity >= 25} onClick={() => updateQuantity(item.productId, item.quantity + 1)}><Plus size={15} aria-hidden="true" /></button>
+                            <button type="button" aria-label="Tăng số lượng" disabled={item.quantity >= item.stock} onClick={() => updateQuantity(item.productId, item.quantity + 1)}><Plus size={15} aria-hidden="true" /></button>
                           </div>
                           <strong>{formatMoney(subtotal)}</strong>
                         </div>

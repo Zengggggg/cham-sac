@@ -20,6 +20,7 @@ import {
     listOrders,
     listProducts,
     listUsers,
+    presignProductImageUpload,
     updateArModel,
     updateGameRule,
     updateHeritageSite,
@@ -40,10 +41,12 @@ import {
     validateUserStatusUpdate,
     validateVersionedDelete
 } from '../validations/adminValidation.js';
+import { validateProductImageUpload } from '../validations/uploadValidation.js';
 
 const adminRouter = express.Router();
 adminRouter.use(authenticate, authorizeRoles('admin'));
 adminRouter.get('/dashboard', getDashboard);
+adminRouter.post('/uploads/product-images/presign', validateProductImageUpload, presignProductImageUpload);
 adminRouter.get('/products', listProducts);
 adminRouter.post('/products', validateProductWrite, createProduct);
 adminRouter.get('/products/:id', validateObjectIdParam('id'), getProduct);

@@ -23,7 +23,7 @@ const menuItems = [
   { label: "Người dùng", href: "/admin/users", icon: UsersRound },
   { label: "Liên hệ", href: "/admin/contacts", icon: Mail },
   { label: "Đơn hàng", href: "/admin/orders", icon: Package },
-  { label: "Sản phẩm", icon: Archive },
+  { label: "Sản phẩm", href: "/admin/products", icon: Archive },
   { label: "Nội dung di sản", icon: FileText },
   { label: "Trải nghiệm AR", icon: Sparkles },
   { label: "Câu hỏi cộng đồng", icon: MessageCircleQuestion },

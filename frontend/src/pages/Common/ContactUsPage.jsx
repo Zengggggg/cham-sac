@@ -16,6 +16,8 @@ import YouTubeIcon from "@mui/icons-material/YouTube";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import Input from "../../components/ui/Input.jsx";
+import elementStar from "../../assets/elements/IMG_4811.PNG";
+import elementTealFold from "../../assets/elements/IMG_4822.PNG";
 import "./ContactUsPage.css";
 
 const initialForm = {
@@ -120,6 +122,8 @@ export default function ContactUsPage() {
 
   return (
     <main className="contact-page">
+      <img className="contact-page__element contact-page__element--teal" src={elementTealFold} alt="" aria-hidden="true" />
+      <img className="contact-page__element contact-page__element--star" src={elementStar} alt="" aria-hidden="true" />
       <div className="contact-page__shell">
         <header className="contact-page__hero">
           <p className="contact-page__eyebrow">

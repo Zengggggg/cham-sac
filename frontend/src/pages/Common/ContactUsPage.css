@@ -2,9 +2,19 @@
   background: #fff9ed;
   color: #211832;
   min-height: 100%;
+  overflow: hidden;
   padding: clamp(32px, 5vw, 68px) 20px 80px;
+  position: relative;
 }
-.contact-page__shell { margin: 0 auto; max-width: 1180px; }
+.contact-page__element {
+  pointer-events: none;
+  position: absolute;
+  user-select: none;
+  z-index: 0;
+}
+.contact-page__element--teal { bottom: -90px; left: -26px; max-width: 210px; transform: rotate(-16deg); width: 16vw; }
+.contact-page__element--star { max-width: 64px; right: 5%; top: 42px; transform: rotate(18deg); width: 6vw; }
+.contact-page__shell { margin: 0 auto; max-width: 1180px; position: relative; z-index: 1; }
 .contact-page__hero { margin-bottom: 32px; max-width: 760px; }
 .contact-page__eyebrow { align-items: center; color: #b12069; display: flex; font-size: 12px; font-weight: 800; gap: 7px; letter-spacing: .14em; margin: 0 0 12px; text-transform: uppercase; }
 .contact-page__hero h1 { color: #211832; font-family: "Baloo 2", sans-serif; font-size: clamp(42px, 6vw, 72px); letter-spacing: -.04em; line-height: .95; margin: 0; }
@@ -54,6 +64,8 @@
 }
 @media (max-width: 560px) {
   .contact-page { padding: 28px 12px 60px; }
+  .contact-page__element--teal { bottom: -48px; left: -42px; width: 120px; }
+  .contact-page__element--star { right: 2%; top: 22px; width: 42px; }
   .contact-page__hero h1 { font-size: 48px; }
   .contact-page__fields, .contact-page__info-grid { grid-template-columns: 1fr; }
   .contact-page__field--wide { grid-column: auto; }

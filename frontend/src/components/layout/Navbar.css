@@ -140,8 +140,8 @@
 }
 .fpt-navbar__icon-link .fpt-navbar__account-icon { transform: translateY(1px); }
 .fpt-navbar__icon-link:hover {
-  color: var(--color-button);
-  background: var(--color-hover-background);
+  color: #ce337f;
+  background: #f8e8f0;
 }
 
 .fpt-navbar__content {
@@ -201,7 +201,7 @@
 }
 
 .fpt-navbar__nav-link.active {
-  color: var(--color-button) !important;
+  color: #ce337f;
   font-weight: bold;
 }
 

@@ -1,5 +1,5 @@
 import "./Header.css";
-import { Mail } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import YouTubeIcon from "@mui/icons-material/YouTube";
@@ -20,13 +20,19 @@ function Header() {
     <header className="fpt-header">
       <div className="fpt-header__container">
         <div className="fpt-header__content">
-          <a
-            className="fpt-header__email"
-            href="mailto:fptuhalloween@fpt.edu.vn"
-          >
-            <Mail size={18} strokeWidth={2.4} aria-hidden="true" />
-            <span>chamsacviet@gmail.com</span>
-          </a>
+          <div className="fpt-header__contact">
+            <a
+              className="fpt-header__email"
+              href="mailto:chamsacviet@gmail.com"
+            >
+              <Mail size={18} strokeWidth={2.4} aria-hidden="true" />
+              <span>chamsacviet@gmail.com</span>
+            </a>
+            <a className="fpt-header__phone" href="tel:+84374385234">
+              <Phone size={17} strokeWidth={2.4} aria-hidden="true" />
+              <span>0374 385 234</span>
+            </a>
+          </div>
           <div className="fpt-header__actions">
             <a
               className="fpt-header__social-link"

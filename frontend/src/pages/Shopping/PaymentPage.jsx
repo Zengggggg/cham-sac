@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
   CircleAlert,
-  CreditCard,
   QrCode,
   RotateCcw,
   ShoppingBag,
   Timer,
 } from "lucide-react";
+import QRCodeGenerator from "qrcode";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
@@ -52,22 +52,75 @@ const formatCountdown = (milliseconds) => {
   return `${String(minutesPart).padStart(2, "0")}:${String(secondsPart).padStart(2, "0")}`;
 };
 
-function PaymentVisual({ payment }) {
+function PaymentVisual({ payment, isCreatingPayment }) {
+  const qrPayload = payment?.qrCode || "";
+  const [qrImageUrl, setQrImageUrl] = useState("");
+  const [qrRenderError, setQrRenderError] = useState("");
+
+  useEffect(() => {
+    if (!qrPayload) return undefined;
+
+    let active = true;
+    QRCodeGenerator.toDataURL(qrPayload, {
+      errorCorrectionLevel: "M",
+      margin: 2,
+      width: 360,
+      color: {
+        dark: "#211832",
+        light: "#fffefa",
+      },
+    })
+      .then((imageUrl) => {
+        if (active) setQrImageUrl(imageUrl);
+      })
+      .catch(() => {
+        if (active) setQrRenderError("Không thể hiển thị mã QR. Vui lòng thử tạo lại liên kết thanh toán.");
+      });
+
+    return () => { active = false; };
+  }, [qrPayload]);
+
   return (
     <section
       className="payment-visual payment-visual--bank"
       aria-label="Khu vực mã QR thanh toán"
     >
-      <div className="payment-visual__placeholder">
-        <QrCode size={76} strokeWidth={1.3} aria-hidden="true" />
-        <strong>Mã QR thanh toán</strong>
-        <span>{payment?.qrCode ? "Mã VietQR đã được tạo. Mở cổng payOS để quét và thanh toán." : "Mở cổng payOS để hoàn tất thanh toán."}</span>
+      <div className={`payment-visual__placeholder${qrImageUrl ? " payment-visual__placeholder--ready" : ""}`}>
+        {qrImageUrl ? (
+          <>
+            <img
+              className="payment-visual__qr-image"
+              src={qrImageUrl}
+              alt="Mã VietQR thanh toán đơn hàng"
+            />
+            <strong>Quét mã để thanh toán</strong>
+            <span>Mở ứng dụng ngân hàng và quét mã VietQR này.</span>
+          </>
+        ) : (
+          <>
+            <QrCode size={76} strokeWidth={1.3} aria-hidden="true" />
+            <strong>Mã QR thanh toán</strong>
+            <span>
+              {qrRenderError || (isCreatingPayment
+                ? "Đang tạo mã VietQR..."
+                : "Chưa có dữ liệu QR. Vui lòng thử tạo lại liên kết thanh toán.")}
+            </span>
+          </>
+        )}
       </div>
     </section>
   );
 }
 
-function PaymentDetails({ total, remainingMs, onResetTimer, payment }) {
+function PaymentDetails({
+  total,
+  remainingMs,
+  onResetTimer,
+  payment,
+  paymentError,
+  isCreatingPayment,
+  onRetryPayment,
+}) {
   const isExpired = remainingMs <= 0;
 
   return (
@@ -119,16 +172,27 @@ function PaymentDetails({ total, remainingMs, onResetTimer, payment }) {
         </div>
       </div>
 
-      <div className="payment-actions">
-        <Button
-          variant="primary"
-          disabled={isExpired || !payment?.checkoutUrl}
-          icon={<CreditCard size={18} aria-hidden="true" />}
-          onClick={() => window.location.assign(payment.checkoutUrl)}
-        >
-          Mở cổng thanh toán payOS
-        </Button>
+      <div className="payment-waiting-notice" role="status">
+        <QrCode size={18} aria-hidden="true" />
+        <span>
+          Sau khi chuyển khoản thành công, trang sẽ tự động cập nhật trạng thái thanh toán.
+        </span>
       </div>
+
+      {paymentError && !isExpired && (
+        <div className="payment-error-notice" role="alert">
+          <AlertCircle size={19} aria-hidden="true" />
+          <span>{paymentError}</span>
+          <Button
+            variant="secondary"
+            loading={isCreatingPayment}
+            icon={<RotateCcw size={16} aria-hidden="true" />}
+            onClick={onRetryPayment}
+          >
+            Thử tạo lại liên kết thanh toán
+          </Button>
+        </div>
+      )}
 
       {isExpired && (
         <div className="payment-expiry-notice" role="status">
@@ -208,6 +272,9 @@ function PaymentPage() {
   const [paymentContext] = useState(getPaymentContext);
   const { checkout, items, order, payment: storedPayment } = paymentContext;
   const [payment, setPayment] = useState(storedPayment);
+  const [paymentError, setPaymentError] = useState("");
+  const [isCreatingPayment, setIsCreatingPayment] = useState(() => Boolean(order && !storedPayment));
+  const automaticPaymentRequestStarted = useRef(false);
   const isCashOnDelivery = false;
   const [paymentResult, setPaymentResult] = useState(() => location.pathname.endsWith("/cancel") ? "failure" : null);
   const [expiresAt] = useState(() =>
@@ -227,16 +294,54 @@ function PaymentPage() {
     return () => window.clearInterval(intervalId);
   }, [expiresAt]);
 
+  const requestPayment = async () => {
+    if (!order || isCreatingPayment) return;
+
+    setIsCreatingPayment(true);
+    setPaymentError("");
+    try {
+      const response = await createPayment(order.id || order._id);
+      const nextPayment = response.data.payment;
+      if (!nextPayment?.checkoutUrl) {
+        throw new Error("Hệ thống chưa nhận được liên kết thanh toán từ payOS.");
+      }
+      setPayment(nextPayment);
+      localStorage.setItem("current-payment", JSON.stringify(nextPayment));
+    } catch (error) {
+      setPaymentError(
+        error.message || "Không thể tạo liên kết thanh toán. Vui lòng thử lại.",
+      );
+    } finally {
+      setIsCreatingPayment(false);
+    }
+  };
+
   useEffect(() => {
-    if (!order || payment) return undefined;
+    if (!order || payment || automaticPaymentRequestStarted.current) return undefined;
+
+    automaticPaymentRequestStarted.current = true;
     let active = true;
     createPayment(order.id || order._id)
       .then((response) => {
         if (!active) return;
-        setPayment(response.data.payment);
-        localStorage.setItem("current-payment", JSON.stringify(response.data.payment));
+        const nextPayment = response.data.payment;
+        if (!nextPayment?.checkoutUrl) {
+          throw new Error("Hệ thống chưa nhận được liên kết thanh toán từ payOS.");
+        }
+        setPayment(nextPayment);
+        localStorage.setItem("current-payment", JSON.stringify(nextPayment));
       })
-      .catch(() => undefined);
+      .catch((error) => {
+        if (active) {
+          setPaymentError(
+            error.message || "Không thể tạo liên kết thanh toán. Vui lòng thử lại.",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setIsCreatingPayment(false);
+      });
+
     return () => { active = false; };
   }, [order, payment]);
 
@@ -340,12 +445,15 @@ function PaymentPage() {
             />
           ) : (
             <div className="payment-card__layout">
-              <PaymentVisual payment={payment} />
+              <PaymentVisual payment={payment} isCreatingPayment={isCreatingPayment} />
               <PaymentDetails
                 total={total}
                 remainingMs={remainingMs}
                 onResetTimer={() => navigate("/my-orders")}
                 payment={payment}
+                paymentError={paymentError}
+                isCreatingPayment={isCreatingPayment}
+                onRetryPayment={requestPayment}
               />
             </div>
           )}

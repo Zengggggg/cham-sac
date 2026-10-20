@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   AlertCircle,
@@ -16,8 +16,9 @@ import Input from "../../components/ui/Input.jsx";
 import starElement from "../../assets/elements/IMG_4811.PNG";
 import diceElement from "../../assets/elements/IMG_4818.PNG";
 import diceLightElement from "../../assets/elements/IMG_4819.PNG";
-import { getAccessToken } from "../../services/apiClient.js";
-import { addCartItem, listProducts } from "../../services/shopService.js";
+import { getAccessToken, getStoredUser } from "../../services/apiClient.js";
+import { addCartItem, getCart, listProducts } from "../../services/shopService.js";
+import { getCartProduct, getCartQuantity } from "../../utils/cart.js";
 import "./ListProductPage.scss";
 
 const categories = ["Tất cả", "Boardgame", "Thẻ trải nghiệm", "Quà lưu niệm"];
@@ -25,17 +26,23 @@ const categories = ["Tất cả", "Boardgame", "Thẻ trải nghiệm", "Quà l�
 const productFallbackImages = [diceElement, diceLightElement, starElement];
 const productTones = ["purple", "teal", "yellow", "red"];
 
-const presentProduct = (product, index) => ({
+const presentProduct = (product, index, cart) => ({
   ...product,
   id: product.id || product._id,
   category: "Boardgame",
   image: product.images?.[0] || productFallbackImages[index % productFallbackImages.length],
   tone: productTones[index % productTones.length],
   tag: product.canPurchase ? "Đang mở bán" : "Tạm hết hàng",
+  cartQuantity: getCartQuantity(cart, product.id || product._id),
 });
 
 const formatMoney = (value) =>
   `${new Intl.NumberFormat("vi-VN").format(value)}đ`;
+
+const getCartOwner = () => {
+  const user = getStoredUser();
+  return user?.id || user?._id || null;
+};
 
 function AnimatedMetric({ value, decimals = 0, suffix = "", format }) {
   const [currentValue, setCurrentValue] = useState(() => {
@@ -79,7 +86,8 @@ function AnimatedMetric({ value, decimals = 0, suffix = "", format }) {
   return `${displayValue}${suffix}`;
 }
 
-function ProductCard({ product, onAdd }) {
+function ProductCard({ product, onAdd, addingProductId }) {
+  const availableToAdd = Math.max(0, product.stock - product.cartQuantity);
   return (
     <Card className={`product-card product-card--${product.tone}`}>
       <div className="product-card__visual">
@@ -94,6 +102,7 @@ function ProductCard({ product, onAdd }) {
           {formatMoney(product.price)}
         </strong>
         <p className="product-card__description">Còn lại: {product.stock} sản phẩm</p>
+        {product.cartQuantity > 0 && <p className="product-card__description">Đã có {product.cartQuantity} trong giỏ · Có thể thêm {availableToAdd}</p>}
         <div className="product-card__actions">
           <Button
             as={Link}
@@ -106,7 +115,8 @@ function ProductCard({ product, onAdd }) {
           <Button
             variant="primary"
             size="sm"
-            disabled={!product.canPurchase}
+            disabled={!product.canPurchase || availableToAdd === 0 || addingProductId !== null}
+            loading={addingProductId === product.id}
             onClick={() => onAdd(product)}
           >
             Thêm vào giỏ
@@ -124,24 +134,42 @@ function ListProductPage() {
   const [loadError, setLoadError] = useState("");
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [searchTerm, setSearchTerm] = useState("");
+  const [addingProductId, setAddingProductId] = useState(null);
+  const addPending = useRef(false);
+  const loadVersion = useRef(0);
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
+    const version = ++loadVersion.current;
+    const owner = getCartOwner();
     setIsLoading(true);
     setLoadError("");
     try {
-      const response = await listProducts();
-      setProducts((response.data || []).map(presentProduct));
+      const [response, cartResponse] = await Promise.all([
+        listProducts(),
+        getAccessToken() ? getCart().catch(() => null) : Promise.resolve(null),
+      ]);
+      if (version === loadVersion.current && owner === getCartOwner()) {
+        setProducts((response.data || []).map((product, index) => presentProduct(product, index, cartResponse?.data?.cart)));
+      }
     } catch (error) {
-      setLoadError(error.message || "Không thể tải danh sách sản phẩm.");
+      if (version === loadVersion.current) setLoadError(error.message || "Không thể tải danh sách sản phẩm.");
     } finally {
-      setIsLoading(false);
+      if (version === loadVersion.current) setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => { void loadProducts(); }, 0);
-    return () => window.clearTimeout(timeoutId);
-  }, []);
+    const syncSession = () => { void loadProducts(); };
+    window.addEventListener("auth:login", syncSession);
+    window.addEventListener("auth:logout", syncSession);
+    return () => {
+      loadVersion.current += 1;
+      window.clearTimeout(timeoutId);
+      window.removeEventListener("auth:login", syncSession);
+      window.removeEventListener("auth:logout", syncSession);
+    };
+  }, [loadProducts]);
 
   const visibleProducts = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -158,17 +186,33 @@ function ListProductPage() {
   }, [activeCategory, products, searchTerm]);
 
   const handleAddToCart = async (product) => {
+    if (addPending.current) return;
     if (!getAccessToken()) {
       toast("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
       navigate("/login", { state: { from: "/products" } });
       return;
     }
+    addPending.current = true;
+    const owner = getCartOwner();
+    setAddingProductId(product.id);
     try {
-      await addCartItem(product.id, 1);
+      const response = await addCartItem(product.id, 1);
       window.dispatchEvent(new Event("cart:updated"));
+      if (owner !== getCartOwner() || !getAccessToken()) return;
+      const updatedProduct = getCartProduct(response.data.cart, product.id);
+      if (updatedProduct) {
+        setProducts((current) => current.map((item, index) => item.id === product.id
+          ? presentProduct({ ...item, ...updatedProduct, canPurchase: updatedProduct.status === "active" && updatedProduct.stock > 0 }, index, response.data.cart)
+          : item));
+      }
       toast.success(`Đã thêm “${product.name}” vào giỏ hàng`);
     } catch (error) {
+      if (owner !== getCartOwner() || !getAccessToken()) return;
       toast.error(error.message || "Không thể cập nhật giỏ hàng lúc này.");
+      if (error.statusCode === 409) await loadProducts();
+    } finally {
+      addPending.current = false;
+      setAddingProductId(null);
     }
   };
 
@@ -311,6 +355,7 @@ function ListProductPage() {
                 key={product.id}
                 product={product}
                 onAdd={handleAddToCart}
+                addingProductId={addingProductId}
               />
             ))}
           </div>

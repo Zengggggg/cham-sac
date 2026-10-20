@@ -38,9 +38,11 @@ export const handlePayOSWebhook = async (req, res, next) => {
         const result = await processPayOSWebhook(req.body);
         return sendSuccess(res, {
             statusCode: 200,
-            message: result.duplicate
-                ? 'Webhook đã được xử lý trước đó.'
-                : 'Đã xử lý webhook thanh toán.',
+            message: result.ignored
+                ? 'Webhook hợp lệ không khớp giao dịch và đã được bỏ qua.'
+                : result.duplicate
+                    ? 'Webhook đã được xử lý trước đó.'
+                    : 'Đã xử lý webhook thanh toán.',
             data: { acknowledged: true }
         });
     } catch (error) {

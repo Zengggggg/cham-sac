@@ -6,6 +6,7 @@ import {
   Check,
   CreditCard,
   ShieldCheck,
+  ShoppingBag,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -15,30 +16,9 @@ import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import Input from "../../components/ui/Input.jsx";
 import ConfirmModal from "../../components/layout/ConfirmModal.jsx";
-import starElement from "../../assets/elements/IMG_4811.PNG";
-import diceElement from "../../assets/elements/IMG_4818.PNG";
-import diceLightElement from "../../assets/elements/IMG_4819.PNG";
 import { createOrder, createPayment, getCart } from "../../services/shopService.js";
+import { normalizeCartItems } from "../../utils/cart.js";
 import "./CheckOutPage.scss";
-
-const productCatalog = {
-  "boardgame-cham-sac-viet": {
-    category: "Boardgame",
-    tone: "purple",
-    image: diceElement,
-  },
-  "bo-the-di-san": {
-    category: "Thẻ trải nghiệm",
-    tone: "teal",
-    image: diceLightElement,
-  },
-  "so-tay-hanh-trinh": {
-    category: "Quà lưu niệm",
-    tone: "yellow",
-    image: starElement,
-  },
-  "combo-kham-pha": { category: "Boardgame", tone: "red", image: diceElement },
-};
 
 const formatMoney = (value) =>
   `${new Intl.NumberFormat("vi-VN").format(Number(value) || 0)}đ`;
@@ -50,15 +30,6 @@ const readStorage = (key, fallback) => {
     return fallback;
   }
 };
-
-const normalizeCheckoutItems = (cart) => (cart?.items || [])
-  .filter((item) => item.selected)
-  .map((item) => ({
-    ...item,
-    productName: item.product?.name || "Sản phẩm",
-    unitPrice: item.product?.price || 0,
-    image: item.product?.images?.[0] || "",
-  }));
 
 const normalizePhone = (phone) => {
   const compact = phone.replace(/[\s.-]/g, "");
@@ -110,7 +81,7 @@ function CheckOutPage() {
     let active = true;
     getCart()
       .then((response) => {
-        if (active) setCheckoutItems(normalizeCheckoutItems(response.data.cart));
+        if (active) setCheckoutItems(normalizeCartItems(response.data.cart).filter((item) => item.selected));
       })
       .catch((error) => {
         if (active) toast.error(error.message || "Không thể tải giỏ hàng.");
@@ -324,6 +295,10 @@ function CheckOutPage() {
         </div>
       </main>
     );
+  }
+
+  if (checkoutItems.some((item) => !item.isAvailable)) {
+    return <main className="checkout-page"><div className="checkout-state" role="alert"><ShoppingBag size={34} aria-hidden="true" /><h1>Giỏ hàng cần được cập nhật</h1><p>Có sản phẩm không còn khả dụng hoặc vượt quá tồn kho. Vui lòng kiểm tra lại số lượng.</p><Button variant="primary" onClick={() => navigate("/cart")}>Kiểm tra giỏ hàng</Button></div></main>;
   }
 
   return (
@@ -657,23 +632,18 @@ function CheckOutPage() {
           >
             <div className="checkout-summary__items">
               {checkoutItems.map((item) => {
-                const meta = productCatalog[item.productId] || {
-                  category: "Sản phẩm Chạm Sắc Việt",
-                  tone: "yellow",
-                  image: starElement,
-                };
                 return (
                   <article
                     className="checkout-summary__item"
                     key={item.productId}
                   >
                     <div
-                      className={`checkout-summary__visual checkout-summary__visual--${meta.tone}`}
+                      className="checkout-summary__visual checkout-summary__visual--yellow"
                     >
-                      <img src={meta.image} alt="" aria-hidden="true" />
+                      {item.image ? <img src={item.image} alt={item.productName} /> : <ShoppingBag size={28} aria-hidden="true" />}
                     </div>
                     <div className="checkout-summary__item-copy">
-                      <p>{meta.category}</p>
+                      <p>{item.category}</p>
                       <h2>{item.productName}</h2>
                       <span>
                         {item.quantity} × {formatMoney(item.unitPrice)}

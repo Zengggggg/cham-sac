@@ -54,6 +54,22 @@ test('payOS provider rejects unsafe order codes and amounts before calling SDK',
     }, client), /providerOrderCode/);
 });
 
+test('payOS provider rejects transfer content longer than the bank limit', async () => {
+    const client = {
+        paymentRequests: {
+            create: async () => assert.fail('SDK must not be called')
+        }
+    };
+
+    await assert.rejects(() => createPayOSPaymentLink({
+        providerOrderCode: 123456,
+        amount: 1000,
+        transferContent: 'CSV1234567',
+        returnUrl: 'https://example.com/success',
+        cancelUrl: 'https://example.com/cancel'
+    }, client), /9 ký tự/);
+});
+
 test('payOS webhook verification delegates signature checks to the official SDK', async () => {
     const payload = { code: '00', data: {}, signature: 'signed' };
     const client = {

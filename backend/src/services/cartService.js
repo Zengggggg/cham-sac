@@ -2,14 +2,40 @@ import Product from '../models/productModel.js';
 import User from '../models/userModel.js';
 import AppError from '../utils/appError.js';
 
-const stringId = (value) => String(value?.id || value?._id || value);
+const stringId = (value) => {
+    // ObjectId.id is a binary buffer, not the public hexadecimal product ID.
+    const id = typeof value?.toHexString === 'function'
+        ? value.toHexString()
+        : String(value?._id || value?.id || value);
+    return /^[a-f\d]{24}$/i.test(id) ? id.toLowerCase() : id;
+};
+
+export const mergeCartItems = (cartItems) => {
+    const items = new Map();
+    for (const cartItem of cartItems) {
+        const productId = stringId(cartItem.productId);
+        const existing = items.get(productId);
+        if (existing) {
+            existing.quantity += cartItem.quantity;
+            existing.selected = existing.selected || cartItem.selected;
+        } else {
+            items.set(productId, {
+                productId,
+                quantity: cartItem.quantity,
+                selected: cartItem.selected,
+                addedAt: cartItem.addedAt
+            });
+        }
+    }
+    return [...items.values()];
+};
 
 export const buildCartSummary = (cartItems, products) => {
     const productMap = new Map(products.map((product) => [stringId(product), product]));
     let subtotalAmount = 0;
     let selectedSubtotalAmount = 0;
 
-    const items = cartItems.map((cartItem) => {
+    const items = mergeCartItems(cartItems).map((cartItem) => {
         const productId = stringId(cartItem.productId);
         const product = productMap.get(productId);
         let issue = null;
@@ -47,6 +73,8 @@ export const buildCartSummary = (cartItems, products) => {
 const getCartUser = async (userId) => {
     const user = await User.findById(userId).select('+cartItems');
     if (!user) throw new AppError('Tài khoản không tồn tại.', 404);
+    const mergedItems = mergeCartItems(user.cartItems);
+    if (mergedItems.length !== user.cartItems.length) user.cartItems = mergedItems;
     return user;
 };
 
@@ -64,7 +92,7 @@ export const addUserCartItem = async (userId, { productId, quantity }) => {
     if (product.stock <= 0) throw new AppError('Sản phẩm đã hết hàng.', 409);
 
     const user = await getCartUser(userId);
-    const existing = user.cartItems.find((item) => stringId(item.productId) === productId);
+    const existing = user.cartItems.find((item) => stringId(item.productId) === stringId(productId));
     const nextQuantity = (existing?.quantity || 0) + quantity;
     if (nextQuantity > product.stock) {
         throw new AppError('Số lượng vượt quá tồn kho hiện có.', 409, [{
@@ -85,7 +113,7 @@ export const addUserCartItem = async (userId, { productId, quantity }) => {
 
 export const updateUserCartItem = async (userId, productId, updates) => {
     const user = await getCartUser(userId);
-    const item = user.cartItems.find((entry) => stringId(entry.productId) === productId);
+    const item = user.cartItems.find((entry) => stringId(entry.productId) === stringId(productId));
     if (!item) throw new AppError('Sản phẩm không có trong giỏ.', 404);
 
     if (updates.quantity !== undefined) {
@@ -105,7 +133,7 @@ export const updateUserCartItem = async (userId, productId, updates) => {
 export const removeUserCartItem = async (userId, productId) => {
     const user = await getCartUser(userId);
     const originalLength = user.cartItems.length;
-    user.cartItems = user.cartItems.filter((item) => stringId(item.productId) !== productId);
+    user.cartItems = user.cartItems.filter((item) => stringId(item.productId) !== stringId(productId));
     if (user.cartItems.length === originalLength) {
         throw new AppError('Sản phẩm không có trong giỏ.', 404);
     }

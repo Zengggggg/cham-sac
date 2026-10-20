@@ -6,6 +6,7 @@ import Payment from '../models/paymentModel.js';
 import Product from '../models/productModel.js';
 import User from '../models/userModel.js';
 import AppError from '../utils/appError.js';
+import { mergeCartItems } from './cartService.js';
 
 const ORDER_TRANSITIONS = {
     pending: new Set(['confirmed', 'cancelled']),
@@ -47,7 +48,7 @@ export const createProviderOrderCode = () => {
     return value;
 };
 
-const selectedCartItems = (user) => user.cartItems.filter(({ selected }) => selected);
+const selectedCartItems = (user) => mergeCartItems(user.cartItems).filter(({ selected }) => selected);
 
 const throwCartConflict = (field, message) => {
     throw new AppError('Giỏ hàng đã thay đổi. Vui lòng kiểm tra lại.', 409, [{ field, message }]);

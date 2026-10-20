@@ -99,6 +99,10 @@ Cấu hình năm biến `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_K
 
 Áp dụng CORS cho bucket theo [`r2-cors.example.json`](./r2-cors.example.json), đồng thời thay danh sách `AllowedOrigins` bằng đúng origin frontend của từng môi trường. Header `Content-Type` là một phần của chữ ký nên request `PUT` phải gửi đúng MIME type backend đã ký.
 
+## Deploy lên Render
+
+Repository có Blueprint `render.yaml` ở root để deploy riêng backend trong monorepo. Hướng dẫn cấu hình MongoDB Atlas, biến môi trường, payOS webhook, frontend production và giới hạn của gói Free nằm tại [RENDER_DEPLOY.md](./RENDER_DEPLOY.md).
+
 ## Khởi tạo MongoDB
 
 Backend có 7 collections theo `mongodb_database_spec.md`: `users`, `products`, `heritage_sites`, `orders`, `ar_models`, `game_rules`, `payments`. Order items được snapshot và nhúng trực tiếp trong `orders`.
@@ -139,7 +143,7 @@ Backend sử dụng SDK Node chính thức `@payos/node`. Cấu hình các biế
 
 Lớp tích hợp tại `src/providers/payOSProvider.js` hỗ trợ tạo payment link, xác minh chữ ký webhook và xác nhận webhook URL. Models lưu `providerOrderCode` để ánh xạ số đơn của payOS, `paymentLinkId` để tra cứu link và `providerTransactionId` để xử lý webhook idempotent.
 
-Checkout trừ tồn kho trong MongoDB transaction. Đơn unpaid hết hạn được worker hủy và hoàn tồn đúng một lần. Không cập nhật trạng thái thanh toán từ `returnUrl`; trạng thái chỉ được xác nhận từ webhook đã qua `payOS.webhooks.verify()`.
+Checkout trừ tồn kho trong MongoDB transaction. Đơn unpaid hết hạn được worker hủy và hoàn tồn đúng một lần. Không cập nhật trạng thái thanh toán từ `returnUrl`; trạng thái chỉ được xác nhận từ webhook đã qua `payOS.webhooks.verify()`. Webhook có chữ ký hợp lệ nhưng không khớp giao dịch (bao gồm payload mẫu khi payOS đăng ký URL) được trả `200` và bỏ qua; webhook sai chữ ký vẫn bị từ chối.
 
 Trước khi thử đăng ký, tạo API key trên Resend, xác minh domain gửi và điền `RESEND_API_KEY`, `RESEND_FROM_EMAIL`. Backend không log hoặc trả OTP trong API response.
 

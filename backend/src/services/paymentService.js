@@ -11,6 +11,13 @@ const toPaymentResponse = (payment) => {
     return value;
 };
 
+export const createPayOSTransferContent = (providerOrderCode) => {
+    if (!Number.isSafeInteger(providerOrderCode) || providerOrderCode <= 0) {
+        throw new TypeError('providerOrderCode phải là số nguyên dương.');
+    }
+    return `CSV${String(providerOrderCode).slice(-6)}`;
+};
+
 export const normalizeVerifiedPayment = (verifiedData) => {
     const paidAt = new Date(verifiedData.transactionDateTime);
     return {
@@ -58,14 +65,15 @@ export const createUserPayment = async (userId, orderId) => {
     const reusable = await Payment.findOne({ orderId, status: 'pending', checkoutUrl: { $exists: true } });
     if (reusable) return { payment: toPaymentResponse(reusable), reused: true };
 
+    const providerOrderCode = createProviderOrderCode();
     let payment;
     try {
         payment = await Payment.create({
             orderId: order._id,
             provider: 'payos',
-            providerOrderCode: createProviderOrderCode(),
+            providerOrderCode,
             amount: order.totalAmount,
-            transferContent: order.orderCode.replaceAll('-', '').slice(0, 25),
+            transferContent: createPayOSTransferContent(providerOrderCode),
             status: 'pending',
             expiresAt: order.expiresAt
         });
@@ -103,6 +111,12 @@ export const createUserPayment = async (userId, orderId) => {
         payment.requiresManualReview = true;
         payment.reviewReason = 'Không thể tạo payment link.';
         await payment.save().catch(() => undefined);
+        console.error('payOS payment link creation failed', {
+            name: error?.name,
+            message: error?.message,
+            code: error?.code,
+            status: error?.status
+        });
         throw new AppError('Không thể tạo thông tin thanh toán. Vui lòng thử lại.', 502);
     }
 };
@@ -119,24 +133,30 @@ export const getUserPaymentStatus = async (userId, orderId) => {
     };
 };
 
-export const processPayOSWebhook = async (payload) => {
+export const processPayOSWebhook = async (
+    payload,
+    {
+        verifyWebhook = verifyPayOSWebhook,
+        findPayment = (query) => Payment.findOne(query)
+    } = {}
+) => {
     let verifiedData;
     try {
-        verifiedData = await verifyPayOSWebhook(payload);
+        verifiedData = await verifyWebhook(payload);
     } catch (_error) {
         throw new AppError('Chữ ký webhook không hợp lệ.', 400);
     }
     const normalized = normalizeVerifiedPayment(verifiedData);
     const existingTransaction = normalized.providerTransactionId
-        ? await Payment.findOne({
+        ? await findPayment({
             provider: 'payos',
             providerTransactionId: normalized.providerTransactionId
         })
         : null;
     if (existingTransaction) return { payment: toPaymentResponse(existingTransaction), duplicate: true };
 
-    const payment = await Payment.findOne({ providerOrderCode: normalized.providerOrderCode });
-    if (!payment) throw new AppError('Không tìm thấy giao dịch tương ứng.', 404);
+    const payment = await findPayment({ providerOrderCode: normalized.providerOrderCode });
+    if (!payment) return { payment: null, duplicate: false, ignored: true };
     const order = await Order.findById(payment.orderId);
     if (!order) throw new AppError('Không tìm thấy đơn hàng tương ứng.', 404);
 
@@ -206,7 +226,7 @@ export const processPayOSWebhook = async (payload) => {
         });
     } catch (error) {
         if (error?.code === 11000) {
-            const duplicate = await Payment.findOne({
+            const duplicate = await findPayment({
                 provider: 'payos',
                 providerTransactionId: normalized.providerTransactionId
             });

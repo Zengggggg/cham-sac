@@ -38,6 +38,9 @@ export const createPayOSPaymentLink = async ({
     if (typeof transferContent !== 'string' || !transferContent.trim()) {
         throw new TypeError('transferContent là bắt buộc.');
     }
+    if (transferContent.trim().length > 9) {
+        throw new TypeError('transferContent không được vượt quá 9 ký tự.');
+    }
 
     const environment = returnUrl && cancelUrl ? {} : getPayOSEnvironment();
     const paymentData = {

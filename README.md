@@ -83,7 +83,7 @@ MVP hiện dùng hai role: `user` và `admin`.
 | Thành phần | Công nghệ/triển khai định hướng | Trách nhiệm |
 | --- | --- | --- |
 | Frontend | React, Vite, Vercel | Giao diện public/user/admin, camera, image tracking và hiển thị model 3D |
-| Backend | Node.js/Express hiện có, Railway | API, xác thực, nghiệp vụ đơn hàng, webhook và quản lý nội dung |
+| Backend | Node.js/Express, Render | API, xác thực, nghiệp vụ đơn hàng, webhook và quản lý nội dung |
 | Database | MongoDB theo code và quyết định hạ tầng hiện tại | Dữ liệu người dùng, sản phẩm, đơn hàng, thanh toán, di sản và AR |
 | Object storage | Cloudflare R2 hoặc S3-compatible storage | Ảnh, target bundle, poster và model `.glb` |
 | Thanh toán | payOS | Tạo payment link/VietQR và xác nhận giao dịch qua webhook đã ký |
@@ -110,6 +110,7 @@ Các cấu trúc nội dung linh hoạt phải tuân theo JSON shape được đ
 - Backend phải tự đọc giá từ dữ liệu sản phẩm và tính `line_total`, `subtotal_amount`, `shipping_fee`, `total_amount`; không tin giá do frontend gửi lên.
 - Tên sản phẩm, đơn giá, người nhận và địa chỉ giao hàng phải được snapshot vào đơn hàng.
 - Tạo đơn, tạo order items và cập nhật tồn kho phải là một thao tác nhất quán/transactional.
+- Giỏ hàng của từng tài khoản gộp các lần thêm theo ID sản phẩm. Giao diện hiển thị số lượng đã có trong giỏ và số lượng có thể thêm (`tồn kho - số lượng trong giỏ`); tồn kho thực tế hiện được trừ khi tạo đơn, chưa giữ hàng ở bước thêm giỏ.
 - Cặp `provider`/`providerTransactionId` phải unique; webhook payOS gửi lặp không được cập nhật trạng thái hay tồn kho nhiều lần.
 - Đơn hàng và thanh toán đã phát sinh không được xóa cứng.
 - Mật khẩu và OTP phải được hash; OTP phải hết hạn, giới hạn số lần thử/gửi lại và không được log. Refresh token lưu dưới dạng hash, được xoay khi làm mới và endpoint auth phải có rate limit.

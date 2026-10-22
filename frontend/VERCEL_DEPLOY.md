@@ -9,6 +9,8 @@
    - Build Command: `npm run build`
    - Output Directory: `dist`
 
+Dự án giữ Node.js 24 mặc định của Vercel. `package.json` đã override dependency native `canvas` cũ của MindAR sang bản tương thích Node.js 24; không hạ project về Node.js 20.
+
 `vercel.json` đã có SPA rewrite về `index.html`, vì vậy mở trực tiếp hoặc tải lại các route như `/ar`, `/login` và `/admin` sẽ không bị 404.
 
 ## 2. Biến môi trường Vercel

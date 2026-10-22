@@ -149,12 +149,13 @@ Trước khi thử đăng ký, tạo API key trên Resend, xác minh domain gử
 
 ## Shop API
 
-Hai endpoint đọc sản phẩm `/shop/boxes` là public. Các endpoint giỏ hàng, đơn hàng và thanh toán của user yêu cầu access token role `user`; endpoint admin yêu cầu role `admin`.
+Hai endpoint đọc sản phẩm `/shop/boxes` và endpoint cấu hình `/ar/experiences` là public. Các endpoint giỏ hàng, đơn hàng và thanh toán của user yêu cầu access token role `user`; endpoint admin yêu cầu role `admin`.
 
 | Method | Endpoint | Mục đích |
 | --- | --- | --- |
 | `GET` | `/chamsacviet/shop/boxes` | Danh sách sản phẩm đang bán (public) |
 | `GET` | `/chamsacviet/shop/boxes/:id` | Chi tiết sản phẩm (public) |
+| `GET` | `/chamsacviet/ar/experiences` | Nội dung địa danh và model AR đã xuất bản, sắp xếp theo `targetIndex` (public) |
 | `GET` | `/chamsacviet/cart` | Lấy giỏ hàng với giá/tồn kho hiện tại |
 | `POST` | `/chamsacviet/cart/items` | Thêm/gộp sản phẩm vào giỏ |
 | `PATCH/DELETE` | `/chamsacviet/cart/items/:productId` | Cập nhật hoặc xóa dòng giỏ |
@@ -188,6 +189,8 @@ Toàn bộ endpoint dưới đây yêu cầu access token của role `admin`. C�
 | `GET/PATCH/DELETE` | `/chamsacviet/admin/heritage-sites/:id` | Xem/cập nhật/xóa địa danh chưa gắn model AR |
 | `GET/POST` | `/chamsacviet/admin/models` | Danh sách/tạo cấu hình model AR |
 | `GET/PATCH/DELETE` | `/chamsacviet/admin/models/:id` | Xem/cập nhật/soft-delete model AR |
+
+Model AR ở trạng thái `published` phải có `targetIndex` duy nhất từ 0 đến 8 để frontend ánh xạ đúng image target; draft có thể chưa gán chỉ số này.
 
 Dashboard chỉ tính payment `success` của đơn vẫn có `paymentStatus=paid`, nhóm doanh thu theo `paidAt`; đơn đã hoàn tiền không được tính. Trường `traffic.available=false` cho biết lượt truy cập chưa có dữ liệu vì MVP chưa tích hợp analytics. Endpoint trạng thái user không cho quản trị viên khóa chính mình, không chỉnh trạng thái admin khác và không kích hoạt tài khoản chưa xác minh email.
 

@@ -477,6 +477,7 @@ const swaggerDefinition = {
 };
 
 swaggerDefinition.tags.push(
+    { name: 'AR', description: 'Trải nghiệm WebAR công khai' },
     { name: 'Shop', description: 'Danh mục sản phẩm cho user' },
     { name: 'Cart', description: 'Giỏ hàng của user' },
     { name: 'Orders', description: 'Checkout và đơn hàng của user' },
@@ -485,6 +486,72 @@ swaggerDefinition.tags.push(
 );
 
 Object.assign(swaggerDefinition.components.schemas, {
+    ArExperience: {
+        type: 'object',
+        required: [
+            'id',
+            'modelId',
+            'targetIndex',
+            'name',
+            'shortDescription',
+            'content',
+            'targetImageUrl',
+            'model'
+        ],
+        properties: {
+            id: { type: 'string' },
+            modelId: { type: 'string' },
+            targetIndex: { type: 'integer', minimum: 0, maximum: 8, example: 5 },
+            name: { type: 'string', example: 'Hồ Gươm' },
+            shortDescription: { type: 'string' },
+            content: { type: 'string' },
+            targetImageUrl: { type: 'string', format: 'uri' },
+            model: {
+                type: 'object',
+                required: ['url', 'scale', 'position', 'rotation', 'thumbnail'],
+                properties: {
+                    url: { type: 'string', format: 'uri' },
+                    scale: { type: 'number', exclusiveMinimum: 0 },
+                    position: {
+                        type: 'object',
+                        required: ['x', 'y', 'z'],
+                        properties: {
+                            x: { type: 'number' },
+                            y: { type: 'number' },
+                            z: { type: 'number' }
+                        }
+                    },
+                    rotation: {
+                        type: 'object',
+                        required: ['x', 'y', 'z'],
+                        properties: {
+                            x: { type: 'number' },
+                            y: { type: 'number' },
+                            z: { type: 'number' }
+                        }
+                    },
+                    thumbnail: { type: 'string', format: 'uri', nullable: true }
+                }
+            }
+        }
+    },
+    ArExperiencesResponse: {
+        type: 'object',
+        required: responseRequiredFields,
+        properties: {
+            ...successProperties('Lấy danh sách trải nghiệm AR thành công.'),
+            data: {
+                type: 'object',
+                required: ['experiences'],
+                properties: {
+                    experiences: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/ArExperience' }
+                    }
+                }
+            }
+        }
+    },
     Product: {
         type: 'object',
         required: ['id', 'name', 'price', 'stock', 'status'],
@@ -555,6 +622,23 @@ const objectIdParameter = (name) => ({
 });
 
 Object.assign(swaggerDefinition.paths, {
+    [`${API_PREFIX}/ar/experiences`]: {
+        get: {
+            tags: ['AR'],
+            summary: 'Danh sách trải nghiệm AR đã xuất bản',
+            operationId: 'listArExperiences',
+            responses: {
+                200: {
+                    description: 'Cấu hình target, nội dung địa danh và model 3D công khai.',
+                    content: {
+                        'application/json': {
+                            schema: { $ref: '#/components/schemas/ArExperiencesResponse' }
+                        }
+                    }
+                }
+            }
+        }
+    },
     [`${API_PREFIX}/shop/boxes`]: {
         get: {
             tags: ['Shop'], summary: 'Danh sách sản phẩm đang bán',

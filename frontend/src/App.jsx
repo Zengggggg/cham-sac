@@ -1,5 +1,5 @@
 import { Toaster } from 'react-hot-toast'
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import Footer from './components/layout/Footer.jsx'
 import Header from './components/layout/Header.jsx'
@@ -36,6 +36,7 @@ import MyCartPage from './pages/Shopping/MyCartPage.jsx'
 import CheckOutPage from './pages/Shopping/CheckOutPage.jsx'
 import PaymentPage from './pages/Shopping/PaymentPage.jsx'
 import MyOrderPage from './pages/Shopping/MyOrderPage.jsx'
+import ArExperiencePage from './pages/AR/ArExperiencePage.jsx'
 import './App.css'
 
 function ScrollToTop() {
@@ -86,6 +87,8 @@ function App() {
         <Route path="/payment/success" element={<Layout><PaymentPage /></Layout>} />
         <Route path="/payment/cancel" element={<Layout><PaymentPage /></Layout>} />
         <Route path="/my-orders" element={<Layout><MyOrderPage /></Layout>} />
+        <Route path="/ar" element={<ArExperiencePage />} />
+        <Route path="/haunted-ghost" element={<Navigate to="/ar" replace />} />
         <Route path="/introduce-hlw26" element={<Layout><ListProductPage /></Layout>} />
         <Route path="/data-policy" element={<Layout><DataPolicy /></Layout>} />
         <Route path="/privacy-policy" element={<Layout><TermOfPrivacy /></Layout>} />

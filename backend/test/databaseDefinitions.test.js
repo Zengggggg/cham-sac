@@ -44,3 +44,20 @@ test('payments definition is payOS-only and has idempotency indexes', () => {
     assert.ok(indexNames.includes('provider_1_providerTransactionId_1'));
     assert.ok(indexNames.includes('providerOrderCode_1'));
 });
+
+test('AR models define a unique target index for image tracking', () => {
+    const arModels = collectionDefinitions.find(({ name }) => name === 'ar_models');
+    const targetIndex = arModels.options.validator.$jsonSchema.properties.targetIndex;
+    const targetIndexDefinition = arModels.indexes.find(
+        ({ options }) => options.name === 'targetIndex_1'
+    );
+
+    assert.equal(targetIndex.minimum, 0);
+    assert.equal(targetIndex.maximum, 8);
+    assert.equal(targetIndex.multipleOf, 1);
+    assert.equal(targetIndexDefinition.options.unique, true);
+    assert.deepEqual(
+        targetIndexDefinition.options.partialFilterExpression,
+        { targetIndex: { $type: 'number' } }
+    );
+});

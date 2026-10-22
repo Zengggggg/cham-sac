@@ -31,7 +31,7 @@ import { logoutUser } from "../../services/authService.js";
 const navigationItems = [
   { label: "TRANG CHỦ", href: "/" },
   { label: "MUA SẮM", href: "/products" },
-  { label: "TRẢI NGHIỆM AR", href: "/haunted-ghost" },
+  { label: "TRẢI NGHIỆM AR", href: "/ar" },
   { label: "VỀ CHÚNG TÔI", href: "/about-us" },
   { label: "LIÊN HỆ", href: "/contact-us" },
   { label: "QUẢN TRỊ", href: "/admin/dashboard" },
@@ -41,7 +41,7 @@ const authenticatedAccountItems = [
   { label: "Tài khoản", href: "/user-profile", icon: UserRound },
   { label: "Đổi mật khẩu", href: "/enter-old-password", icon: KeyRound },
   { label: "Đơn hàng", href: "/my-orders", icon: Package },
-  { label: "Trải nghiệm AR", href: "/haunted-ghost", icon: Sparkles },
+  { label: "Trải nghiệm AR", href: "/ar", icon: Sparkles },
 ];
 
 const readStoredUser = () => {

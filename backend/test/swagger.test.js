@@ -11,6 +11,7 @@ test('Swagger spec exposes the current API routes and Bearer authentication', ()
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/verify-email`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/resend-verification-otp`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/me`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/ar/experiences`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/shop/boxes`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/cart/items`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/orders`]);
@@ -35,6 +36,7 @@ test('Swagger response schemas enforce the backend-to-frontend contract', () => 
         'StatusResponse',
         'EmptySuccessResponse',
         'ErrorResponse',
+        'ArExperiencesResponse',
         'ShopObjectResponse',
         'ShopListResponse'
     ];
@@ -51,5 +53,10 @@ test('Swagger response schemas enforce the backend-to-frontend contract', () => 
         swaggerSpec.paths[`${API_PREFIX}/status`].get.responses[200]
             .content['application/json'].schema.$ref,
         '#/components/schemas/StatusResponse'
+    );
+    assert.equal(
+        swaggerSpec.paths[`${API_PREFIX}/ar/experiences`].get.responses[200]
+            .content['application/json'].schema.$ref,
+        '#/components/schemas/ArExperiencesResponse'
     );
 });

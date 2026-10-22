@@ -60,7 +60,7 @@ test('guest order embeds snapshots and enforces the server total invariant', asy
     await assert.rejects(() => order.validate(), /totalAmount/);
 });
 
-test('AR model requires an HTTPS GLB URL and a positive scale', () => {
+test('published AR model requires target index, an HTTPS GLB URL and a positive scale', async () => {
     const invalidModel = new ArModel({
         heritageSiteId: new mongoose.Types.ObjectId(),
         model3dUrl: 'https://assets.example.com/model.fbx',
@@ -69,9 +69,20 @@ test('AR model requires an HTTPS GLB URL and a positive scale', () => {
         status: 'published'
     });
 
-    const error = invalidModel.validateSync();
-    assert.ok(error.errors.model3dUrl);
-    assert.ok(error.errors.defaultScale);
+    await assert.rejects(
+        () => invalidModel.validate(),
+        (error) => {
+            assert.ok(error.errors.targetIndex);
+            assert.ok(error.errors.model3dUrl);
+            assert.ok(error.errors.defaultScale);
+            return true;
+        }
+    );
+
+    invalidModel.targetIndex = 5;
+    invalidModel.model3dUrl = 'https://assets.example.com/model.glb';
+    invalidModel.defaultScale = 1;
+    await invalidModel.validate();
 });
 
 test('payment is payOS-only and requires paidAt for successful payments', async () => {

@@ -145,8 +145,8 @@ Payment: pending -> success
 | MongoDB models/validators/indexes | Đã có 7 collections và script khởi tạo idempotent |
 | Sản phẩm, giỏ hàng, đơn hàng, thanh toán API | Đã triển khai backend, checkout transaction và worker hết hạn đơn |
 | payOS provider/webhook | Đã có payment link, webhook xác minh chữ ký và xử lý idempotent |
-| Nội dung di sản | Đã có backend admin CRUD; public API chưa triển khai |
-| Image tracking/WebAR | Đã có backend admin cấu hình model AR; trải nghiệm WebAR công khai chưa triển khai |
+| Nội dung di sản | Đã có backend admin CRUD và public API `GET /chamsacviet/ar/experiences` cho cấu hình AR đã xuất bản |
+| Image tracking/WebAR | Đã có trang công khai `/ar`, MindAR image tracking cho 7 thẻ đầu tiên (`target_index` 0–6), tải lười model GLB, tiến độ/lỗi tải và model Tháp Rùa cho target Hồ Gươm (`target_index` 5) |
 | R2/CDN integration | Đã có upload ảnh sản phẩm trực tiếp từ frontend bằng presigned URL do backend cấp; cần cấu hình bucket, credential, public domain và CORS theo môi trường |
 | Admin | Đã có backend dashboard, quản lý user, sản phẩm, tồn kho, đơn, luật chơi, địa danh và cấu hình model AR; frontend chưa triển khai |
 | Automated tests | Đã có test cho auth, response contract, MongoDB, shop rules, order state và payOS |
@@ -157,11 +157,11 @@ Prefix API chính thức của dự án là `/chamsacviet`; không duy trì alia
 
 | Phần | Công nghệ |
 | --- | --- |
-| Frontend | React 19, Vite 8, JavaScript/JSX, ESLint, React Compiler |
+| Frontend | React 19, Vite 8, JavaScript/JSX, ESLint, React Compiler, MindAR và Three.js |
 | Backend | Node.js, Express 4, Mongoose 8, MongoDB, ES modules, JWT, bcrypt, Google Auth Library, Resend |
 | Package manager | npm với lockfile riêng cho `frontend` và `backend` |
 
-Frontend dùng React Router, Material UI, Lucide, React Hot Toast và API client dựa trên `fetch`; chưa cài AR engine, state manager hay thư viện data-fetching. Backend dùng validation thủ công và Node.js test runner; auth, shop và các API admin cho nội dung/AR đã được triển khai, còn public API nội dung và trải nghiệm WebAR chưa triển khai.
+Frontend dùng React Router, Material UI, Lucide, React Hot Toast, MindAR/Three.js và API client dựa trên `fetch`; chưa cài state manager hay thư viện data-fetching. Backend dùng validation thủ công và Node.js test runner; auth, shop, API admin nội dung/AR và public API trải nghiệm AR đã được triển khai.
 
 ## Yêu cầu môi trường local
 
@@ -220,6 +220,8 @@ npm run dev
 Backend mặc định chạy tại `http://localhost:8080`. Với code hiện tại, kiểm tra server tại:
 
 Giao diện Swagger để xem và thử API có tại `http://localhost:8080/api-docs`; đặc tả OpenAPI JSON có tại `http://localhost:8080/api-docs.json`.
+
+Frontend AR lấy cấu hình công khai từ `GET /chamsacviet/ar/experiences`. Mỗi model `published` phải có `targetIndex` duy nhất trong khoảng 0–8; API chỉ trả nội dung địa danh và URL/transform model cần cho trình quét, không nhận hoặc lưu camera frame.
 
 ```text
 GET http://localhost:8080/chamsacviet/status
@@ -298,6 +300,8 @@ VITE_GOOGLE_CLIENT_ID=your_web_client_id.apps.googleusercontent.com
 | `VITE_GOOGLE_CLIENT_ID` | Có khi bật Google login | Không có | OAuth 2.0 Web Client ID công khai để frontend khởi tạo Google Identity Services; phải khớp `GOOGLE_CLIENT_ID` của backend |
 
 Frontend dùng `VITE_API_URL` làm origin của backend; để trống khi chạy local bằng Vite proxy. API client tự gắn access token, làm mới phiên bằng refresh token và dùng prefix `/chamsacviet`.
+
+Để deploy frontend lên Vercel, đặt **Root Directory** là `frontend`, cấu hình `VITE_API_URL` bằng origin backend production và làm theo [frontend/VERCEL_DEPLOY.md](./frontend/VERCEL_DEPLOY.md). `frontend/vercel.json` đã cấu hình Vite build, output `dist`, SPA rewrite cho các route React Router và quyền camera cùng origin.
 
 Thông tin payOS và R2 phải được lưu trong biến môi trường; không commit credential vào repository.
 
@@ -390,11 +394,10 @@ Skill theo ngữ cảnh repository:
 Không tự quyết các điểm sau nếu implementation phụ thuộc trực tiếp vào chúng:
 
 1. Cho phép guest checkout hay bắt buộc đăng nhập.
-2. AR engine: MindAR, AR.js hay dịch vụ khác.
-3. Quy tắc tính phí vận chuyển.
-4. Danh sách chính thức của 9 địa danh.
-5. Giới hạn dung lượng, polygon và texture cho model `.glb`.
-6. Trừ tồn kho khi tạo đơn hay khi thanh toán thành công.
+2. Quy tắc tính phí vận chuyển.
+3. Danh sách chính thức của 9 địa danh.
+4. Giới hạn dung lượng, polygon và texture cho model `.glb`.
+5. Trừ tồn kho khi tạo đơn hay khi thanh toán thành công.
 
 ### Quyết định database đã chốt
 

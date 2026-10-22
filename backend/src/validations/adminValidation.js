@@ -17,11 +17,11 @@ const HERITAGE_SITE_UPDATE_FIELDS = new Set([
     'name', 'shortDescription', 'content', 'targetImageUrl', 'expectedUpdatedAt'
 ]);
 const AR_MODEL_CREATE_FIELDS = new Set([
-    'heritageSiteId', 'model3dUrl', 'defaultScale', 'defaultPosition',
+    'heritageSiteId', 'targetIndex', 'model3dUrl', 'defaultScale', 'defaultPosition',
     'defaultRotation', 'thumbnail', 'status'
 ]);
 const AR_MODEL_UPDATE_FIELDS = new Set([
-    'model3dUrl', 'defaultScale', 'defaultPosition', 'defaultRotation',
+    'targetIndex', 'model3dUrl', 'defaultScale', 'defaultPosition', 'defaultRotation',
     'thumbnail', 'status', 'expectedUpdatedAt'
 ]);
 
@@ -202,6 +202,11 @@ export const validateArModelWrite = (req, res, next) => {
         if (!mongoose.isValidObjectId(heritageSiteId)) {
             errors.push({ field: 'heritageSiteId', message: 'Địa danh không hợp lệ.' });
         } else normalized.heritageSiteId = heritageSiteId;
+    }
+    if (body.targetIndex !== undefined) {
+        if (!Number.isInteger(body.targetIndex) || body.targetIndex < 0 || body.targetIndex > 8) {
+            errors.push({ field: 'targetIndex', message: 'targetIndex phải là số nguyên từ 0 đến 8.' });
+        } else normalized.targetIndex = body.targetIndex;
     }
     if (body.model3dUrl !== undefined) {
         const model3dUrl = trimString(body.model3dUrl);

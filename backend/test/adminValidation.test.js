@@ -61,6 +61,39 @@ test('admin AR validation rejects non-GLB model URLs and malformed vectors', () 
     );
 });
 
+test('admin AR validation accepts a target index and rejects values outside the bundle', () => {
+    const validRequest = {
+        method: 'POST',
+        body: {
+            heritageSiteId: '507f1f77bcf86cd799439011',
+            targetIndex: 5,
+            model3dUrl: 'https://cdn.example.com/thap-rua.glb',
+            status: 'published'
+        }
+    };
+    const validResponse = mockResponse();
+    let nextCalled = false;
+
+    validateArModelWrite(validRequest, validResponse, () => { nextCalled = true; });
+
+    assert.equal(nextCalled, true);
+    assert.equal(validRequest.body.targetIndex, 5);
+
+    const invalidRequest = {
+        method: 'POST',
+        body: {
+            heritageSiteId: '507f1f77bcf86cd799439011',
+            targetIndex: 9,
+            model3dUrl: 'https://cdn.example.com/thap-rua.glb'
+        }
+    };
+    const invalidResponse = mockResponse();
+    validateArModelWrite(invalidRequest, invalidResponse, () => assert.fail('validation should fail'));
+
+    assert.equal(invalidResponse.statusCode, 422);
+    assert.equal(invalidResponse.body.errors[0].field, 'targetIndex');
+});
+
 test('admin user status validation requires optimistic concurrency timestamp', () => {
     const req = { method: 'PATCH', body: { status: 'blocked' } };
     const res = mockResponse();

@@ -45,6 +45,7 @@ const seedDevelopmentData = async () => {
         { heritageSiteId: heritageSite._id },
         {
             $set: {
+                targetIndex: 0,
                 model3dUrl: 'https://assets.example.com/cham-sac-viet/model-dev.v1.glb',
                 defaultScale: 1,
                 defaultPosition: { x: 0, y: 0, z: 0 },

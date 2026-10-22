@@ -265,6 +265,7 @@ export const collectionDefinitions = [
         ],
         {
             heritageSiteId: { bsonType: 'objectId' },
+            targetIndex: { ...nonNegativeInteger, maximum: 8 },
             model3dUrl: {
                 bsonType: 'string',
                 pattern: '^https://[^\\s?#]+\\.glb(?:[?#][^\\s]*)?$'
@@ -285,7 +286,15 @@ export const collectionDefinitions = [
                 key: { heritageSiteId: 1 },
                 options: { unique: true, name: 'heritageSiteId_1' }
             },
-            { key: { status: 1 }, options: { name: 'status_1' } }
+            { key: { status: 1 }, options: { name: 'status_1' } },
+            {
+                key: { targetIndex: 1 },
+                options: {
+                    unique: true,
+                    name: 'targetIndex_1',
+                    partialFilterExpression: { targetIndex: { $type: 'number' } }
+                }
+            }
         ]
     ),
     definition(

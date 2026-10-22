@@ -19,6 +19,15 @@ const arModelSchema = new mongoose.Schema({
         unique: true,
         immutable: true
     },
+    targetIndex: {
+        type: Number,
+        min: 0,
+        max: 8,
+        validate: {
+            validator: Number.isInteger,
+            message: 'targetIndex phải là số nguyên từ 0 đến 8.'
+        }
+    },
     model3dUrl: {
         type: String,
         required: true,
@@ -58,6 +67,20 @@ const arModelSchema = new mongoose.Schema({
 });
 
 arModelSchema.index({ status: 1 });
+arModelSchema.index(
+    { targetIndex: 1 },
+    {
+        unique: true,
+        name: 'targetIndex_1',
+        partialFilterExpression: { targetIndex: { $type: 'number' } }
+    }
+);
+
+arModelSchema.pre('validate', function requireTargetIndexForPublishedModel() {
+    if (this.status === 'published' && !Number.isInteger(this.targetIndex)) {
+        this.invalidate('targetIndex', 'Model đã xuất bản phải có targetIndex.');
+    }
+});
 
 const ArModel = mongoose.models.ArModel || mongoose.model('ArModel', arModelSchema);
 

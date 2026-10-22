@@ -365,7 +365,7 @@ export const createAdminArModel = async (input) => {
     if (!heritageSiteExists) throw new AppError('Địa danh không tồn tại.', 404);
     return saveWithDuplicateMapping(
         new ArModel(input),
-        'Địa danh này đã có model AR.'
+        'Địa danh hoặc targetIndex này đã có model AR.'
     );
 };
 
@@ -373,7 +373,7 @@ export const updateAdminArModel = async (modelId, input) => {
     const { expectedUpdatedAt, ...updates } = input;
     const model = await findVersioned(ArModel, modelId, expectedUpdatedAt, 'Model AR');
     Object.assign(model, updates);
-    return saveWithDuplicateMapping(model, 'Dữ liệu model AR bị trùng.');
+    return saveWithDuplicateMapping(model, 'Địa danh hoặc targetIndex này đã có model AR.');
 };
 
 export const deleteAdminArModel = async (modelId, expectedUpdatedAt) => {

@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --configLoader runner",
+    "build": "vite build --configLoader runner",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --configLoader runner"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -16,6 +16,7 @@
     "@mui/material": "^9.5.0",
     "i18next": "^26.4.7",
     "lucide-react": "^1.58.0",
+    "mind-ar": "^1.2.5",
     "qrcode": "^1.5.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
@@ -23,7 +24,8 @@
     "react-i18next": "^17.0.20",
     "react-icons": "^5.7.0",
     "react-loading-skeleton": "^3.5.0",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "three": "^0.160.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

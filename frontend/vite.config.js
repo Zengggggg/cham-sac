@@ -10,6 +10,7 @@ compilerPreset.rolldown.filter.id = {
 // https://vite.dev/config/
 export default defineConfig({
   cacheDir: '.vite-cache',
+  assetsInclude: ['**/*.glb'],
   plugins: [
     react(),
     babel({ presets: [compilerPreset] })

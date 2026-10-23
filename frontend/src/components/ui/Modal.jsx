@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 import Button from './Button.jsx'
 import './Modal.scss'
 
-function Modal({ open, onClose, title, description, children, actions, size = 'md' }) {
+function Modal({ open, onClose, title, description, headerLeading, children, actions, size = 'md', showClose = true, className = '' }) {
   const closeButtonRef = useRef(null)
 
   useEffect(() => {
@@ -19,15 +19,18 @@ function Modal({ open, onClose, title, description, children, actions, size = 'm
 
   return createPortal(
     <div className="ui-modal" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose?.()}>
-      <section className={`ui-modal__dialog ui-modal__dialog--${size}`} role="dialog" aria-modal="true" aria-labelledby="ui-modal-title">
+      <section className={`ui-modal__dialog ui-modal__dialog--${size} ${className}`.trim()} role="dialog" aria-modal="true" aria-labelledby="ui-modal-title">
         <header className="ui-modal__header">
-          <div>
+          {headerLeading && <div className="ui-modal__header-leading">{headerLeading}</div>}
+          <div className="ui-modal__heading">
             <h2 id="ui-modal-title">{title}</h2>
             {description && <p>{description}</p>}
           </div>
-          <button ref={closeButtonRef} className="ui-modal__close" type="button" onClick={onClose} aria-label="Đóng cửa sổ">
-            <X aria-hidden="true" />
-          </button>
+          {showClose && <div className="ui-modal__header-actions">
+            <button ref={closeButtonRef} className="ui-modal__close" type="button" onClick={onClose} aria-label="Đóng cửa sổ">
+              <X aria-hidden="true" />
+            </button>
+          </div>}
         </header>
         {children && <div className="ui-modal__body">{children}</div>}
         {actions && <footer className="ui-modal__footer">{actions}</footer>}

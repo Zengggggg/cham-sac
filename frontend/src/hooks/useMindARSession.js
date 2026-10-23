@@ -3,6 +3,27 @@ import targetBundleUrl from '../assets/ar-targets/heritage-targets.mind?url'
 import { HERITAGE_EXPERIENCES } from '../data/heritageExperiences.js'
 
 const idleModelState = { targetIndex: null, status: 'idle', progress: 0, message: null }
+const idleCaptureState = { status: 'idle', imageUrl: null }
+const CAPTURE_ANIMATION_MIN_MS = 2400
+
+const captureVideoFrame = (video) => {
+  if (!video?.videoWidth || !video?.videoHeight) return null
+
+  const maxWidth = 1280
+  const scale = Math.min(1, maxWidth / video.videoWidth)
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(video.videoWidth * scale)
+  canvas.height = Math.round(video.videoHeight * scale)
+  const context = canvas.getContext('2d')
+  if (!context) return null
+
+  try {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height)
+    return canvas.toDataURL('image/jpeg', 0.86)
+  } catch {
+    return null
+  }
+}
 
 const getSupportStatus = () => {
   if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia || !window.WebGLRenderingContext) return 'unsupported'
@@ -106,6 +127,10 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const resourcesRef = useRef([])
   const modelEntriesRef = useRef(new Map())
   const loadModelRef = useRef(null)
+  const captureFlowRef = useRef(null)
+  const captureImageRef = useRef(null)
+  const captureStatusRef = useRef('idle')
+  const capturedTargetIndexRef = useRef(null)
   const recognizedExperienceRef = useRef(null)
   const sessionIdRef = useRef(0)
   const mountedRef = useRef(true)
@@ -114,12 +139,23 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const [error, setError] = useState(null)
   const [recognizedExperience, setRecognizedExperience] = useState(null)
   const [modelState, setModelState] = useState(idleModelState)
+  const [captureState, setCaptureState] = useState(idleCaptureState)
+
+  const updateCaptureState = useCallback((nextState) => {
+    captureStatusRef.current = nextState.status
+    captureImageRef.current = nextState.imageUrl
+    setCaptureState(nextState)
+  }, [])
 
   const releaseSession = useCallback(() => {
     sessionIdRef.current += 1
     activeTargetIndexRef.current = null
+    capturedTargetIndexRef.current = null
     recognizedExperienceRef.current = null
     loadModelRef.current = null
+    captureFlowRef.current = null
+    captureStatusRef.current = 'idle'
+    captureImageRef.current = null
 
     modelEntriesRef.current.forEach((entry) => {
       entry.mixer?.stopAllAction()
@@ -153,13 +189,31 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     setError(null)
     setRecognizedExperience(null)
     setModelState(idleModelState)
+    setCaptureState(idleCaptureState)
     setStatus(getSupportStatus())
   }, [releaseSession])
 
+  const captureTarget = useCallback(() => {
+    const experience = recognizedExperienceRef.current
+    if (experience) void captureFlowRef.current?.(experience)
+  }, [])
+
   const retryModel = useCallback(() => {
     const experience = recognizedExperienceRef.current
-    if (experience) void loadModelRef.current?.(experience, true)
+    if (experience) void captureFlowRef.current?.(experience, true)
   }, [])
+
+  const retakeCapture = useCallback(() => {
+    const targetIndex = capturedTargetIndexRef.current
+    const entry = targetIndex === null ? null : modelEntriesRef.current.get(targetIndex)
+    if (entry?.wrapper) entry.wrapper.visible = false
+    if (entry?.badge) entry.badge.visible = true
+
+    capturedTargetIndexRef.current = null
+    updateCaptureState(idleCaptureState)
+    setModelState(idleModelState)
+    setStatus(recognizedExperienceRef.current ? 'recognized' : 'scanning')
+  }, [updateCaptureState])
 
   const startAR = useCallback(async () => {
     const supportStatus = getSupportStatus()
@@ -175,6 +229,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     setError(null)
     setRecognizedExperience(null)
     setModelState(idleModelState)
+    updateCaptureState(idleCaptureState)
     setStatus('loading')
 
     try {
@@ -206,14 +261,13 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       loadModelRef.current = async (experience, force = false) => {
         const entry = modelEntriesRef.current.get(experience.targetIndex)
         if (!entry || !experience.model?.url) {
-          if (activeTargetIndexRef.current === experience.targetIndex) {
+          if (activeTargetIndexRef.current === experience.targetIndex || capturedTargetIndexRef.current === experience.targetIndex) {
             setModelState({ targetIndex: experience.targetIndex, status: 'unavailable', progress: 0, message: 'Địa danh này chưa có model 3D.' })
           }
-          return
+          return false
         }
         if (entry.status === 'ready') {
-          setModelState({ targetIndex: experience.targetIndex, status: 'ready', progress: 100, message: null })
-          return
+          return true
         }
         if (entry.status === 'loading' && !force) return entry.promise
 
@@ -227,7 +281,9 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
             experience.model.url,
             resolve,
             (event) => {
-              if (activeTargetIndexRef.current !== experience.targetIndex || sessionId !== sessionIdRef.current) return
+              const isCurrentTarget = activeTargetIndexRef.current === experience.targetIndex
+                || capturedTargetIndexRef.current === experience.targetIndex
+              if (!isCurrentTarget || sessionId !== sessionIdRef.current) return
               const progress = event.total > 0 ? Math.min(99, Math.round((event.loaded / event.total) * 100)) : null
               setModelState({ targetIndex: experience.targetIndex, status: 'loading', progress, message: null })
             },
@@ -242,6 +298,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
             return
           }
           const { wrapper, modelScene } = prepareModel(THREE, gltf, experience.model)
+          wrapper.visible = false
           entry.anchor.group.add(wrapper)
           entry.wrapper = wrapper
           entry.modelScene = modelScene
@@ -250,17 +307,58 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
             entry.mixer = new THREE.AnimationMixer(modelScene)
             gltf.animations.forEach((clip) => entry.mixer.clipAction(clip).play())
           }
-          if (activeTargetIndexRef.current === experience.targetIndex) {
-            setModelState({ targetIndex: experience.targetIndex, status: 'ready', progress: 100, message: null })
-          }
-        } catch {
+          return true
+        } catch (modelError) {
+          console.error('Không thể tải model AR', modelError)
           if (!mountedRef.current || sessionId !== sessionIdRef.current) return
           entry.status = 'error'
           entry.promise = null
-          if (activeTargetIndexRef.current === experience.targetIndex) {
+          if (activeTargetIndexRef.current === experience.targetIndex || capturedTargetIndexRef.current === experience.targetIndex) {
             setModelState({ targetIndex: experience.targetIndex, status: 'error', progress: 0, message: 'Không tải được model 3D. Hãy kiểm tra kết nối rồi thử lại.' })
           }
+          return false
         }
+      }
+
+      captureFlowRef.current = async (experience, force = false) => {
+        if (captureStatusRef.current === 'loading' && !force) return
+
+        const imageUrl = captureImageRef.current || captureVideoFrame(mindAR.video)
+        if (!imageUrl) {
+          setModelState({ targetIndex: experience.targetIndex, status: 'error', progress: 0, message: 'Không thể chụp khung hình camera. Hãy thử lại.' })
+          return
+        }
+
+        capturedTargetIndexRef.current = experience.targetIndex
+        const entry = modelEntriesRef.current.get(experience.targetIndex)
+        if (entry?.badge) entry.badge.visible = false
+        updateCaptureState({ status: 'loading', imageUrl })
+        setStatus('captured')
+        setModelState({ targetIndex: experience.targetIndex, status: 'loading', progress: 0, message: null })
+
+        const minimumAnimation = new Promise((resolve) => {
+          window.setTimeout(resolve, CAPTURE_ANIMATION_MIN_MS)
+        })
+        const [modelReady] = await Promise.all([
+          loadModelRef.current?.(experience, force),
+          minimumAnimation,
+        ])
+
+        if (!mountedRef.current || sessionId !== sessionIdRef.current) return
+        if (!modelReady || !entry?.wrapper) {
+          updateCaptureState({ status: 'error', imageUrl })
+          return
+        }
+
+        entry.wrapper.visible = true
+        entry.anchor.group.visible = true
+        updateCaptureState({ status: 'revealing', imageUrl })
+        setModelState({ targetIndex: experience.targetIndex, status: 'ready', progress: 100, message: null })
+
+        window.setTimeout(() => {
+          if (!mountedRef.current || sessionId !== sessionIdRef.current) return
+          updateCaptureState({ status: 'ready', imageUrl })
+        }, 700)
       }
 
       experiences.forEach((experience) => {
@@ -268,7 +366,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
         const { mesh, resources } = createTargetBadge(THREE, experience)
         resourcesRef.current.push(...resources)
         anchor.group.add(mesh)
-        modelEntriesRef.current.set(experience.targetIndex, { anchor, status: 'idle', promise: null, wrapper: null, modelScene: null, mixer: null })
+        modelEntriesRef.current.set(experience.targetIndex, { anchor, badge: mesh, status: 'idle', promise: null, wrapper: null, modelScene: null, mixer: null })
 
         anchor.onTargetFound = () => {
           if (!mountedRef.current || sessionId !== sessionIdRef.current) return
@@ -276,10 +374,10 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
           recognizedExperienceRef.current = experience
           setRecognizedExperience(experience)
           setStatus('recognized')
-          void loadModelRef.current?.(experience)
         }
         anchor.onTargetLost = () => {
           if (!mountedRef.current || sessionId !== sessionIdRef.current || activeTargetIndexRef.current !== experience.targetIndex) return
+          if (capturedTargetIndexRef.current === experience.targetIndex) return
           activeTargetIndexRef.current = null
           recognizedExperienceRef.current = null
           setRecognizedExperience(null)
@@ -298,6 +396,8 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       mindAR.renderer.setAnimationLoop(() => {
         const delta = clock.getDelta()
         modelEntriesRef.current.forEach((entry) => entry.mixer?.update(delta))
+        const capturedEntry = modelEntriesRef.current.get(capturedTargetIndexRef.current)
+        if (capturedEntry) capturedEntry.anchor.group.visible = true
         mindAR.renderer.render(mindAR.scene, mindAR.camera)
       })
       setStatus('scanning')
@@ -307,7 +407,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       setError(await getARSessionError(sessionError))
       setStatus('error')
     }
-  }, [experiences, releaseSession])
+  }, [experiences, releaseSession, updateCaptureState])
 
   useEffect(() => {
     const stopWhenHidden = () => {
@@ -325,5 +425,17 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     }
   }, [releaseSession])
 
-  return { containerRef, error, modelState, recognizedExperience, retryModel, startAR, status, stopAR }
+  return {
+    captureState,
+    captureTarget,
+    containerRef,
+    error,
+    modelState,
+    recognizedExperience,
+    retakeCapture,
+    retryModel,
+    startAR,
+    status,
+    stopAR,
+  }
 }

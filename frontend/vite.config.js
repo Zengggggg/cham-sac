@@ -22,6 +22,11 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/chamsacviet': 'http://localhost:8080',
+      '/ar-assets': {
+        target: 'https://assets.chamsacviet.io.vn',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ar-assets/, ''),
+      },
     },
   },
 })

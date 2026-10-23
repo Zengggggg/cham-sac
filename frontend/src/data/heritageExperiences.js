@@ -9,6 +9,7 @@ import hueTarget from '../assets/ar-targets/card-27.png'
 const AR_ASSET_ORIGIN = 'https://assets.chamsacviet.io.vn'
 
 export const THAP_RUA_MODEL_URL = '/ar-assets/models/thap-rua/Meshy_AI_turtle_tower_ar_optim_1015064523_texture.glb'
+export const QUOC_TU_GIAM_MODEL_URL = '/ar-assets/models/quoc-tu-giam/ban%20mau%20quoc%20tu%20giam%20final.glb'
 
 const toSameOriginAssetUrl = (url) => {
   if (typeof url !== 'string' || !url.startsWith(`${AR_ASSET_ORIGIN}/`)) return url
@@ -75,6 +76,13 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Hà Nội',
     tagline: 'Nơi lưu giữ truyền thống hiếu học',
     targetImage: templeOfLiteratureTarget,
+    model: {
+      url: QUOC_TU_GIAM_MODEL_URL,
+      scale: 1,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      thumbnail: null,
+    },
     shortDescription: 'Di tích lịch sử tiêu biểu cho truyền thống giáo dục, khoa bảng và tinh thần tôn sư trọng đạo của người Việt.',
     content: [
       'Văn Miếu được xây dựng năm 1070 dưới triều vua Lý Thánh Tông. Quốc Tử Giám được thành lập năm 1076 dưới triều vua Lý Nhân Tông, trở thành trung tâm đào tạo nhân tài quan trọng của Đại Việt.',

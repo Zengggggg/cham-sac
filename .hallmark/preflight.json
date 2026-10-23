@@ -1,0 +1,9 @@
+{
+  "scanned_at": "2026-10-23",
+  "framework": "React 19 with Vite 8",
+  "font_stack": ["Baloo 2", "Be Vietnam Pro"],
+  "palette": "warm cream, plum, muted rose",
+  "motion": "CSS transitions; no motion library",
+  "spacing": "page-local 4pt named scale",
+  "preserved": ["brand font stack", "cream and plum palette", "Lucide icon set", "SCSS architecture"]
+}

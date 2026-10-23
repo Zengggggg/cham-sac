@@ -818,6 +818,10 @@ body:has(.ar-catalog) .ui-modal__header p {
   font-size: 0.66rem;
 }
 
+.ar-place-detail__preview {
+  margin-top: 20px;
+}
+
 @media (min-width: 680px) {
   .ar-place-detail__layout { grid-template-columns: minmax(210px, 0.7fr) minmax(0, 1.3fr); }
 }

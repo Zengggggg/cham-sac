@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, BookOpen, Camera, CameraOff, Check, ChevronLeft, ChevronRight, LockKeyhole, MapPin, ScanLine, ShieldCheck, X } from 'lucide-react'
+import { Aperture, ArrowLeft, BookOpen, Camera, CameraOff, Check, ChevronLeft, ChevronRight, LockKeyhole, MapPin, RefreshCw, ScanLine, ShieldCheck, Sparkles, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import useMindARSession from '../../hooks/useMindARSession.js'
 import useArExperiences from '../../hooks/useArExperiences.js'
@@ -7,7 +7,7 @@ import './ArExperiencePage.scss'
 
 const statusCopy = {
   loading: 'Đang tải bộ nhận diện MindAR…',
-  scanning: 'Đang tìm thẻ địa danh',
+  scanning: 'Căn thẻ địa danh để chụp',
 }
 
 function CameraFallback({ status, error, onBrowse, onRetry }) {
@@ -123,7 +123,7 @@ function ModelLoadStatus({ modelState, onRetry }) {
   }
 
   if (modelState.status === 'ready') {
-    return <p className="ar-model-status ar-model-status--ready">Model 3D đã sẵn sàng trên thẻ.</p>
+    return <p className="ar-model-status ar-model-status--ready">Mô hình 3D đã hiện trên ảnh chụp.</p>
   }
 
   if (modelState.status === 'error') {
@@ -138,13 +138,37 @@ function ModelLoadStatus({ modelState, onRetry }) {
   return <p className="ar-model-status ar-model-status--muted">{modelState.message}</p>
 }
 
+function CaptureBuildAnimation({ captureState, experience, progress }) {
+  if (!['loading', 'revealing'].includes(captureState.status)) return null
+
+  const progressLabel = Number.isFinite(progress) ? `${progress}%` : 'Đang tải'
+  return (
+    <div className={`ar-capture-build ar-capture-build--${captureState.status}`} role="status" aria-live="polite">
+      <span className="ar-capture-build__halo" aria-hidden="true" />
+      <span className="ar-capture-build__orbit" aria-hidden="true" />
+      <span className="ar-capture-build__tower" aria-hidden="true">
+        <span className="ar-capture-build__spire" />
+        <span className="ar-capture-build__level ar-capture-build__level--top" />
+        <span className="ar-capture-build__level ar-capture-build__level--middle" />
+        <span className="ar-capture-build__level ar-capture-build__level--base" />
+      </span>
+      <span className="ar-capture-build__scan" aria-hidden="true" />
+      <strong>{captureState.status === 'revealing' ? 'Đang mở lớp di sản' : `Đang dựng ${experience.name}`}</strong>
+      <small>{captureState.status === 'revealing' ? 'Mô hình đã sẵn sàng' : progressLabel}</small>
+    </div>
+  )
+}
+
 function ArExperiencePage() {
   const { experiences } = useArExperiences()
   const {
+    captureState,
+    captureTarget,
     containerRef,
     error,
     modelState,
     recognizedExperience,
+    retakeCapture,
     retryModel,
     startAR,
     status,
@@ -152,9 +176,10 @@ function ArExperiencePage() {
   } = useMindARSession(experiences)
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [selectedExperience, setSelectedExperience] = useState(null)
-  const isActive = ['loading', 'scanning', 'recognized'].includes(status)
+  const isActive = ['loading', 'scanning', 'recognized', 'captured'].includes(status)
   const isRequesting = status === 'loading'
   const hasFallback = ['error', 'insecure', 'unsupported'].includes(status)
+  const hasCapture = captureState.status !== 'idle'
 
   useEffect(() => {
     if (!catalogOpen) return undefined
@@ -195,8 +220,9 @@ function ArExperiencePage() {
 
       <section className="ar-stage" aria-label="Khu vực trải nghiệm thực tế tăng cường">
         <div
-          className="ar-stage__mindar"
+          className={`ar-stage__mindar${hasCapture ? ' ar-stage__mindar--captured' : ''}`}
           ref={containerRef}
+          style={captureState.imageUrl ? { backgroundImage: `url("${captureState.imageUrl}")` } : undefined}
           aria-label="Hình ảnh camera và lớp phủ thực tế tăng cường"
         />
 
@@ -204,9 +230,20 @@ function ArExperiencePage() {
           <div className="ar-scanner">
             <div className="ar-scanner__status" role="status" aria-live="polite">
               <span className="ar-scanner__dot" aria-hidden="true" />
-              {recognizedExperience ? `Đã nhận diện: ${recognizedExperience.name}` : statusCopy[status]}
+              {hasCapture
+                ? `Đã chụp: ${recognizedExperience?.name}`
+                : recognizedExperience
+                  ? `Đã nhận diện: ${recognizedExperience.name}`
+                  : statusCopy[status]}
             </div>
-            <div className={`ar-scanner__frame${recognizedExperience ? ' ar-scanner__frame--recognized' : ''}`} aria-hidden="true">
+            <div className={`ar-scanner__frame${recognizedExperience ? ' ar-scanner__frame--recognized' : ''}${hasCapture ? ' ar-scanner__frame--captured' : ''}`}>
+              {recognizedExperience && (
+                <CaptureBuildAnimation
+                  captureState={captureState}
+                  experience={recognizedExperience}
+                  progress={modelState.progress}
+                />
+              )}
               <span className="ar-scanner__corner ar-scanner__corner--tl" />
               <span className="ar-scanner__corner ar-scanner__corner--tr" />
               <span className="ar-scanner__corner ar-scanner__corner--bl" />
@@ -216,11 +253,21 @@ function ArExperiencePage() {
             <div className="ar-scanner__guide">
               {recognizedExperience ? (
                 <>
-                  <Check size={22} aria-hidden="true" />
-                  <div>
-                    <strong>{recognizedExperience.name}</strong>
-                    <span>{recognizedExperience.tagline}</span>
-                    <ModelLoadStatus modelState={modelState} onRetry={retryModel} />
+                  {hasCapture ? <Sparkles size={22} aria-hidden="true" /> : <Aperture size={22} aria-hidden="true" />}
+                  <div className="ar-scanner__guide-copy">
+                    <strong>{hasCapture ? recognizedExperience.name : 'Thẻ đã sẵn sàng để chụp'}</strong>
+                    <span>{hasCapture ? recognizedExperience.tagline : 'Giữ máy ổn định rồi chạm nút chụp để dựng mô hình 3D.'}</span>
+                    {!hasCapture && (
+                      <button className="ar-scanner__capture-button" type="button" onClick={captureTarget}>
+                        <Camera size={17} aria-hidden="true" /> Chụp thẻ & dựng mô hình
+                      </button>
+                    )}
+                    {hasCapture && <ModelLoadStatus modelState={modelState} onRetry={retryModel} />}
+                    {['ready', 'error'].includes(captureState.status) && (
+                      <button className="ar-scanner__retake-button" type="button" onClick={retakeCapture}>
+                        <RefreshCw size={15} aria-hidden="true" /> Chụp lại
+                      </button>
+                    )}
                     <button type="button" onClick={() => {
                       setSelectedExperience(recognizedExperience)
                       setCatalogOpen(true)
@@ -253,12 +300,12 @@ function ArExperiencePage() {
             <p className="ar-eyebrow">TRẢI NGHIỆM DI SẢN SỐ</p>
             <h1 id="ar-page-title">Chạm vào di sản,<br />đánh thức câu chuyện</h1>
             <p className="ar-intro__lead">
-              Đưa camera vào một trong 7 thẻ địa danh đã sẵn sàng để bắt đầu hành trình khám phá.
+              Căn một trong 7 thẻ địa danh vào khung, chụp lại và chờ mô hình di sản được dựng ngay trên ảnh.
             </p>
 
             <ul className="ar-intro__promises" aria-label="Cam kết quyền riêng tư">
-              <li><ShieldCheck size={18} aria-hidden="true" /> Hình ảnh chỉ được xử lý trên thiết bị</li>
-              <li><LockKeyhole size={18} aria-hidden="true" /> Không ghi hình hoặc tải video lên máy chủ</li>
+              <li><ShieldCheck size={18} aria-hidden="true" /> Ảnh chụp chỉ được lưu tạm trên thiết bị</li>
+              <li><LockKeyhole size={18} aria-hidden="true" /> Không tải ảnh hoặc video lên máy chủ</li>
               <li><Check size={18} aria-hidden="true" /> Không cần đăng nhập</li>
             </ul>
 
@@ -269,7 +316,7 @@ function ArExperiencePage() {
               disabled={isRequesting}
             >
               <Camera size={20} aria-hidden="true" />
-              {isRequesting ? statusCopy.loading : 'Bắt đầu quét AR'}
+              {isRequesting ? statusCopy.loading : 'Mở camera chụp AR'}
             </button>
             <p className="ar-intro__consent">
               Trình duyệt sẽ hỏi quyền camera sau khi bạn chọn bắt đầu.

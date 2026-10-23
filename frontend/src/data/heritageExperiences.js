@@ -6,7 +6,14 @@ import templeOfLiteratureTarget from '../assets/ar-targets/card-24.png'
 import swordLakeTarget from '../assets/ar-targets/card-25.png'
 import hueTarget from '../assets/ar-targets/card-27.png'
 
-export const THAP_RUA_MODEL_URL = 'https://assets.chamsacviet.io.vn/models/thap-rua/Meshy_AI_turtle_tower_ar_optim_1015064523_texture.glb'
+const AR_ASSET_ORIGIN = 'https://assets.chamsacviet.io.vn'
+
+export const THAP_RUA_MODEL_URL = '/ar-assets/models/thap-rua/Meshy_AI_turtle_tower_ar_optim_1015064523_texture.glb'
+
+const toSameOriginAssetUrl = (url) => {
+  if (typeof url !== 'string' || !url.startsWith(`${AR_ASSET_ORIGIN}/`)) return url
+  return `/ar-assets/${url.slice(AR_ASSET_ORIGIN.length + 1)}`
+}
 
 export const HERITAGE_EXPERIENCES = [
   {
@@ -138,7 +145,9 @@ export function mergeHeritageExperiences(remoteExperiences = []) {
       shortDescription: remote.shortDescription || fallback.shortDescription,
       content: normalizeContent(remote.content, fallback.content),
       targetImageUrl: remote.targetImageUrl || fallback.targetImageUrl,
-      model: remote.model?.url ? remote.model : fallback.model,
+      model: remote.model?.url
+        ? { ...remote.model, url: toSameOriginAssetUrl(remote.model.url) }
+        : fallback.model,
     }
   })
 }

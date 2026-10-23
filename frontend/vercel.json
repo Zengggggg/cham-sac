@@ -5,6 +5,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/ar-assets/:path*",
+      "destination": "https://assets.chamsacviet.io.vn/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

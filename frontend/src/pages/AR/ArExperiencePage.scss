@@ -83,10 +83,13 @@
   z-index: -2;
   overflow: hidden;
   background: #130f14;
+  background-position: center;
+  background-size: cover;
 }
 
-.ar-stage__mindar > video { z-index: 0 !important; }
+.ar-stage__mindar > video { z-index: 0 !important; transition: opacity 260ms ease; }
 .ar-stage__mindar > canvas { z-index: 1; pointer-events: none; }
+.ar-stage__mindar--captured > video { opacity: 0; }
 .ar-page:not(.ar-page--active) .ar-stage__mindar { display: none; }
 
 .ar-page--active .ar-stage::after {
@@ -287,6 +290,11 @@
 
 .ar-scanner__frame--recognized .ar-scanner__corner { border-color: #77e3a1; }
 .ar-scanner__frame--recognized .ar-scanner__line { display: none; }
+.ar-scanner__frame--captured {
+  overflow: hidden;
+  background: rgba(14, 7, 17, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255, 141, 196, 0.62), 0 0 48px rgba(206, 51, 127, 0.2);
+}
 
 .ar-scanner__corner { position: absolute; width: 50px; height: 50px; border-color: #fff; border-style: solid; filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.35)); }
 .ar-scanner__corner--tl { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 18px 0 0; }
@@ -294,6 +302,85 @@
 .ar-scanner__corner--bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 18px; }
 .ar-scanner__corner--br { right: 0; bottom: 0; border-width: 0 3px 3px 0; border-radius: 0 0 18px; }
 .ar-scanner__line { position: absolute; right: 8%; left: 8%; top: 50%; height: 2px; background: linear-gradient(90deg, transparent, #ff77b9 20%, #fff 50%, #ff77b9 80%, transparent); box-shadow: 0 0 14px #ce337f; }
+
+.ar-capture-build {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  color: #fff;
+  background: radial-gradient(circle at 50% 48%, rgba(206, 51, 127, 0.28), rgba(12, 7, 12, 0.62) 58%, rgba(12, 7, 12, 0.2));
+  text-align: center;
+}
+
+.ar-capture-build__halo,
+.ar-capture-build__orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -58%);
+}
+
+.ar-capture-build__halo {
+  width: 178px;
+  height: 178px;
+  border: 1px solid rgba(255, 141, 196, 0.48);
+  box-shadow: 0 0 38px rgba(206, 51, 127, 0.32), inset 0 0 38px rgba(206, 51, 127, 0.18);
+}
+
+.ar-capture-build__orbit {
+  width: 218px;
+  height: 108px;
+  border: 1px dashed rgba(255, 217, 133, 0.72);
+  transform: translate(-50%, -60%) rotateX(66deg) rotateZ(-9deg);
+}
+
+.ar-capture-build__tower {
+  position: relative;
+  display: flex;
+  width: 132px;
+  height: 170px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-direction: column;
+  filter: drop-shadow(0 0 15px rgba(255, 141, 196, 0.8));
+}
+
+.ar-capture-build__spire {
+  width: 3px;
+  height: 22px;
+  background: linear-gradient(#fff5bc, #ff8dc4);
+  box-shadow: 0 0 9px #ffd985;
+}
+
+.ar-capture-build__level {
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 12px, rgba(255, 255, 255, 0.62) 12px 15px),
+    linear-gradient(180deg, rgba(255, 217, 133, 0.36), rgba(206, 51, 127, 0.46));
+  box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.16);
+}
+
+.ar-capture-build__level--top { width: 64px; height: 35px; border-radius: 9px 9px 2px 2px; }
+.ar-capture-build__level--middle { width: 92px; height: 44px; margin-top: 3px; border-radius: 5px 5px 2px 2px; }
+.ar-capture-build__level--base { width: 126px; height: 52px; margin-top: 3px; border-radius: 4px 4px 12px 12px; }
+
+.ar-capture-build__scan {
+  position: absolute;
+  top: 22%;
+  right: 16%;
+  left: 16%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ffd985 24%, #fff 50%, #ff8dc4 76%, transparent);
+  box-shadow: 0 0 13px #ff8dc4;
+}
+
+.ar-capture-build strong { z-index: 1; margin-top: 18px; font-family: "Baloo 2", sans-serif; font-size: 1.04rem; }
+.ar-capture-build small { z-index: 1; margin-top: 2px; color: rgba(255, 255, 255, 0.76); font-size: 0.7rem; }
 
 .ar-scanner__guide {
   display: flex;
@@ -313,6 +400,7 @@
 .ar-scanner__guide svg { flex: 0 0 auto; margin-top: 2px; color: #ff8dc4; }
 .ar-scanner__guide strong,
 .ar-scanner__guide span { display: block; }
+.ar-scanner__guide-copy { min-width: 0; }
 .ar-scanner__guide strong { font-size: 0.86rem; }
 .ar-scanner__guide span { margin-top: 3px; color: rgba(255, 255, 255, 0.75); font-size: 0.7rem; line-height: 1.5; }
 .ar-scanner__guide button {
@@ -327,6 +415,23 @@
   font-weight: 800;
   cursor: pointer;
 }
+
+.ar-scanner__guide .ar-scanner__capture-button,
+.ar-scanner__guide .ar-scanner__retake-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ar-scanner__guide .ar-scanner__capture-button {
+  color: #fff;
+  background: linear-gradient(135deg, #ce337f, #a42766);
+  box-shadow: 0 8px 20px rgba(206, 51, 127, 0.28);
+}
+
+.ar-scanner__guide .ar-scanner__capture-button svg,
+.ar-scanner__guide .ar-scanner__retake-button svg { margin: 0; color: currentColor; }
+.ar-scanner__guide .ar-scanner__retake-button { margin-right: 7px; color: #7b2555; background: #ffe9f3; }
 
 .ar-scanner__guide .ar-model-status {
   margin: 10px 0 0;
@@ -521,7 +626,17 @@
 @media (prefers-reduced-motion: no-preference) {
   .ar-intro__orbit { animation: ar-orbit 12s linear infinite; }
   .ar-scanner__line { animation: ar-scan 2.6s ease-in-out infinite; }
+  .ar-capture-build__halo { animation: ar-build-pulse 1.7s ease-in-out infinite; }
+  .ar-capture-build__orbit { animation: ar-build-orbit 2.8s linear infinite; }
+  .ar-capture-build__tower { animation: ar-build-tower 1.8s ease-in-out infinite; }
+  .ar-capture-build__scan { animation: ar-build-scan 1.5s ease-in-out infinite; }
+  .ar-capture-build--revealing { animation: ar-reveal-model 700ms ease forwards; }
 }
 
 @keyframes ar-orbit { to { transform: rotate(348deg); } }
 @keyframes ar-scan { 0%, 100% { top: 16%; opacity: 0.55; } 50% { top: 84%; opacity: 1; } }
+@keyframes ar-build-pulse { 50% { opacity: 0.55; transform: translate(-50%, -58%) scale(1.1); } }
+@keyframes ar-build-orbit { to { transform: translate(-50%, -60%) rotateX(66deg) rotateZ(351deg); } }
+@keyframes ar-build-tower { 0%, 100% { opacity: 0.68; transform: translateY(5px); } 50% { opacity: 1; transform: translateY(-5px); } }
+@keyframes ar-build-scan { 0%, 100% { top: 20%; opacity: 0.5; } 50% { top: 70%; opacity: 1; } }
+@keyframes ar-reveal-model { to { opacity: 0; transform: scale(1.04); } }

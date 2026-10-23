@@ -65,7 +65,10 @@ export default function MessengerButton() {
         </div>
       )}
 
-      <div className="messenger-fab-stack">
+      <div
+        className="messenger-fab-stack"
+        data-onboarding-target="support-actions"
+      >
         {/* Nút bấm tròn lơ lửng */}
         <button
           className="messenger-fab"

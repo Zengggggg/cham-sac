@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AlertTriangle, BookOpen, LoaderCircle, MapPin, Minus, Plus, RotateCcw, ScanLine, X } from 'lucide-react'
+import './HeritageModelDialog.scss'
 
 const initialLoadState = { status: 'loading', progress: null, message: null }
 

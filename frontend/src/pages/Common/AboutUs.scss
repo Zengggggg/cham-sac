@@ -170,11 +170,18 @@
   border-radius: 22px;
   box-shadow: 12px 12px 0 rgba(114, 50, 126, .16);
   min-height: 390px;
-  overflow: hidden;
+  overflow: visible;
   padding: 20px;
   position: relative;
   transform: rotate(2deg);
 }
+
+.about-page__character { top: -28px; right: -18px; }
+.about-page__timeline, .about-page__statement, .about-page__section--cta { position: relative; }
+.about-page__shell { position: relative; z-index: 1; }
+.about-page__timeline-character { top: -36px; right: 8%; }
+.about-page__statement-character { top: 24px; right: auto; bottom: auto; left: 5%; }
+.about-page__cta-character { top: -54px; right: 4%; }
 
 .about-page__visual-placeholder::before,
 .about-page__visual-placeholder::after {
@@ -251,7 +258,7 @@
   background: #fffdf8;
   border-bottom: 1px solid #eadfe6;
   border-top: 1px solid #eadfe6;
-  overflow: hidden;
+  overflow: visible;
   padding: 42px 0 46px;
   position: relative;
 }

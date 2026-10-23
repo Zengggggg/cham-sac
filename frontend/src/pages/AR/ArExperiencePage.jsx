@@ -1,18 +1,33 @@
-import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, BookOpen, Camera, CameraOff, Check, ChevronLeft, ChevronRight, Landmark, LockKeyhole, MapPin, ScanLine, ShieldCheck, X } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import {
+  ArrowLeft,
+  BookOpen,
+  Camera,
+  CameraOff,
+  ChevronLeft,
+  ChevronRight,
+  House,
+  MapPin,
+  RefreshCw,
+  ScanLine,
+  Sparkles,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
+import Button from '../../components/ui/Button.jsx'
+import Card from '../../components/ui/Card.jsx'
+import Modal from '../../components/ui/Modal.jsx'
 import HeritageModelDialog from '../../components/ar/HeritageModelDialog.jsx'
+import brandMark from '../../assets/elements/wtm_withstroke.png'
 import useMindARSession from '../../hooks/useMindARSession.js'
 import useArExperiences from '../../hooks/useArExperiences.js'
 import './ArExperiencePage.scss'
 
 const statusCopy = {
-  loading: 'Đang chuẩn bị bộ nhận diện…',
-  scanning: 'Đang tìm thẻ địa danh',
-  recognized: 'Đã nhận diện · Đang tắt camera',
+  loading: 'Đang tải bộ nhận diện MindAR…',
+  scanning: 'Căn thẻ địa danh để nhận diện',
 }
 
-function CameraFallback({ status, error, experienceCount, onBrowse, onRetry }) {
+function CameraFallback({ status, error, onBrowse, onRetry }) {
   const isInsecure = status === 'insecure'
   const isUnsupported = status === 'unsupported'
   const title = isInsecure
@@ -29,6 +44,7 @@ function CameraFallback({ status, error, experienceCount, onBrowse, onRetry }) {
   return (
     <section className="ar-fallback" role="alert" aria-labelledby="ar-fallback-title">
       <span className="ar-fallback__icon" aria-hidden="true"><CameraOff size={28} /></span>
+      <p className="ar-eyebrow">PHƯƠNG ÁN THAY THẾ</p>
       <h1 id="ar-fallback-title">{title}</h1>
       <p>{description}</p>
       {error?.code === 'permission-denied' && (
@@ -40,35 +56,50 @@ function CameraFallback({ status, error, experienceCount, onBrowse, onRetry }) {
       )}
       <div className="ar-fallback__actions">
         {!isInsecure && !isUnsupported && (
-          <button className="ar-button ar-button--primary" type="button" onClick={onRetry}>Thử lại</button>
+          <Button onClick={onRetry} icon={<RefreshCw size={18} aria-hidden="true" />}>
+            Thử lại
+          </Button>
         )}
-        <button className="ar-button ar-button--secondary" type="button" onClick={onBrowse}>
-          <BookOpen size={18} aria-hidden="true" /> Xem {experienceCount} địa danh
-        </button>
+        <Button as={Link} variant="secondary" to="/about-us" icon={<ArrowLeft size={18} aria-hidden="true" />}>
+          Khám phá Chạm Sắc Việt
+        </Button>
+        <Button variant="ghost" onClick={onBrowse} icon={<BookOpen size={18} aria-hidden="true" />}>
+          Xem 7 địa danh
+        </Button>
       </div>
     </section>
   )
 }
 
-function HeritageCatalog({ experiences, selectedExperience, onClose, onPreview, onSelect }) {
-  return (
-    <section className="ar-catalog" role="dialog" aria-modal="true" aria-labelledby="ar-catalog-title">
-      <div className="ar-catalog__panel">
-        <header className="ar-catalog__header">
-          <div>
-            <p>{selectedExperience ? selectedExperience.location : 'Bộ thẻ đang hỗ trợ'}</p>
-            <h2 id="ar-catalog-title">{selectedExperience ? selectedExperience.name : `${experiences.length} địa danh để khám phá`}</h2>
-          </div>
-          <button className="ar-icon-button" type="button" onClick={onClose} aria-label="Đóng danh sách địa danh">
-            <X size={22} aria-hidden="true" />
-          </button>
-        </header>
+function HeritageCatalog({ open, experiences, selectedExperience, onClose, onPreview, onSelect }) {
+  const title = selectedExperience ? selectedExperience.name : 'Khám phá 7 địa danh'
+  const description = selectedExperience
+    ? selectedExperience.tagline
+    : 'Xem trước nội dung văn hóa ngay cả khi camera chưa sẵn sàng.'
 
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={title}
+      description={description}
+      size="lg"
+      headerLeading={selectedExperience ? (
+        <Button
+          className="ar-catalog__back"
+          variant="ghost"
+          size="sm"
+          onClick={() => onSelect(null)}
+          aria-label="Quay lại danh sách tất cả địa danh"
+          icon={<ChevronLeft size={18} aria-hidden="true" />}
+        >
+          Tất cả địa danh
+        </Button>
+      ) : null}
+    >
+      <section className="ar-catalog" aria-label="Bộ thẻ địa danh đang hỗ trợ">
         {selectedExperience ? (
           <article className="ar-place-detail">
-            <button className="ar-place-detail__back" type="button" onClick={() => onSelect(null)}>
-              <ChevronLeft size={18} aria-hidden="true" /> Tất cả địa danh
-            </button>
             <div className="ar-place-detail__layout">
               <img src={selectedExperience.targetImage} alt={`Thẻ địa danh ${selectedExperience.name}`} />
               <div className="ar-place-detail__content">
@@ -77,33 +108,34 @@ function HeritageCatalog({ experiences, selectedExperience, onClose, onPreview, 
                 <p className="ar-place-detail__summary">{selectedExperience.shortDescription}</p>
                 {selectedExperience.content.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
                 {selectedExperience.model?.url && (
-                  <button className="ar-button ar-button--primary ar-place-detail__preview" type="button" onClick={() => onPreview(selectedExperience)}>
-                    <Landmark size={18} aria-hidden="true" /> Xem mô hình 3D
-                  </button>
+                  <Button
+                    className="ar-place-detail__preview"
+                    onClick={() => onPreview(selectedExperience)}
+                    icon={<Sparkles size={18} aria-hidden="true" />}
+                  >
+                    Xem mô hình 3D
+                  </Button>
                 )}
               </div>
             </div>
           </article>
         ) : (
-          <>
-            <p className="ar-catalog__intro">Chọn một thẻ để đọc nội dung văn hóa, kể cả khi camera không khả dụng.</p>
-            <div className="ar-catalog__grid">
-              {experiences.map((experience) => (
-                <button className="ar-place-card" type="button" key={experience.id} onClick={() => onSelect(experience)}>
-                  <img src={experience.targetImage} alt="" />
-                  <span className="ar-place-card__body">
-                    <small><MapPin size={13} aria-hidden="true" /> {experience.location}</small>
-                    <strong>{experience.name}</strong>
-                    <span>{experience.tagline}</span>
-                  </span>
-                  <ChevronRight size={20} aria-hidden="true" />
-                </button>
-              ))}
-            </div>
-          </>
+          <div className="ar-catalog__grid">
+            {experiences.map((experience) => (
+              <button className="ar-place-card" type="button" key={experience.id} onClick={() => onSelect(experience)}>
+                <img src={experience.targetImage} alt="" />
+                <span className="ar-place-card__body">
+                  <small><MapPin size={13} aria-hidden="true" /> {experience.location}</small>
+                  <strong>{experience.name}</strong>
+                  <span>{experience.tagline}</span>
+                </span>
+                <ChevronRight className="ar-place-card__arrow" size={20} aria-hidden="true" />
+              </button>
+            ))}
+          </div>
         )}
-      </div>
-    </section>
+      </section>
+    </Modal>
   )
 }
 
@@ -118,18 +150,6 @@ function ArExperiencePage() {
   const hasFallback = ['error', 'insecure', 'unsupported'].includes(status)
   const isViewing = status === 'viewing' && recognizedExperience
   const viewerExperience = isViewing ? recognizedExperience : previewExperience
-
-  useEffect(() => {
-    if (!catalogOpen) return undefined
-    const closeOnEscape = (event) => {
-      if (event.key === 'Escape') {
-        setCatalogOpen(false)
-        setSelectedExperience(null)
-      }
-    }
-    document.addEventListener('keydown', closeOnEscape)
-    return () => document.removeEventListener('keydown', closeOnEscape)
-  }, [catalogOpen])
 
   const openCatalog = () => setCatalogOpen(true)
   const closeCatalog = () => {
@@ -151,101 +171,136 @@ function ArExperiencePage() {
   }, [startAR])
 
   return (
-    <main className={`ar-page${isCameraActive ? ' ar-page--scanning' : ''}`}>
-      <header className="ar-toolbar">
-        <Link className="ar-toolbar__back" to="/" aria-label="Trở về trang chủ">
-          <ArrowLeft size={20} aria-hidden="true" />
-          <span>Trang chủ</span>
-        </Link>
-        <div className="ar-toolbar__brand" aria-label="Chạm Sắc Việt">
-          <Landmark size={20} aria-hidden="true" />
-          <span>CHẠM SẮC VIỆT</span>
-        </div>
-        {isCameraActive ? (
-          <button className="ar-toolbar__stop" type="button" onClick={stopAR}>
-            <CameraOff size={18} aria-hidden="true" /> Dừng camera
-          </button>
-        ) : <span className="ar-toolbar__spacer" />}
-      </header>
+    <main className={`ar-page${isCameraActive ? ' ar-page--active' : ''}`}>
+      {isCameraActive && (
+        <header className="ar-toolbar">
+          <Button
+            as={Link}
+            className="ar-toolbar__back"
+            variant="ghost"
+            size="sm"
+            to="/"
+            aria-label="Trở về trang chủ"
+            icon={<House size={19} aria-hidden="true" />}
+          >
+            Trang chủ
+          </Button>
+          <Link className="ar-toolbar__brand" to="/" aria-label="Chạm Sắc Việt - Trang chủ">
+            <img src={brandMark} alt="Chạm Sắc Việt" />
+          </Link>
+          <Button
+            className="ar-toolbar__stop"
+            variant="danger"
+            size="sm"
+            onClick={stopAR}
+            aria-label="Dừng camera"
+            icon={<CameraOff size={18} aria-hidden="true" />}
+          >
+            Dừng camera
+          </Button>
+        </header>
+      )}
 
       <section className="ar-stage" aria-label="Khu vực trải nghiệm thực tế tăng cường">
         <div className="ar-stage__mindar" ref={containerRef} aria-label="Hình ảnh camera dùng để nhận diện thẻ địa danh" />
 
         {isCameraActive && (
-          <div className="ar-scanner">
-            <div className="ar-scanner__status" role="status" aria-live="polite">
-              <span className="ar-scanner__dot" aria-hidden="true" />
-              {recognizedExperience ? `Đã nhận diện ${recognizedExperience.name}` : statusCopy[status]}
-            </div>
-            <div className={`ar-scanner__frame${recognizedExperience ? ' ar-scanner__frame--recognized' : ''}`} aria-hidden="true">
-              <span className="ar-scanner__corner ar-scanner__corner--tl" />
-              <span className="ar-scanner__corner ar-scanner__corner--tr" />
-              <span className="ar-scanner__corner ar-scanner__corner--bl" />
-              <span className="ar-scanner__corner ar-scanner__corner--br" />
-              <span className="ar-scanner__line" />
-            </div>
-            <div className="ar-scanner__guide">
-              {recognizedExperience ? <Check size={22} aria-hidden="true" /> : <ScanLine size={22} aria-hidden="true" />}
-              <div>
-                <strong>{recognizedExperience ? 'Đang mở không gian khám phá' : 'Đưa toàn bộ thẻ vào khung'}</strong>
-                <span>{recognizedExperience ? 'Camera sẽ tắt ngay; mô hình 3D không dùng ảnh chụp làm nền.' : 'Giữ máy ổn định, đủ sáng và cách thẻ khoảng 20–40 cm.'}</span>
+          <>
+            <div className="ar-scanner">
+              <div className="ar-scanner__status" role="status" aria-live="polite">
+                <span className="ar-scanner__dot" aria-hidden="true" />
+                {recognizedExperience ? `Đã nhận diện: ${recognizedExperience.name}` : statusCopy[status]}
+              </div>
+              <div className={`ar-scanner__frame${recognizedExperience ? ' ar-scanner__frame--recognized' : ''}`}>
+                <span className="ar-scanner__corner ar-scanner__corner--tl" />
+                <span className="ar-scanner__corner ar-scanner__corner--tr" />
+                <span className="ar-scanner__corner ar-scanner__corner--bl" />
+                <span className="ar-scanner__corner ar-scanner__corner--br" />
+                <span className="ar-scanner__line" />
               </div>
             </div>
-          </div>
+            <Card className="ar-scanner__guide">
+              <div className="ar-scanner__guide-layout">
+                {recognizedExperience
+                  ? <Sparkles size={22} aria-hidden="true" />
+                  : <ScanLine size={22} aria-hidden="true" />}
+                <div className="ar-scanner__guide-copy">
+                  <strong>
+                    {recognizedExperience
+                      ? 'Đang mở mô hình di sản'
+                      : status === 'loading'
+                        ? 'Đang chuẩn bị bộ nhận diện'
+                        : 'Đưa hình địa danh vào giữa khung'}
+                  </strong>
+                  <span>
+                    {recognizedExperience
+                      ? 'Camera sẽ tự tắt; mô hình 3D mở trong một cửa sổ riêng để bạn xoay và thu phóng.'
+                      : status === 'loading'
+                        ? 'Lần khởi động đầu tiên có thể mất vài giây.'
+                        : 'Giữ điện thoại ổn định, đủ sáng và cách hình khoảng 20–40 cm.'}
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </>
         )}
 
-        {!isCameraActive && !hasFallback && !isViewing && (
+        {!isCameraActive && !hasFallback && !viewerExperience && (
           <section className="ar-intro" aria-labelledby="ar-page-title">
             <div className="ar-intro__copy">
-              <span className="ar-intro__signal"><span aria-hidden="true" /> Nhận diện ngay trên thiết bị</span>
-              <h1 id="ar-page-title">Quét thẻ. Xoay cả di sản.</h1>
+              <p className="ar-eyebrow"><Sparkles size={17} aria-hidden="true" /> TRẢI NGHIỆM DI SẢN SỐ</p>
+              <h1 id="ar-page-title">Chạm vào di sản,<span>đánh thức câu chuyện</span></h1>
               <p className="ar-intro__lead">
-                Camera chỉ dùng để tìm đúng thẻ. Nhận diện xong, camera tự tắt và mô hình 3D mở trong một thẻ khám phá riêng để bạn xoay, phóng to và đọc câu chuyện địa danh.
+                Căn một trong 7 thẻ địa danh vào khung. Khi nhận diện thành công, camera tự tắt và mô hình 3D mở để bạn tự do khám phá.
               </p>
               <div className="ar-intro__actions">
-                <button className="ar-button ar-button--primary" type="button" onClick={startAR} disabled={isRequesting}>
-                  <Camera size={20} aria-hidden="true" />
+                <Button
+                  className="ar-intro__start"
+                  size="lg"
+                  onClick={startAR}
+                  disabled={isRequesting}
+                  icon={<Camera size={20} aria-hidden="true" />}
+                >
                   {isRequesting ? statusCopy.loading : 'Mở camera quét thẻ'}
-                </button>
-                <button className="ar-button ar-button--secondary" type="button" onClick={openCatalog}>
-                  <BookOpen size={18} aria-hidden="true" /> Xem {experiences.length} địa danh
-                </button>
+                </Button>
+                <Button
+                  className="ar-intro__browse"
+                  size="lg"
+                  variant="secondary"
+                  onClick={openCatalog}
+                  icon={<BookOpen size={18} aria-hidden="true" />}
+                >
+                  Xem 7 địa danh
+                </Button>
               </div>
-              <ul className="ar-intro__privacy" aria-label="Cam kết quyền riêng tư">
-                <li><ShieldCheck size={18} aria-hidden="true" /> Nhận diện trên thiết bị</li>
-                <li><LockKeyhole size={18} aria-hidden="true" /> Không lưu ảnh hay video</li>
-                <li><Check size={18} aria-hidden="true" /> Không cần đăng nhập</li>
-              </ul>
+              <p className="ar-intro__consent">
+                Trình duyệt chỉ hỏi quyền camera sau khi bạn chọn bắt đầu.
+              </p>
             </div>
 
-            <aside className="ar-intro__workbench" aria-label="Ba bước trải nghiệm AR">
-              <div className="ar-intro__workbench-head">
-                <span>Quy trình</span>
-                <strong>Camera dừng sau bước 2</strong>
+            <Card
+              className="ar-intro__guide-card"
+              eyebrow="3 BƯỚC KHÁM PHÁ"
+              title="Đưa thẻ vào khung"
+              description="Camera chỉ dùng để nhận diện thẻ và tự tắt trước khi mô hình 3D xuất hiện."
+            >
+              <div className="ar-intro__preview" aria-hidden="true">
+                <span className="ar-intro__preview-corner ar-intro__preview-corner--tl" />
+                <span className="ar-intro__preview-corner ar-intro__preview-corner--tr" />
+                <span className="ar-intro__preview-corner ar-intro__preview-corner--bl" />
+                <span className="ar-intro__preview-corner ar-intro__preview-corner--br" />
+                <Camera size={52} strokeWidth={1.7} />
               </div>
               <ol className="ar-intro__steps">
-                <li><span>1</span><div><strong>Mở camera</strong><small>Căn thẻ địa danh vào khung.</small></div></li>
-                <li><span>2</span><div><strong>Nhận diện thẻ</strong><small>MindAR đối chiếu trên thiết bị.</small></div></li>
-                <li><span>3</span><div><strong>Khám phá mô hình</strong><small>Xoay mọi hướng, thu phóng và đọc thông tin.</small></div></li>
+                <li><span>01</span> Cho phép camera</li>
+                <li><span>02</span> Căn thẻ địa danh</li>
+                <li><span>03</span> Xoay và xem mô hình</li>
               </ol>
-              <div className="ar-intro__targets" aria-label="Một số thẻ đang hỗ trợ">
-                {experiences.slice(0, 4).map((experience) => (
-                  <img key={experience.id} src={experience.targetImage} alt={`Thẻ ${experience.name}`} />
-                ))}
-              </div>
-            </aside>
+            </Card>
           </section>
         )}
 
-        {hasFallback && (
-          <CameraFallback
-            status={status}
-            error={error}
-            experienceCount={experiences.length}
-            onBrowse={openCatalog}
-            onRetry={startAR}
-          />
-        )}
+        {hasFallback && <CameraFallback status={status} error={error} onBrowse={openCatalog} onRetry={startAR} />}
       </section>
 
       {viewerExperience && (
@@ -256,15 +311,14 @@ function ArExperiencePage() {
         />
       )}
 
-      {catalogOpen && (
-        <HeritageCatalog
-          experiences={experiences}
-          selectedExperience={selectedExperience}
-          onClose={closeCatalog}
-          onPreview={previewModel}
-          onSelect={setSelectedExperience}
-        />
-      )}
+      <HeritageCatalog
+        open={catalogOpen}
+        experiences={experiences}
+        selectedExperience={selectedExperience}
+        onClose={closeCatalog}
+        onPreview={previewModel}
+        onSelect={setSelectedExperience}
+      />
     </main>
   )
 }

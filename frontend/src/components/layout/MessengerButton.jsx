@@ -69,6 +69,7 @@ export default function MessengerButton() {
         {/* Nút bấm tròn lơ lửng */}
         <button
           className="messenger-fab"
+          data-onboarding-target="messenger"
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Mở Messenger"
           aria-expanded={isOpen}
@@ -82,6 +83,7 @@ export default function MessengerButton() {
 
         <Link
           className="faq-fab"
+          data-onboarding-target="faq"
           to="/faq"
           aria-label="Mở câu hỏi thường gặp"
           title="Câu hỏi thường gặp"

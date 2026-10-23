@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import PermIdentityIcon from "@mui/icons-material/PermIdentity";
 import { logoutUser } from "../../services/authService.js";
+import { APP_VERSION } from "../../data/appVersion.js";
 
 // Các nghiệp vụ cũ được giữ lại dưới dạng comment để có thể bật lại:
 // import { authAPI } from "../apis/authAPI";
@@ -125,6 +126,7 @@ function Navbar() {
             {visibleNavigationItems.map((item) => (
               <Link
                 key={item.href}
+                data-onboarding-target={item.href === "/" ? "home" : item.href === "/products" ? "products" : item.href === "/ar" ? "ar" : item.href === "/about-us" ? "about" : item.href === "/contact-us" ? "contact" : undefined}
                 to={item.href}
                 className={`fpt-navbar__nav-link${location.pathname === item.href ? " active" : ""}`}
               >
@@ -135,6 +137,7 @@ function Navbar() {
           <div className="fpt-navbar__actions">
             <Link
               className="fpt-navbar__icon-link"
+              data-onboarding-target="cart"
               to="/cart"
               aria-label="Giỏ hàng"
               title="Giỏ hàng"
@@ -146,6 +149,7 @@ function Navbar() {
                 <>
                   <button
                     className="fpt-navbar__icon-link fpt-navbar__account-trigger"
+                    data-onboarding-target="account"
                     type="button"
                     onClick={() => setAccountOpen((open) => !open)}
                     aria-label="Tài khoản"
@@ -187,12 +191,16 @@ function Navbar() {
                     >
                       <LogOut size={17} aria-hidden="true" /> Đăng xuất
                     </button>
+                    <div className="fpt-navbar__app-version" role="presentation">
+                      <span>Phiên bản {APP_VERSION}</span>
+                    </div>
                   </div>
                 </>
               ) : (
                 <>
                   <button
                     className="fpt-navbar__icon-link fpt-navbar__account-trigger"
+                    data-onboarding-target="account"
                     type="button"
                     onClick={() => setAccountOpen((open) => !open)}
                     aria-label="Tài khoản"
@@ -227,6 +235,9 @@ function Navbar() {
                     >
                       <UserPlus size={17} aria-hidden="true" /> Đăng ký
                     </Link>
+                    <div className="fpt-navbar__app-version" role="presentation">
+                      <span>Phiên bản {APP_VERSION}</span>
+                    </div>
                   </div>
                 </>
               )}

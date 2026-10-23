@@ -5,6 +5,7 @@ import Footer from './components/layout/Footer.jsx'
 import Header from './components/layout/Header.jsx'
 import Navbar from './components/layout/Navbar.jsx'
 import MessengerButton from './components/layout/MessengerButton.jsx'
+import OnboardingTour from './components/layout/OnboardingTour.jsx'
 import HomePage from './pages/Common/HomePage.jsx'
 import ContactUsPage from './pages/Common/ContactUsPage.jsx'
 import FAQ from './pages/Common/FAQ.jsx'
@@ -57,6 +58,7 @@ function Layout({ children }) {
       <main className="app-main">{children}</main>
       <Footer />
       <MessengerButton />
+      <OnboardingTour />
     </div>
   )
 }
@@ -87,7 +89,7 @@ function App() {
         <Route path="/payment/success" element={<Layout><PaymentPage /></Layout>} />
         <Route path="/payment/cancel" element={<Layout><PaymentPage /></Layout>} />
         <Route path="/my-orders" element={<Layout><MyOrderPage /></Layout>} />
-        <Route path="/ar" element={<ArExperiencePage />} />
+        <Route path="/ar" element={<Layout><ArExperiencePage /></Layout>} />
         <Route path="/haunted-ghost" element={<Navigate to="/ar" replace />} />
         <Route path="/introduce-hlw26" element={<Layout><ListProductPage /></Layout>} />
         <Route path="/data-policy" element={<Layout><DataPolicy /></Layout>} />

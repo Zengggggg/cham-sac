@@ -12,6 +12,7 @@ import {
 import { Link } from "react-router-dom";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
+import FloatingCharacter from "../../components/layout/FloatingCharacter.jsx";
 import elementFlag from "../../assets/elements/IMG_4820.PNG";
 import elementRedFold from "../../assets/elements/IMG_4821.PNG";
 import elementTealFold from "../../assets/elements/IMG_4822.PNG";
@@ -140,6 +141,7 @@ function AboutUs() {
             role="img"
             aria-label="Ảnh minh họa placeholder về di sản Việt Nam"
           >
+            <FloatingCharacter variant={2} className="about-page__character" />
             <div className="about-page__visual-frame">
               <Image size={42} aria-hidden="true" />
               <strong>Ảnh minh họa</strong>
@@ -160,6 +162,7 @@ function AboutUs() {
         className="about-page__timeline"
         aria-label="Dòng thời gian Chạm Sắc Việt"
       >
+        <FloatingCharacter variant={1} className="about-page__timeline-character" />
         <span className="about-page__timeline-watermark" aria-hidden="true">
           DI SẢN
         </span>
@@ -189,6 +192,7 @@ function AboutUs() {
         className="about-page__statement"
         aria-label="Tuyên ngôn Chạm Sắc Việt"
       >
+        <FloatingCharacter variant={3} className="about-page__statement-character" />
         <img
           className="about-page__statement-element about-page__statement-element--flag"
           src={elementFlag}
@@ -349,6 +353,7 @@ function AboutUs() {
       </section>
 
       <section className="about-page__section about-page__section--cta">
+        <FloatingCharacter variant={0} className="about-page__cta-character" />
         <div className="about-page__shell about-page__cta">
           <div className="about-page__cta-copy">
             <p className="about-page__eyebrow">

@@ -105,3 +105,36 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+@media (pointer: fine) {
+  html,
+  body,
+  body * {
+    cursor: url("./assets/cursors/IMG_4825.png") 32 21, auto;
+  }
+
+  :where(
+    a,
+    button,
+    summary,
+    label[for],
+    input,
+    select,
+    textarea,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ),
+  :where(
+    a,
+    button,
+    summary,
+    label[for],
+    input,
+    select,
+    textarea,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"])
+  ) * {
+    cursor: url("./assets/cursors/IMG_4826.png") 32 21, pointer !important;
+  }
+}

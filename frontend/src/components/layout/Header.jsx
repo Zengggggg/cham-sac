@@ -1,8 +1,7 @@
 import "./Header.css";
 import { Mail, Phone } from "lucide-react";
 import FacebookIcon from "@mui/icons-material/Facebook";
-import InstagramIcon from "@mui/icons-material/Instagram";
-import YouTubeIcon from "@mui/icons-material/YouTube";
+import { SiZalo } from "react-icons/si";
 import { useNavigate } from "react-router-dom";
 
 // Các nghiệp vụ cũ được giữ lại để có thể khôi phục khi cần:
@@ -36,30 +35,21 @@ function Header() {
           <div className="fpt-header__actions">
             <a
               className="fpt-header__social-link"
-              href="https://www.facebook.com/fptuhalloween"
+              href="https://zalo.me/0374385234"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Zalo Chạm Sắc Việt"
+            >
+              <SiZalo size={26} aria-hidden="true" />
+            </a>
+            <a
+              className="fpt-header__social-link"
+              href="https://www.facebook.com/61592108695547"
               target="_blank"
               rel="noreferrer"
               aria-label="Facebook"
             >
               <FacebookIcon fontSize="small" />
-            </a>
-            <a
-              className="fpt-header__social-link"
-              href="https://www.youtube.com"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="YouTube"
-            >
-              <YouTubeIcon fontSize="small" />
-            </a>
-            <a
-              className="fpt-header__social-link"
-              href="https://www.instagram.com"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Instagram"
-            >
-              <InstagramIcon fontSize="small" />
             </a>
             <button
               type="button"

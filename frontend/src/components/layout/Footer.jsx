@@ -3,10 +3,9 @@ import "./Footer.css";
 import wtm from "../../assets/wtm.png";
 import EmailIcon from "@mui/icons-material/Email";
 import FacebookIcon from "@mui/icons-material/Facebook";
-import InstagramIcon from "@mui/icons-material/Instagram";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import YouTubeIcon from "@mui/icons-material/YouTube";
 import { ChevronDown } from "lucide-react";
+import { SiZalo } from "react-icons/si";
 import { useState } from "react";
 
 // Các nghiệp vụ cũ được giữ lại dưới dạng comment:
@@ -101,31 +100,22 @@ function Footer() {
             <h4 className="fpt-footer__social-title">Kết nối với chúng tôi</h4>
             <div className="fpt-footer__social-buttons">
               <a
-                href="https://www.facebook.com/fptuhalloween"
+                href="https://zalo.me/0374385234"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="Facebook FPTU Halloween"
+                aria-label="Zalo Chạm Sắc Việt"
+                className="fpt-footer__social-btn fpt-footer__social-btn--zalo"
+              >
+                <SiZalo size={30} aria-hidden="true" />
+              </a>
+              <a
+                href="https://www.facebook.com/61592108695547"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook Chạm Sắc Việt"
                 className="fpt-footer__social-btn fpt-footer__social-btn--facebook"
               >
                 <FacebookIcon />
-              </a>
-              <a
-                href="https://www.facebook.com/fuboardgameclub"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Facebook Board Game Club"
-                className="fpt-footer__social-btn fpt-footer__social-btn--instagram"
-              >
-                <InstagramIcon />
-              </a>
-              <a
-                href="https://www.tiktok.com/@fptu.halloween2025"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="TikTok FPTU Halloween"
-                className="fpt-footer__social-btn fpt-footer__social-btn--youtube"
-              >
-                <YouTubeIcon />
               </a>
             </div>
           </div>

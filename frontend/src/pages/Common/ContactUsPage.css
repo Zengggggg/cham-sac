@@ -31,8 +31,7 @@
 .contact-page__social-link:hover { background: #fffefa; border-color: #ce337f; transform: translateY(-1px); }
 .contact-page__social-link:focus-visible { outline: 3px solid #eea53b; outline-offset: 3px; }
 .contact-page__social-link--facebook { color: #1877f2; }
-.contact-page__social-link--instagram { color: #c13584; }
-.contact-page__social-link--youtube { color: #d52841; }
+.contact-page__social-link--zalo { color: #0068ff; }
 .contact-page__form { display: grid; gap: 20px; }
 .contact-page__fields { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .contact-page__field { color: #514653; display: flex; flex-direction: column; font-size: 13px; font-weight: 700; gap: 7px; }

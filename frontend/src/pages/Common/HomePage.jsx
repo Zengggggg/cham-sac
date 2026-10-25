@@ -24,8 +24,17 @@ import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import colorfulStarArtifact from "../../assets/elements/IMG_4814.PNG";
 import diceArtifact from "../../assets/elements/IMG_4818.PNG";
-import lotusFlower from "../../assets/elements/lotus-flower.svg";
+import flowerImage from "../../assets/flower.png";
 import quocTuGiamModel from "../../assets/ar_files/QuocTuGiam.glb";
+import fansipanImage from "../../assets/landmarks/fansipan.jpg";
+import hoGuomImage from "../../assets/landmarks/ho-guom.jpg";
+import vanMieuImage from "../../assets/landmarks/van-mieu.jpg";
+import hoaLuImage from "../../assets/landmarks/hoa-lu.jpg";
+import hueImage from "../../assets/landmarks/hue.jpg";
+import cauRongImage from "../../assets/landmarks/cau-rong.jpg";
+import dinhDocLapImage from "../../assets/landmarks/dinh-doc-lap.jpg";
+import cuChiImage from "../../assets/landmarks/cu-chi.jpg";
+import muiCaMauImage from "../../assets/landmarks/mui-ca-mau.jpg";
 import FloatingCharacter from "../../components/layout/FloatingCharacter.jsx";
 import "./HomePage.scss";
 
@@ -37,6 +46,7 @@ const landmarks = [
     fact: "Nóc nhà Đông Dương, cao 3.147,3 m giữa dãy Hoàng Liên Sơn.",
     tone: "gold",
     icon: Mountain,
+    image: fansipanImage,
   },
   {
     name: "Hồ Gươm",
@@ -45,6 +55,7 @@ const landmarks = [
     fact: "Hồ Hoàn Kiếm gắn với truyền thuyết vua Lê Thái Tổ trả gươm báu.",
     tone: "pink",
     icon: Landmark,
+    image: hoGuomImage,
   },
   {
     name: "Văn Miếu – Quốc Tử Giám",
@@ -53,6 +64,7 @@ const landmarks = [
     fact: "Di tích lưu giữ dấu ấn giáo dục và truyền thống hiếu học của Việt Nam.",
     tone: "turquoise",
     icon: GraduationCap,
+    image: vanMieuImage,
   },
   {
     name: "Cố đô Hoa Lư",
@@ -61,6 +73,7 @@ const landmarks = [
     fact: "Kinh đô của Đại Cồ Việt từ năm 968 đến năm 1010.",
     tone: "pink",
     icon: Castle,
+    image: hoaLuImage,
   },
   {
     name: "Cố đô Huế",
@@ -69,6 +82,7 @@ const landmarks = [
     fact: "Kinh đô triều Nguyễn bên sông Hương, lưu dấu quần thể kiến trúc cung đình.",
     tone: "gold",
     icon: Castle,
+    image: hueImage,
   },
   {
     name: "Cầu Rồng",
@@ -77,6 +91,7 @@ const landmarks = [
     fact: "Cây cầu hình rồng bắc qua sông Hàn, nổi bật với màn phun lửa và nước.",
     tone: "turquoise",
     icon: Waves,
+    image: cauRongImage,
   },
   {
     name: "Dinh Độc Lập",
@@ -85,6 +100,7 @@ const landmarks = [
     fact: "Công trình gắn với dấu mốc lịch sử ngày 30 tháng 4 năm 1975.",
     tone: "gold",
     icon: Building2,
+    image: dinhDocLapImage,
   },
   {
     name: "Địa đạo Củ Chi",
@@ -93,6 +109,7 @@ const landmarks = [
     fact: "Hệ thống đường hầm thể hiện sự sáng tạo và tinh thần kiên cường.",
     tone: "pink",
     icon: Compass,
+    image: cuChiImage,
   },
   {
     name: "Mũi Cà Mau",
@@ -101,6 +118,7 @@ const landmarks = [
     fact: "Vùng cực Nam đất liền với cảnh quan ven biển và hệ sinh thái rừng ngập mặn.",
     tone: "turquoise",
     icon: Trees,
+    image: muiCaMauImage,
   },
 ];
 
@@ -549,11 +567,16 @@ function HomePage() {
                 title={landmark.name}
                 description={landmark.location}
               >
+                <img
+                  className="home-landmark__background"
+                  src={landmark.image}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  aria-hidden="true"
+                />
                 <LandmarkIcon className="home-landmark__icon" size={20} aria-hidden="true" />
                 <p>{landmark.fact}</p>
-                <span className="home-landmark__index" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
               </Card>
             );
           })}
@@ -626,9 +649,8 @@ function HomePage() {
       </section>
 
       <section className="home-final-cta" aria-label="Khám phá cửa hàng">
-        <div className="home-final-cta__lotus-group" aria-hidden="true">
-          <img className="home-final-cta__lotus" src={lotusFlower} alt="" />
-          <img className="home-final-cta__lotus" src={lotusFlower} alt="" />
+        <div className="home-final-cta__flower-group" aria-hidden="true">
+          <img className="home-final-cta__flower" src={flowerImage} alt="" />
         </div>
         <div>
           <p className="home-eyebrow">Mang câu chuyện Việt về nhà</p>

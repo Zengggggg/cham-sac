@@ -19,6 +19,90 @@
   z-index: 0;
 }
 
+.about-page__flower-doodle {
+  animation: about-flower-doodle-float 5.4s ease-in-out infinite;
+  filter: drop-shadow(4px 6px 0 rgba(114, 50, 126, .14));
+  opacity: .92;
+  pointer-events: none;
+  position: absolute;
+  transform-origin: 50% 86%;
+  user-select: none;
+  z-index: 0;
+}
+
+.about-page__flower-doodle--hero {
+  --flower-rotation: -11deg;
+  bottom: 24px;
+  left: 2.5%;
+  width: clamp(58px, 6vw, 86px);
+}
+
+.about-page__flower-doodle--timeline {
+  --flower-rotation: 10deg;
+  animation-delay: -1.2s;
+  animation-duration: 5.8s;
+  bottom: -12px;
+  left: 3%;
+  width: clamp(52px, 5vw, 72px);
+}
+
+.about-page__flower-doodle--team {
+  --flower-rotation: -8deg;
+  animation-delay: -2.4s;
+  animation-duration: 5.1s;
+  bottom: 26px;
+  left: 2.5%;
+  width: clamp(62px, 6vw, 88px);
+}
+
+.about-page__flower-doodle--values {
+  --flower-rotation: 12deg;
+  animation-delay: -3.1s;
+  animation-duration: 6s;
+  right: 3%;
+  top: 46px;
+  width: clamp(58px, 5.5vw, 82px);
+}
+
+.about-page__flower-doodle--values-top-left {
+  --flower-rotation: -10deg;
+  animation-delay: -1.8s;
+  animation-duration: 5.7s;
+  left: 3%;
+  top: 42px;
+  width: clamp(54px, 5vw, 76px);
+}
+
+.about-page__flower-doodle--journey {
+  --flower-rotation: -12deg;
+  animation-delay: -4s;
+  animation-duration: 5.6s;
+  bottom: 30px;
+  left: 2.5%;
+  opacity: .78;
+  width: clamp(64px, 6.5vw, 94px);
+}
+
+.about-page__flower-doodle--journey-top-right {
+  --flower-rotation: 11deg;
+  animation-delay: -2.7s;
+  animation-duration: 6.1s;
+  opacity: .76;
+  right: 3%;
+  top: 42px;
+  width: clamp(56px, 5.5vw, 80px);
+}
+
+@keyframes about-flower-doodle-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--flower-rotation, 0deg)) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) rotate(var(--flower-rotation, 0deg)) scale(1.035);
+  }
+}
+
 .about-page__page-element--hero-flag {
   max-width: 210px;
   right: 3%;
@@ -57,6 +141,22 @@
   top: 58px;
   transform: rotate(18deg);
   width: 6vw;
+}
+
+.about-page__page-element--values-teal {
+  bottom: -76px;
+  left: -18px;
+  max-width: 155px;
+  transform: rotate(-15deg);
+  width: 12vw;
+}
+
+.about-page__page-element--values-red {
+  bottom: -58px;
+  max-width: 135px;
+  right: 2%;
+  transform: rotate(14deg);
+  width: 11vw;
 }
 
 .about-page__page-element--journey-teal {
@@ -181,7 +281,12 @@
 .about-page__shell { position: relative; z-index: 1; }
 .about-page__timeline-character { top: -36px; right: 8%; }
 .about-page__statement-character { top: 24px; right: auto; bottom: auto; left: 5%; }
-.about-page__cta-character { top: -54px; right: 4%; }
+.about-page__cta-character {
+  max-height: 230px;
+  right: 4%;
+  top: 50px;
+  width: clamp(130px, 12vw, 190px);
+}
 
 .about-page__visual-placeholder::before,
 .about-page__visual-placeholder::after {
@@ -847,12 +952,29 @@
   max-width: 540px;
 }
 
-.about-page__cta-tags span {
+.about-page__cta-tags a {
   background: rgba(206, 51, 127, .16);
   border: 1px solid rgba(238, 165, 59, .42);
+  border-radius: 9px;
   color: #fff9ed;
+  cursor: pointer;
   font-size: 13px;
   padding: 9px 13px;
+  text-decoration: none;
+  transition: background-color 180ms ease, border-color 180ms ease,
+    color 180ms ease, transform 180ms ease;
+}
+
+.about-page__cta-tags a:hover {
+  background: rgba(206, 51, 127, .34);
+  border-color: #eea53b;
+  color: #fffdf8;
+  transform: translateY(-2px);
+}
+
+.about-page__cta-tags a:focus-visible {
+  outline: 3px solid #eea53b;
+  outline-offset: 3px;
 }
 
 .about-page__cta .ui-button {
@@ -925,7 +1047,7 @@
 }
 
 .about-page__cta-collage-element--flag {
-  right: 1%;
+  right: 32%;
   top: -28px;
   transform: rotate(12deg);
   width: 145px;
@@ -1045,6 +1167,30 @@
     width: 48px;
   }
 
+  .about-page__flower-doodle--values-top-left {
+    left: 4px;
+    top: 22px;
+    width: 50px;
+  }
+
+  .about-page__flower-doodle--values {
+    right: 4px;
+    top: 24px;
+    width: 52px;
+  }
+
+  .about-page__page-element--values-teal {
+    bottom: -42px;
+    left: -30px;
+    width: 92px;
+  }
+
+  .about-page__page-element--values-red {
+    bottom: -34px;
+    right: -24px;
+    width: 82px;
+  }
+
   .about-page__page-element--journey-teal {
     bottom: -54px;
     right: -34px;
@@ -1055,6 +1201,12 @@
     left: -22px;
     top: 24px;
     width: 98px;
+  }
+
+  .about-page__flower-doodle--journey-top-right {
+    right: 4px;
+    top: 24px;
+    width: 52px;
   }
 
   .about-page__values-grid,
@@ -1246,5 +1398,10 @@
 @media (prefers-reduced-motion: reduce) {
   .about-page__visual-placeholder {
     transform: none;
+  }
+
+  .about-page__flower-doodle {
+    animation: none;
+    transform: rotate(var(--flower-rotation, 0deg));
   }
 }

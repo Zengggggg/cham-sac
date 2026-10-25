@@ -16,11 +16,14 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const completeLogin = useCallback((response) => {
-    const user = response.data.user;
-    toast.success(response.message || "Đăng nhập thành công.");
-    navigate(user.role === "admin" ? "/admin/dashboard" : "/");
-  }, [navigate]);
+  const completeLogin = useCallback(
+    (response) => {
+      const user = response.data.user;
+      toast.success(response.message || "Đăng nhập thành công.");
+      navigate(user.role === "admin" ? "/admin/dashboard" : "/");
+    },
+    [navigate],
+  );
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -39,22 +42,25 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoogleCredential = useCallback(async (credentialResponse) => {
-    if (!credentialResponse?.credential) {
-      toast.error("Google không trả về thông tin đăng nhập hợp lệ.");
-      return;
-    }
+  const handleGoogleCredential = useCallback(
+    async (credentialResponse) => {
+      if (!credentialResponse?.credential) {
+        toast.error("Google không trả về thông tin đăng nhập hợp lệ.");
+        return;
+      }
 
-    setGoogleLoading(true);
-    try {
-      const response = await loginWithGoogle(credentialResponse.credential);
-      completeLogin(response);
-    } catch (error) {
-      toast.error(error.message || "Không thể đăng nhập bằng Google.");
-    } finally {
-      setGoogleLoading(false);
-    }
-  }, [completeLogin]);
+      setGoogleLoading(true);
+      try {
+        const response = await loginWithGoogle(credentialResponse.credential);
+        completeLogin(response);
+      } catch (error) {
+        toast.error(error.message || "Không thể đăng nhập bằng Google.");
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    [completeLogin],
+  );
 
   return (
     <main className="login-page" aria-label="Đăng nhập Chạm Sắc Việt">

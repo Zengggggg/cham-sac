@@ -14,6 +14,7 @@ import YouTubeIcon from "@mui/icons-material/YouTube";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import Input from "../../components/ui/Input.jsx";
+import FloatingCharacter from "../../components/layout/FloatingCharacter.jsx";
 import elementStar from "../../assets/elements/IMG_4811.PNG";
 import elementTealFold from "../../assets/elements/IMG_4822.PNG";
 import "./ContactUsPage.css";
@@ -124,6 +125,7 @@ export default function ContactUsPage() {
       <img className="contact-page__element contact-page__element--star" src={elementStar} alt="" aria-hidden="true" />
       <div className="contact-page__shell">
         <header className="contact-page__hero">
+          <FloatingCharacter variant={1} className="contact-page__character" />
           <p className="contact-page__eyebrow">
             <Mail size={16} aria-hidden="true" /> KẾT NỐI CÙNG CHẠM SẮC VIỆT
           </p>

@@ -121,6 +121,18 @@
   color: #b12069;
   outline: none;
 }
+.fpt-navbar__app-version {
+  border-top: 1px solid #eadfe6;
+  color: #8b8192;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+  padding: 9px 12px 2px;
+  text-align: center;
+  white-space: nowrap;
+}
 .fpt-navbar__icon-link {
   display: inline-flex;
   align-items: center;

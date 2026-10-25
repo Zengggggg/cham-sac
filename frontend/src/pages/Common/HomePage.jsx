@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -12,15 +13,20 @@ import {
   Sparkles,
   Trees,
   Waves,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
+import * as THREE from "three";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Link } from "react-router-dom";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
-import brandMark from "../../assets/wtm.png";
-import starArtifact from "../../assets/elements/IMG_4811.PNG";
 import colorfulStarArtifact from "../../assets/elements/IMG_4814.PNG";
 import diceArtifact from "../../assets/elements/IMG_4818.PNG";
-import flagArtifact from "../../assets/elements/IMG_4820.PNG";
+import lotusFlower from "../../assets/elements/lotus-flower.svg";
+import quocTuGiamModel from "../../assets/ar_files/QuocTuGiam.glb";
+import FloatingCharacter from "../../components/layout/FloatingCharacter.jsx";
 import "./HomePage.scss";
 
 const landmarks = [
@@ -119,6 +125,299 @@ const steps = [
   },
 ];
 
+const MODEL_ZOOM_MIN = 0.4;
+const MODEL_ZOOM_MAX = 2.5;
+const SMALL_SCREEN_QUERY = "(max-width: 640px)";
+
+function isSmallScreen() {
+  return window.matchMedia(SMALL_SCREEN_QUERY).matches;
+}
+
+function syncGroundShadow(interaction, scale) {
+  if (!interaction.model || !interaction.groundShadow) return;
+
+  interaction.groundShadow.position.set(
+    interaction.model.position.x,
+    interaction.model.position.y + interaction.localBottom * scale - 0.012,
+    interaction.model.position.z,
+  );
+}
+
+function applyModelZoom(interaction, nextZoom) {
+  interaction.zoom = THREE.MathUtils.clamp(
+    nextZoom,
+    MODEL_ZOOM_MIN,
+    MODEL_ZOOM_MAX,
+  );
+  if (!interaction.model) return;
+
+  const scale = interaction.baseScale * interaction.zoom;
+  interaction.model.scale.setScalar(scale);
+  syncGroundShadow(interaction, scale);
+}
+
+function HeroModel() {
+  const mountRef = useRef(null);
+  const interactionRef = useRef({
+    model: null,
+    groundShadow: null,
+    baseScale: 1,
+    localBottom: 0,
+    zoom: 1,
+    active: false,
+    lastX: 0,
+    lastPinchDistance: null,
+    pointers: new Map(),
+  });
+
+  const setZoom = (nextZoom) => {
+    applyModelZoom(interactionRef.current, nextZoom);
+  };
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return undefined;
+    const interaction = interactionRef.current;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+    camera.position.set(0, 0.25, 4.8);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    renderer.setClearColor(0x000000, 0);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    mount.appendChild(renderer.domElement);
+    const handleWheel = (event) => {
+      if (isSmallScreen()) return;
+
+      event.preventDefault();
+      const interaction = interactionRef.current;
+      applyModelZoom(interaction, interaction.zoom - event.deltaY * 0.001);
+    };
+    mount.addEventListener("wheel", handleWheel, { passive: false });
+    scene.add(new THREE.HemisphereLight(0xfff7eb, 0x211832, 3.2));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    keyLight.position.set(3, 5, 4);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.near = 0.1;
+    keyLight.shadow.camera.far = 15;
+    keyLight.shadow.camera.left = -3;
+    keyLight.shadow.camera.right = 3;
+    keyLight.shadow.camera.top = 3;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.bias = -0.0008;
+    keyLight.shadow.normalBias = 0.015;
+    scene.add(keyLight);
+    const fillLight = new THREE.DirectionalLight(0xeea53b, 1.8);
+    fillLight.position.set(-3, 1, 2);
+    scene.add(fillLight);
+
+    let model;
+    let groundShadow;
+    let frameId = null;
+    let visibilityObserver;
+    let isVisible = !("IntersectionObserver" in window);
+    let disposed = false;
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath("/draco/");
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.setDRACOLoader(dracoLoader);
+    gltfLoader.load(quocTuGiamModel, (gltf) => {
+      if (disposed) return;
+      const sourceModel = gltf.scene;
+      const bounds = new THREE.Box3().setFromObject(sourceModel);
+      const size = bounds.getSize(new THREE.Vector3());
+      const center = bounds.getCenter(new THREE.Vector3());
+      model = new THREE.Group();
+      sourceModel.position.set(-center.x, -center.y, -center.z);
+      model.add(sourceModel);
+      const baseScale = 2 / (Math.max(size.x, size.y, size.z) || 1);
+      const localBottom = bounds.min.y - center.y;
+      const initialScale = baseScale * interactionRef.current.zoom;
+      interactionRef.current.baseScale = baseScale;
+      interactionRef.current.localBottom = localBottom;
+      model.scale.setScalar(initialScale);
+      model.position.set(0, 0.35, 0);
+      model.traverse((child) => {
+        if (!child.isMesh || !child.material) return;
+        child.castShadow = true;
+        child.receiveShadow = true;
+        const materials = Array.isArray(child.material) ? child.material : [child.material];
+        materials.forEach((material) => {
+          material.roughness = Math.max(material.roughness ?? 0.7, 0.72);
+          material.metalness = Math.min(material.metalness ?? 0, 0.12);
+          material.needsUpdate = true;
+        });
+      });
+      interactionRef.current.model = model;
+      scene.add(model);
+      const maximumScale = baseScale * MODEL_ZOOM_MAX;
+      groundShadow = new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          Math.max(size.x * maximumScale * 1.3, 2.4),
+          Math.max(size.z * maximumScale * 1.7, 1.6),
+        ),
+        new THREE.ShadowMaterial({
+          color: 0x211832,
+          opacity: 0.3,
+          transparent: true,
+          depthWrite: false,
+        }),
+      );
+      groundShadow.rotation.x = -Math.PI / 2;
+      groundShadow.receiveShadow = true;
+      interactionRef.current.groundShadow = groundShadow;
+      syncGroundShadow(interactionRef.current, initialScale);
+      scene.add(groundShadow);
+    }, undefined, (error) => {
+      console.error("Không thể tải model Văn Miếu – Quốc Tử Giám", error);
+    });
+    const resize = () => {
+      const width = mount.clientWidth || 1;
+      const height = mount.clientHeight || 1;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height, false);
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(mount);
+    resize();
+    const animate = () => {
+      frameId = null;
+      if (disposed || !isVisible) return;
+      if (model && !interactionRef.current.active) model.rotation.y += 0.004;
+      renderer.render(scene, camera);
+      frameId = window.requestAnimationFrame(animate);
+    };
+    const startRendering = () => {
+      if (!disposed && isVisible && frameId === null) {
+        frameId = window.requestAnimationFrame(animate);
+      }
+    };
+    if ("IntersectionObserver" in window) {
+      visibilityObserver = new IntersectionObserver(([entry]) => {
+        isVisible = Boolean(entry?.isIntersecting);
+        if (isVisible) {
+          resize();
+          startRendering();
+        } else if (frameId !== null) {
+          window.cancelAnimationFrame(frameId);
+          frameId = null;
+        }
+      }, { threshold: 0.01 });
+      visibilityObserver.observe(mount);
+    } else {
+      startRendering();
+    }
+    return () => {
+      disposed = true;
+      interaction.model = null;
+      interaction.groundShadow = null;
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      observer.disconnect();
+      visibilityObserver?.disconnect();
+      mount.removeEventListener("wheel", handleWheel);
+      model?.traverse((child) => {
+        child.geometry?.dispose();
+        if (Array.isArray(child.material)) child.material.forEach((material) => material.dispose());
+        else child.material?.dispose();
+      });
+      groundShadow?.geometry.dispose();
+      groundShadow?.material.dispose();
+      renderer.dispose();
+      dracoLoader.dispose();
+      renderer.domElement.remove();
+    };
+  }, []);
+
+  const handlePointerDown = (event) => {
+    const interaction = interactionRef.current;
+    interaction.pointers.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+    interaction.active = true;
+    interaction.lastX = event.clientX;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+  const handlePointerMove = (event) => {
+    const interaction = interactionRef.current;
+    if (!interaction.pointers.has(event.pointerId)) return;
+    interaction.pointers.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    if (interaction.pointers.size >= 2) {
+      if (isSmallScreen()) {
+        interaction.lastPinchDistance = null;
+        return;
+      }
+
+      const [first, second] = [...interaction.pointers.values()];
+      const distance = Math.hypot(first.x - second.x, first.y - second.y);
+      if (interaction.lastPinchDistance) {
+        setZoom(interaction.zoom * (distance / interaction.lastPinchDistance));
+      }
+      interaction.lastPinchDistance = distance;
+      return;
+    }
+
+    if (!interaction.model) return;
+    interaction.model.rotation.y += (event.clientX - interaction.lastX) * 0.012;
+    interaction.lastX = event.clientX;
+  };
+  const handlePointerUp = (event) => {
+    const interaction = interactionRef.current;
+    interaction.pointers.delete(event.pointerId);
+    interaction.active = interaction.pointers.size > 0;
+    interaction.lastPinchDistance = null;
+    const [remainingPointer] = interaction.pointers.values();
+    if (remainingPointer) interaction.lastX = remainingPointer.x;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  };
+  return (
+    <div
+      ref={mountRef}
+      className="home-hero__model"
+      role="group"
+      aria-label="Mô hình 3D Văn Miếu – Quốc Tử Giám. Kéo để xoay, sử dụng các nút điều khiển để thu phóng."
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+    >
+      <div
+        className="home-hero__model-controls"
+        role="group"
+        aria-label="Thu phóng mô hình"
+        onPointerDown={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          aria-label="Phóng to mô hình"
+          title="Phóng to"
+          onClick={() => setZoom(interactionRef.current.zoom + 0.18)}
+        >
+          <ZoomIn size={18} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          aria-label="Thu nhỏ mô hình"
+          title="Thu nhỏ"
+          onClick={() => setZoom(interactionRef.current.zoom - 0.18)}
+        >
+          <ZoomOut size={18} aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function HomePage() {
   const scrollToJourney = (event) => {
     const journey = document.getElementById("hanh-trinh");
@@ -144,9 +443,11 @@ function HomePage() {
               Nam
             </p>
             <h1 id="home-hero-title">
-              Chạm vào di sản,
+              Đi qua mọi miền,
               <br />
-              <span>mở lối khám phá.</span>
+              <span className="home-hero__title-accent">
+                nối liền yêu thương
+              </span>
             </h1>
             <p className="home-hero__lead">
               Qua boardgame và trải nghiệm AR, khám phá chín địa danh cùng những
@@ -184,30 +485,22 @@ function HomePage() {
             className="home-hero__art"
             aria-label="Nhận diện thương hiệu Chạm Sắc Việt"
           >
-            <span
-              className="home-hero__orbit home-hero__orbit--one"
-              aria-hidden="true"
-            />
-            <span
-              className="home-hero__orbit home-hero__orbit--two"
-              aria-hidden="true"
-            />
-            <span className="home-hero__sun" aria-hidden="true" />
-            <img className="home-hero__star" src={starArtifact} alt="" />
-            <img
-              className="home-hero__star-color"
-              src={colorfulStarArtifact}
-              alt=""
-            />
-            <img
-              className="home-hero__brand"
-              src={brandMark}
-              alt="Chạm Sắc Việt"
-            />
-            <div className="home-hero__stamp">
-              <MapPin size={15} aria-hidden="true" /> 09 địa danh
+            <div className="home-hero__scene">
+              <span
+                className="home-hero__orbit home-hero__orbit--one"
+                aria-hidden="true"
+              />
+              <span
+                className="home-hero__orbit home-hero__orbit--two"
+                aria-hidden="true"
+              />
+              <img
+                className="home-hero__star-color"
+                src={colorfulStarArtifact}
+                alt=""
+              />
+              <HeroModel />
             </div>
-            <span className="home-hero__caption">Di sản trong tầm tay</span>
           </div>
         </div>
         <a
@@ -226,6 +519,7 @@ function HomePage() {
         id="hanh-trinh"
         aria-labelledby="home-journey-title"
       >
+        <FloatingCharacter variant={1} className="home-journey__character" />
         <div className="home-section-heading">
           <div>
             <p className="home-eyebrow">
@@ -279,6 +573,7 @@ function HomePage() {
       </section>
 
       <section className="home-ar" aria-labelledby="home-ar-title">
+        <FloatingCharacter variant={2} className="home-ar__character" />
         <div className="home-ar__visual" aria-hidden="true">
           <div className="home-ar__ring home-ar__ring--outer" />
           <div className="home-ar__ring home-ar__ring--inner" />
@@ -331,7 +626,10 @@ function HomePage() {
       </section>
 
       <section className="home-final-cta" aria-label="Khám phá cửa hàng">
-        <img className="home-final-cta__element" src={flagArtifact} alt="" />
+        <div className="home-final-cta__lotus-group" aria-hidden="true">
+          <img className="home-final-cta__lotus" src={lotusFlower} alt="" />
+          <img className="home-final-cta__lotus" src={lotusFlower} alt="" />
+        </div>
         <div>
           <p className="home-eyebrow">Mang câu chuyện Việt về nhà</p>
           <h2>Một hành trình đang chờ bạn.</h2>

@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import FacebookIcon from "@mui/icons-material/Facebook";
-import InstagramIcon from "@mui/icons-material/Instagram";
-import YouTubeIcon from "@mui/icons-material/YouTube";
+import { FaFacebookMessenger } from "react-icons/fa";
+import { SiZalo } from "react-icons/si";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import Input from "../../components/ui/Input.jsx";
@@ -63,16 +63,21 @@ const contactLinks = [
     href: "mailto:chamsacviet@gmail.com",
   },
   {
-    icon: Mail,
-    title: "Email liên hệ",
-    text: "chamsacviet@gmail.com",
-    href: "mailto:chamsacviet@gmail.com",
+    icon: SiZalo,
+    title: "Zalo",
+    text: "0374385234",
+    href: "https://zalo.me/0374385234",
   },
 ];
 
 const phoneLinks = [
   { title: "Hotline", text: "0374385234", phone: "0374385234" },
-  { title: "Hotline", text: "0374385234", phone: "0374385234" },
+  {
+    icon: FaFacebookMessenger,
+    title: "Messenger",
+    text: "Nhắn tin với chúng tôi",
+    href: "https://m.me/61592108695547",
+  },
 ];
 
 export default function ContactUsPage() {
@@ -141,6 +146,16 @@ export default function ContactUsPage() {
           >
             <div className="contact-page__socials" aria-label="Mạng xã hội">
               <a
+                className="contact-page__social-link contact-page__social-link--zalo"
+                href="https://zalo.me/0374385234"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Zalo Chạm Sắc Việt"
+                title="Zalo"
+              >
+                <SiZalo size={26} aria-hidden="true" />
+              </a>
+              <a
                 className="contact-page__social-link contact-page__social-link--facebook"
                 href="https://www.facebook.com/61592108695547"
                 target="_blank"
@@ -149,26 +164,6 @@ export default function ContactUsPage() {
                 title="Facebook"
               >
                 <FacebookIcon fontSize="small" />
-              </a>
-              <a
-                className="contact-page__social-link contact-page__social-link--instagram"
-                href="https://www.instagram.com"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Instagram"
-                title="Instagram"
-              >
-                <InstagramIcon fontSize="small" />
-              </a>
-              <a
-                className="contact-page__social-link contact-page__social-link--youtube"
-                href="https://www.youtube.com"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="YouTube"
-                title="YouTube"
-              >
-                <YouTubeIcon fontSize="small" />
               </a>
             </div>
             <form
@@ -262,22 +257,41 @@ export default function ContactUsPage() {
                   <ArrowUpRight size={16} aria-hidden="true" />
                 </a>
               ))}
-              {phoneLinks.map(({ title, text, phone }) => (
-                <button
-                  className="contact-page__info-card contact-page__info-card--copyable"
-                  type="button"
-                  onClick={() => copyPhone(phone)}
-                  key={title}
-                >
-                  <span>
-                    <Phone size={20} aria-hidden="true" />
-                  </span>
-                  <div>
-                    <strong>{title}</strong>
-                    <p>{text}</p>
-                  </div>
-                </button>
-              ))}
+              {phoneLinks.map(({ icon: Icon = Phone, title, text, phone, href }) =>
+                href ? (
+                  <a
+                    className="contact-page__info-card"
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    key={title}
+                  >
+                    <span>
+                      <Icon size={20} aria-hidden="true" />
+                    </span>
+                    <div>
+                      <strong>{title}</strong>
+                      <p>{text}</p>
+                    </div>
+                    <ArrowUpRight size={16} aria-hidden="true" />
+                  </a>
+                ) : (
+                  <button
+                    className="contact-page__info-card contact-page__info-card--copyable"
+                    type="button"
+                    onClick={() => copyPhone(phone)}
+                    key={title}
+                  >
+                    <span>
+                      <Icon size={20} aria-hidden="true" />
+                    </span>
+                    <div>
+                      <strong>{title}</strong>
+                      <p>{text}</p>
+                    </div>
+                  </button>
+                ),
+              )}
             </div>
           </section>
         </div>

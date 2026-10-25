@@ -18,6 +18,8 @@ import elementRedFold from "../../assets/elements/IMG_4821.PNG";
 import elementTealFold from "../../assets/elements/IMG_4822.PNG";
 import elementMaskPurple from "../../assets/elements/IMG_4818.PNG";
 import elementMaskBlue from "../../assets/elements/IMG_4819.PNG";
+import elementFlowerOne from "../../assets/elements/IMG_4825.PNG";
+import elementFlowerTwo from "../../assets/elements/IMG_4826.PNG";
 import "./AboutUs.scss";
 
 const values = [
@@ -96,9 +98,24 @@ const teamMembers = [
 
 const carouselMembers = [
   ...teamMembers,
-  { name: '\u004e\u1ed9i dung di s\u1ea3n', role: '\u0110ang c\u1eadp nh\u1eadt', initials: 'ND', tone: 'purple' },
-  { name: 'Thi\u1ebft k\u1ebf tr\u1ea3i nghi\u1ec7m', role: '\u0110ang c\u1eadp nh\u1eadt', initials: 'TK', tone: 'orange' },
-  { name: 'K\u1ebft n\u1ed1i c\u1ed9ng \u0111\u1ed3ng', role: '\u0110ang c\u1eadp nh\u1eadt', initials: 'KC', tone: 'blue' },
+  {
+    name: "\u004e\u1ed9i dung di s\u1ea3n",
+    role: "\u0110ang c\u1eadp nh\u1eadt",
+    initials: "ND",
+    tone: "purple",
+  },
+  {
+    name: "Thi\u1ebft k\u1ebf tr\u1ea3i nghi\u1ec7m",
+    role: "\u0110ang c\u1eadp nh\u1eadt",
+    initials: "TK",
+    tone: "orange",
+  },
+  {
+    name: "K\u1ebft n\u1ed1i c\u1ed9ng \u0111\u1ed3ng",
+    role: "\u0110ang c\u1eadp nh\u1eadt",
+    initials: "KC",
+    tone: "blue",
+  },
 ];
 
 function AboutUs() {
@@ -108,6 +125,12 @@ function AboutUs() {
         <img
           className="about-page__page-element about-page__page-element--hero-flag"
           src={elementFlag}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className="about-page__flower-doodle about-page__flower-doodle--hero"
+          src={elementFlowerOne}
           alt=""
           aria-hidden="true"
         />
@@ -162,13 +185,22 @@ function AboutUs() {
         className="about-page__timeline"
         aria-label="Dòng thời gian Chạm Sắc Việt"
       >
-        <FloatingCharacter variant={1} className="about-page__timeline-character" />
+        <FloatingCharacter
+          variant={1}
+          className="about-page__timeline-character"
+        />
         <span className="about-page__timeline-watermark" aria-hidden="true">
           DI SẢN
         </span>
         <img
           className="about-page__page-element about-page__page-element--timeline-teal"
           src={elementTealFold}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className="about-page__flower-doodle about-page__flower-doodle--timeline"
+          src={elementFlowerTwo}
           alt=""
           aria-hidden="true"
         />
@@ -192,7 +224,10 @@ function AboutUs() {
         className="about-page__statement"
         aria-label="Tuyên ngôn Chạm Sắc Việt"
       >
-        <FloatingCharacter variant={3} className="about-page__statement-character" />
+        <FloatingCharacter
+          variant={3}
+          className="about-page__statement-character"
+        />
         <img
           className="about-page__statement-element about-page__statement-element--flag"
           src={elementFlag}
@@ -224,6 +259,12 @@ function AboutUs() {
           alt=""
           aria-hidden="true"
         />
+        <img
+          className="about-page__flower-doodle about-page__flower-doodle--team"
+          src={elementFlowerOne}
+          alt=""
+          aria-hidden="true"
+        />
         <div className="about-page__shell">
           <div className="about-page__team-heading">
             <div>
@@ -239,25 +280,35 @@ function AboutUs() {
             </p>
           </div>
 
-          <div className="about-page__team-carousel" aria-label="Đội ngũ Chạm Sắc Việt">
+          <div
+            className="about-page__team-carousel"
+            aria-label="Đội ngũ Chạm Sắc Việt"
+          >
             <div className="about-page__team-track">
               {[0, 1].map((group) => (
-                <div className="about-page__team-group" key={group} aria-hidden={group === 1}>
-                  {carouselMembers.map(({ name, role, initials, tone }) => (
-                    <Card className="about-page__team-card" key={`${group}-${name}`}>
                 <div
-                  className={`about-page__team-portrait about-page__team-portrait--${tone}`}
-                  role="img"
-                  aria-label={`Ảnh placeholder của ${name}`}
+                  className="about-page__team-group"
+                  key={group}
+                  aria-hidden={group === 1}
                 >
-                  <Image size={30} aria-hidden="true" />
-                  <strong>{initials}</strong>
-                  <span>Ảnh đội ngũ</span>
-                </div>
-                <div className="about-page__team-card-copy">
-                  <h3>{name}</h3>
-                  <p>{role}</p>
-                </div>
+                  {carouselMembers.map(({ name, role, initials, tone }) => (
+                    <Card
+                      className="about-page__team-card"
+                      key={`${group}-${name}`}
+                    >
+                      <div
+                        className={`about-page__team-portrait about-page__team-portrait--${tone}`}
+                        role="img"
+                        aria-label={`Ảnh placeholder của ${name}`}
+                      >
+                        <Image size={30} aria-hidden="true" />
+                        <strong>{initials}</strong>
+                        <span>Ảnh đội ngũ</span>
+                      </div>
+                      <div className="about-page__team-card-copy">
+                        <h3>{name}</h3>
+                        <p>{role}</p>
+                      </div>
                     </Card>
                   ))}
                 </div>
@@ -294,6 +345,30 @@ function AboutUs() {
       </section>
 
       <section className="about-page__section">
+        <img
+          className="about-page__flower-doodle about-page__flower-doodle--values-top-left"
+          src={elementFlowerOne}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className="about-page__flower-doodle about-page__flower-doodle--values"
+          src={elementFlowerTwo}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className="about-page__page-element about-page__page-element--values-teal"
+          src={elementTealFold}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className="about-page__page-element about-page__page-element--values-red"
+          src={elementRedFold}
+          alt=""
+          aria-hidden="true"
+        />
         <div className="about-page__shell">
           <div className="about-page__center-heading">
             <p className="about-page__eyebrow">
@@ -322,8 +397,26 @@ function AboutUs() {
 
       <section className="about-page__section about-page__section--ink">
         <img
+          className="about-page__page-element about-page__page-element--journey-flag"
+          src={elementFlag}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className="about-page__flower-doodle about-page__flower-doodle--journey-top-right"
+          src={elementFlowerTwo}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
           className="about-page__page-element about-page__page-element--journey-teal"
           src={elementTealFold}
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          className="about-page__flower-doodle about-page__flower-doodle--journey"
+          src={elementFlowerOne}
           alt=""
           aria-hidden="true"
         />
@@ -359,7 +452,7 @@ function AboutUs() {
             <p className="about-page__eyebrow">
               <Sparkles size={16} aria-hidden="true" /> ĐỒNG HÀNH CÙNG DI SẢN
             </p>
-            <h2>Let&apos;s talk!</h2>
+            <h2>Let&apos;s play!</h2>
             <p>
               Chia sẻ ý tưởng của bạn và cùng Chạm Sắc Việt tạo nên trải nghiệm
               di sản tiếp theo.
@@ -368,11 +461,10 @@ function AboutUs() {
               className="about-page__cta-tags"
               aria-label="Các lĩnh vực đồng hành"
             >
-              <span>Nội dung di sản</span>
-              <span>Trải nghiệm AR</span>
-              <span>Thiết kế số</span>
-              <span>Kể chuyện văn hóa</span>
-              <span>Cộng đồng khám phá</span>
+              <Link to="/products">Nội dung di sản</Link>
+              <Link to="/ar">Trải nghiệm AR</Link>
+              <Link to="/faq">Kể chuyện văn hóa</Link>
+              <Link to="/contact-us">Cộng đồng khám phá</Link>
             </div>
             <Button
               as={Link}

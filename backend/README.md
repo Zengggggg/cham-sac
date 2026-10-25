@@ -145,6 +145,8 @@ Lớp tích hợp tại `src/providers/payOSProvider.js` hỗ trợ tạo paymen
 
 Checkout trừ tồn kho trong MongoDB transaction. Đơn unpaid hết hạn được worker hủy và hoàn tồn đúng một lần. Không cập nhật trạng thái thanh toán từ `returnUrl`; trạng thái chỉ được xác nhận từ webhook đã qua `payOS.webhooks.verify()`. Webhook có chữ ký hợp lệ nhưng không khớp giao dịch (bao gồm payload mẫu khi payOS đăng ký URL) được trả `200` và bỏ qua; webhook sai chữ ký vẫn bị từ chối.
 
+Nếu webhook đến muộn nhưng thời điểm thanh toán PayOS trước hạn, backend khôi phục đơn từ trạng thái hết hạn về chờ xác nhận và giữ lại tồn kho nếu còn đủ. Nếu không còn đủ hàng, đơn cần được đối soát/hoàn tiền thủ công thay vì xác nhận nhầm.
+
 Trước khi thử đăng ký, tạo API key trên Resend, xác minh domain gửi và điền `RESEND_API_KEY`, `RESEND_FROM_EMAIL`. Backend không log hoặc trả OTP trong API response.
 
 ## Shop API

@@ -1,6 +1,44 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import * as THREE from 'three'
 import targetBundleUrl from '../assets/ar-targets/heritage-targets.mind?url'
 import { HERITAGE_EXPERIENCES } from '../data/heritageExperiences.js'
+
+const createIdleModelState = () => ({ status: 'idle', progress: null, message: null })
+
+const disposeObject3D = (root) => {
+  root?.traverse((object) => {
+    object.geometry?.dispose()
+    const materials = Array.isArray(object.material) ? object.material : [object.material]
+    materials.filter(Boolean).forEach((material) => {
+      Object.values(material).forEach((value) => {
+        if (value?.isTexture) value.dispose()
+      })
+      material.dispose?.()
+    })
+  })
+}
+
+const normalizeModelForTarget = (model, config = {}) => {
+  const rotation = config.rotation || {}
+  model.rotation.set(rotation.x || 0, rotation.y || 0, rotation.z || 0)
+  model.updateMatrixWorld(true)
+
+  const box = new THREE.Box3().setFromObject(model)
+  const size = box.getSize(new THREE.Vector3())
+  const maxDimension = Math.max(size.x, size.y, size.z)
+  if (!Number.isFinite(maxDimension) || maxDimension <= 0) throw new Error('Mô hình không có kích thước hợp lệ.')
+
+  model.scale.multiplyScalar((0.78 / maxDimension) * (config.scale || 1))
+  model.updateMatrixWorld(true)
+
+  const center = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3())
+  const position = config.position || {}
+  model.position.set(
+    -center.x + (position.x || 0),
+    -center.y + (position.y || 0),
+    -center.z + (position.z || 0),
+  )
+}
 
 const getSupportStatus = () => {
   if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia || !window.WebGLRenderingContext) return 'unsupported'
@@ -34,13 +72,24 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const sessionIdRef = useRef(0)
   const mountedRef = useRef(true)
   const recognizedTargetRef = useRef(null)
+  const modelRootsRef = useRef([])
+  const mixersRef = useRef([])
+  const dracoLoaderRef = useRef(null)
   const [status, setStatus] = useState(getSupportStatus)
   const [error, setError] = useState(null)
   const [recognizedExperience, setRecognizedExperience] = useState(null)
+  const [modelState, setModelState] = useState(createIdleModelState)
 
   const releaseSession = useCallback(() => {
     sessionIdRef.current += 1
     recognizedTargetRef.current = null
+
+    mixersRef.current.forEach((mixer) => mixer.stopAllAction())
+    mixersRef.current = []
+    modelRootsRef.current.forEach(disposeObject3D)
+    modelRootsRef.current = []
+    dracoLoaderRef.current?.dispose()
+    dracoLoaderRef.current = null
 
     const mindAR = mindARRef.current
     mindARRef.current = null
@@ -65,6 +114,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     releaseSession()
     setError(null)
     setRecognizedExperience(null)
+    setModelState(createIdleModelState())
     setStatus(getSupportStatus())
   }, [releaseSession])
 
@@ -81,10 +131,15 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     sessionIdRef.current = sessionId
     setError(null)
     setRecognizedExperience(null)
+    setModelState(createIdleModelState())
     setStatus('loading')
 
     try {
-      const { MindARThree } = await import('mind-ar/dist/mindar-image-three.prod.js')
+      const [{ MindARThree }, { GLTFLoader }, { DRACOLoader }] = await Promise.all([
+        import('mind-ar/dist/mindar-image-three.prod.js'),
+        import('three/examples/jsm/loaders/GLTFLoader.js'),
+        import('three/examples/jsm/loaders/DRACOLoader.js'),
+      ])
       if (!mountedRef.current || sessionId !== sessionIdRef.current || !containerRef.current) return
 
       const mindAR = new MindARThree({
@@ -99,27 +154,95 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       })
       mindARRef.current = mindAR
 
+      mindAR.scene.add(new THREE.HemisphereLight(0xfff8ed, 0x5d4255, 2.6))
+      const keyLight = new THREE.DirectionalLight(0xffffff, 3.2)
+      keyLight.position.set(-3, 5, 4)
+      mindAR.scene.add(keyLight)
+
+      const loader = new GLTFLoader()
+      const dracoLoader = new DRACOLoader()
+      dracoLoader.setDecoderPath('/draco/')
+      dracoLoader.setWorkerLimit(2)
+      loader.setDRACOLoader(dracoLoader)
+      dracoLoaderRef.current = dracoLoader
+      const modelStates = new Map()
+
       experiences.forEach((experience) => {
         const anchor = mindAR.addAnchor(experience.targetIndex)
         anchor.onTargetFound = () => {
-          if (!mountedRef.current || sessionId !== sessionIdRef.current || recognizedTargetRef.current !== null) return
+          if (!mountedRef.current || sessionId !== sessionIdRef.current) return
 
           recognizedTargetRef.current = experience.targetIndex
           setRecognizedExperience(experience)
+          setModelState(experience.model?.url
+            ? modelStates.get(experience.targetIndex) || { status: 'loading', progress: null, message: null }
+            : { status: 'unavailable', progress: null, message: 'Địa danh này chưa có mô hình 3D.' })
           setStatus('recognized')
-
-          window.setTimeout(() => {
-            if (!mountedRef.current || sessionId !== sessionIdRef.current) return
-            releaseSession()
-            setStatus('viewing')
-          }, 120)
         }
+
+        anchor.onTargetLost = () => {
+          if (!mountedRef.current || sessionId !== sessionIdRef.current || recognizedTargetRef.current !== experience.targetIndex) return
+
+          recognizedTargetRef.current = null
+          setRecognizedExperience(null)
+          setModelState(createIdleModelState())
+          setStatus('scanning')
+        }
+
+
+        if (!experience.model?.url) return
+
+        const updateModelState = (nextState) => {
+          if (!mountedRef.current || sessionId !== sessionIdRef.current) return
+          modelStates.set(experience.targetIndex, nextState)
+          if (recognizedTargetRef.current === experience.targetIndex) setModelState(nextState)
+        }
+
+        updateModelState({ status: 'loading', progress: null, message: null })
+        loader.load(
+          experience.model.url,
+          (gltf) => {
+            if (!mountedRef.current || sessionId !== sessionIdRef.current) {
+              disposeObject3D(gltf.scene)
+              return
+            }
+
+            try {
+              normalizeModelForTarget(gltf.scene, experience.model)
+              anchor.group.add(gltf.scene)
+              modelRootsRef.current.push(gltf.scene)
+
+              if (gltf.animations?.length) {
+                const mixer = new THREE.AnimationMixer(gltf.scene)
+                gltf.animations.forEach((clip) => mixer.clipAction(clip).play())
+                mixersRef.current.push(mixer)
+              }
+
+              updateModelState({ status: 'ready', progress: 100, message: null })
+            } catch (modelError) {
+              console.error('Không thể chuẩn hóa mô hình AR', modelError)
+              disposeObject3D(gltf.scene)
+              updateModelState({ status: 'error', progress: null, message: 'Mô hình 3D không có dữ liệu hiển thị hợp lệ.' })
+            }
+          },
+          (event) => {
+            const progress = event.total > 0 ? Math.min(99, Math.round((event.loaded / event.total) * 100)) : null
+            updateModelState({ status: 'loading', progress, message: null })
+          },
+          (loadError) => {
+            console.error('Không thể tải mô hình AR', loadError)
+            updateModelState({ status: 'error', progress: null, message: 'Không tải được mô hình 3D. Hãy kiểm tra kết nối rồi thử lại.' })
+          },
+        )
       })
 
       await mindAR.start()
       if (!mountedRef.current || sessionId !== sessionIdRef.current) return
 
+      const clock = new THREE.Clock()
       mindAR.renderer.setAnimationLoop(() => {
+        const delta = clock.getDelta()
+        mixersRef.current.forEach((mixer) => mixer.update(delta))
         mindAR.renderer.render(mindAR.scene, mindAR.camera)
       })
       setStatus('scanning')
@@ -150,6 +273,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   return {
     containerRef,
     error,
+    modelState,
     recognizedExperience,
     startAR,
     status,

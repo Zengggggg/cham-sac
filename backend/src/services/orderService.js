@@ -191,6 +191,35 @@ export const restoreOrderStock = async (order, session) => {
     return true;
 };
 
+export const reserveOrderStock = async (order, session) => {
+    if (!order.stockRestoredAt) return true;
+
+    const products = await Product.find({
+        _id: { $in: order.items.map((item) => item.productId) }
+    }).select('_id stock').session(session).lean();
+    const stockByProductId = new Map(products.map((product) => [String(product._id), product.stock]));
+    if (order.items.some((item) => (stockByProductId.get(String(item.productId)) ?? -1) < item.quantity)) {
+        return false;
+    }
+
+    const operations = order.items.map((item) => ({
+        updateOne: {
+            filter: { _id: item.productId },
+            update: { $inc: { stock: -item.quantity } }
+        }
+    }));
+    if (operations.length) {
+        const result = await Product.bulkWrite(operations, { session });
+        if (result.matchedCount !== operations.length) {
+            const error = new Error('Không thể giữ lại tồn kho cho đơn đã thanh toán.');
+            error.code = 'ORDER_STOCK_RESERVATION_CONFLICT';
+            throw error;
+        }
+    }
+    order.stockRestoredAt = undefined;
+    return true;
+};
+
 export const expireOrder = async (orderId, now = new Date()) => {
     const session = await mongoose.startSession();
     let expired = false;

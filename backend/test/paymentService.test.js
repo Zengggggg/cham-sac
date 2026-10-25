@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
     createPayOSTransferContent,
+    isRecoverableExpiredOrder,
     normalizeVerifiedPayment,
     processPayOSWebhook
 } from '../src/services/paymentService.js';
@@ -25,6 +26,26 @@ test('verified payOS data is normalized to trusted payment fields', () => {
     assert.equal(normalized.providerTransactionId, 'FT-001');
     assert.equal(normalized.isSuccessful, true);
     assert.ok(normalized.paidAt instanceof Date);
+});
+
+test('a timely payment can recover an order cancelled by the expiry worker', () => {
+    const order = {
+        orderStatus: 'cancelled',
+        cancellationReason: 'Đơn hàng hết thời hạn thanh toán.',
+        expiresAt: new Date('2026-10-14T10:15:00.000Z'),
+        statusHistory: [{
+            to: 'cancelled',
+            actorRole: 'system',
+            reason: 'Đơn hàng hết thời hạn thanh toán.'
+        }]
+    };
+
+    assert.equal(isRecoverableExpiredOrder(order, new Date('2026-10-14T10:14:00.000Z')), true);
+    assert.equal(isRecoverableExpiredOrder(order, new Date('2026-10-14T10:16:00.000Z')), false);
+    assert.equal(isRecoverableExpiredOrder({
+        ...order,
+        statusHistory: [{ ...order.statusHistory[0], actorRole: 'admin' }]
+    }, new Date('2026-10-14T10:14:00.000Z')), false);
 });
 
 test('valid payOS registration sample is acknowledged when it has no matching payment', async () => {

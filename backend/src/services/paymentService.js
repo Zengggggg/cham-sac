@@ -3,12 +3,66 @@ import Order from '../models/orderModel.js';
 import Payment from '../models/paymentModel.js';
 import AppError from '../utils/appError.js';
 import { createPayOSPaymentLink, verifyPayOSWebhook } from '../providers/payOSProvider.js';
-import { createProviderOrderCode, expireOrder, restoreOrderStock } from './orderService.js';
+import {
+    createProviderOrderCode,
+    expireOrder,
+    reserveOrderStock,
+    restoreOrderStock
+} from './orderService.js';
+
+const EXPIRED_ORDER_CANCELLATION_REASON = 'Đơn hàng hết thời hạn thanh toán.';
 
 const toPaymentResponse = (payment) => {
     const value = typeof payment.toJSON === 'function' ? payment.toJSON() : { ...payment };
     delete value.webhookPayload;
     return value;
+};
+
+export const isRecoverableExpiredOrder = (order, paidAt) => {
+    const lastStatusChange = order.statusHistory?.[order.statusHistory.length - 1];
+    return order.orderStatus === 'cancelled'
+        && order.cancellationReason === EXPIRED_ORDER_CANCELLATION_REASON
+        && lastStatusChange?.to === 'cancelled'
+        && lastStatusChange.actorRole === 'system'
+        && lastStatusChange.reason === EXPIRED_ORDER_CANCELLATION_REASON
+        && paidAt <= order.expiresAt;
+};
+
+const recoverDelayedSuccessfulPayment = async (paymentId, paidAt) => {
+    const session = await mongoose.startSession();
+    try {
+        await session.withTransaction(async () => {
+            const payment = await Payment.findById(paymentId).session(session);
+            if (!payment) return;
+            const order = await Order.findById(payment.orderId).session(session);
+            if (!order) return;
+            if (payment.status !== 'success' || !isRecoverableExpiredOrder(order, paidAt)) return;
+
+            const stockReserved = await reserveOrderStock(order, session);
+            if (!stockReserved) {
+                payment.requiresManualReview = true;
+                payment.reviewReason = 'Đã thanh toán trước hạn nhưng sản phẩm không còn đủ tồn kho; cần hoàn tiền hoặc xử lý thủ công.';
+                order.refundRequired = true;
+            } else {
+                order.orderStatus = 'pending';
+                order.cancelledAt = undefined;
+                order.cancellationReason = undefined;
+                order.refundRequired = false;
+                order.statusHistory.push({
+                    from: 'cancelled',
+                    to: 'pending',
+                    actorRole: 'system',
+                    reason: 'PayOS xác nhận thanh toán trước hạn; khôi phục đơn do webhook đến muộn.'
+                });
+                payment.requiresManualReview = false;
+                payment.reviewReason = undefined;
+            }
+            await payment.save({ session });
+            await order.save({ session });
+        });
+    } finally {
+        await session.endSession();
+    }
 };
 
 export const createPayOSTransferContent = (providerOrderCode) => {
@@ -153,7 +207,14 @@ export const processPayOSWebhook = async (
             providerTransactionId: normalized.providerTransactionId
         })
         : null;
-    if (existingTransaction) return { payment: toPaymentResponse(existingTransaction), duplicate: true };
+    if (existingTransaction) {
+        if (existingTransaction.status === 'success' && existingTransaction.paidAt) {
+            await recoverDelayedSuccessfulPayment(existingTransaction._id, existingTransaction.paidAt);
+            const updated = await Payment.findById(existingTransaction._id);
+            return { payment: toPaymentResponse(updated), duplicate: true };
+        }
+        return { payment: toPaymentResponse(existingTransaction), duplicate: true };
+    }
 
     const payment = await findPayment({ providerOrderCode: normalized.providerOrderCode });
     if (!payment) return { payment: null, duplicate: false, ignored: true };
@@ -196,16 +257,44 @@ export const processPayOSWebhook = async (
                 return;
             }
 
-            const isLate = transactionalOrder.orderStatus === 'cancelled'
-                || transactionalOrder.expiresAt <= normalized.paidAt;
+            const recoverExpiredOrder = isRecoverableExpiredOrder(transactionalOrder, normalized.paidAt);
             transactionalPayment.status = 'success';
             transactionalPayment.paidAt = normalized.paidAt;
-            transactionalPayment.requiresManualReview = isLate;
-            transactionalPayment.reviewReason = isLate
-                ? 'Thanh toán thành công sau khi đơn đã hết hạn hoặc bị hủy.'
-                : undefined;
+            transactionalPayment.requiresManualReview = false;
+            transactionalPayment.reviewReason = undefined;
             transactionalOrder.paymentStatus = 'paid';
-            if (isLate) {
+
+            if (recoverExpiredOrder) {
+                const stockReserved = await reserveOrderStock(transactionalOrder, session);
+                if (stockReserved) {
+                    transactionalOrder.orderStatus = 'pending';
+                    transactionalOrder.cancelledAt = undefined;
+                    transactionalOrder.cancellationReason = undefined;
+                    transactionalOrder.refundRequired = false;
+                    transactionalOrder.statusHistory.push({
+                        from: 'cancelled',
+                        to: 'pending',
+                        actorRole: 'system',
+                        reason: 'PayOS xác nhận thanh toán trước hạn; khôi phục đơn do webhook đến muộn.'
+                    });
+                } else {
+                    transactionalPayment.requiresManualReview = true;
+                    transactionalPayment.reviewReason = 'Đã thanh toán trước hạn nhưng sản phẩm không còn đủ tồn kho; cần hoàn tiền hoặc xử lý thủ công.';
+                    transactionalOrder.refundRequired = true;
+                }
+            } else {
+                const isLate = transactionalOrder.orderStatus === 'cancelled'
+                    || transactionalOrder.expiresAt <= normalized.paidAt;
+                transactionalPayment.requiresManualReview = isLate;
+                transactionalPayment.reviewReason = isLate
+                    ? 'Thanh toán thành công sau khi đơn đã hết hạn hoặc bị hủy.'
+                    : undefined;
+                if (!isLate) {
+                    await transactionalPayment.save({ session });
+                    await transactionalOrder.save({ session });
+                    return;
+                }
+
                 await restoreOrderStock(transactionalOrder, session);
                 if (transactionalOrder.orderStatus !== 'cancelled') {
                     const previousStatus = transactionalOrder.orderStatus;
@@ -225,6 +314,46 @@ export const processPayOSWebhook = async (
             await transactionalOrder.save({ session });
         });
     } catch (error) {
+        if (error?.code === 'ORDER_STOCK_RESERVATION_CONFLICT') {
+            const fallbackSession = await mongoose.startSession();
+            try {
+                await fallbackSession.withTransaction(async () => {
+                    const transactionalPayment = await Payment.findById(payment._id).session(fallbackSession);
+                    const transactionalOrder = await Order.findById(order._id).session(fallbackSession);
+                    if (transactionalPayment.status === 'success') return;
+
+                    const otherSuccessfulPayment = await Payment.findOne({
+                        _id: { $ne: transactionalPayment._id },
+                        orderId: transactionalOrder._id,
+                        status: 'success'
+                    }).session(fallbackSession);
+                    if (otherSuccessfulPayment) {
+                        transactionalPayment.status = 'failed';
+                        transactionalPayment.providerTransactionId = normalized.providerTransactionId;
+                        transactionalPayment.webhookPayload = normalized.webhookPayload;
+                        transactionalPayment.requiresManualReview = true;
+                        transactionalPayment.reviewReason = 'Đơn hàng đã có một giao dịch thành công khác.';
+                        await transactionalPayment.save({ session: fallbackSession });
+                        return;
+                    }
+
+                    transactionalPayment.status = 'success';
+                    transactionalPayment.paidAt = normalized.paidAt;
+                    transactionalPayment.providerTransactionId = normalized.providerTransactionId;
+                    transactionalPayment.webhookPayload = normalized.webhookPayload;
+                    transactionalPayment.requiresManualReview = true;
+                    transactionalPayment.reviewReason = 'Đã thanh toán trước hạn nhưng tồn kho vừa thay đổi; cần hoàn tiền hoặc xử lý thủ công.';
+                    transactionalOrder.paymentStatus = 'paid';
+                    transactionalOrder.refundRequired = true;
+                    await transactionalPayment.save({ session: fallbackSession });
+                    await transactionalOrder.save({ session: fallbackSession });
+                });
+            } finally {
+                await fallbackSession.endSession();
+            }
+            const updated = await Payment.findById(payment._id);
+            return { payment: toPaymentResponse(updated), duplicate: false };
+        }
         if (error?.code === 11000) {
             const duplicate = await findPayment({
                 provider: 'payos',

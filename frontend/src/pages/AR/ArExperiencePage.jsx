@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import {
   ArrowLeft,
   BookOpen,
@@ -16,7 +16,6 @@ import { Link } from 'react-router-dom'
 import Button from '../../components/ui/Button.jsx'
 import Card from '../../components/ui/Card.jsx'
 import Modal from '../../components/ui/Modal.jsx'
-import HeritageModelDialog from '../../components/ar/HeritageModelDialog.jsx'
 import brandMark from '../../assets/elements/wtm_withstroke.png'
 import useMindARSession from '../../hooks/useMindARSession.js'
 import useArExperiences from '../../hooks/useArExperiences.js'
@@ -71,7 +70,7 @@ function CameraFallback({ status, error, onBrowse, onRetry }) {
   )
 }
 
-function HeritageCatalog({ open, experiences, selectedExperience, onClose, onPreview, onSelect }) {
+function HeritageCatalog({ open, experiences, selectedExperience, onClose, onScan, onSelect }) {
   const title = selectedExperience ? selectedExperience.name : 'Khám phá 7 địa danh'
   const description = selectedExperience
     ? selectedExperience.tagline
@@ -110,10 +109,10 @@ function HeritageCatalog({ open, experiences, selectedExperience, onClose, onPre
                 {selectedExperience.model?.url && (
                   <Button
                     className="ar-place-detail__preview"
-                    onClick={() => onPreview(selectedExperience)}
-                    icon={<Sparkles size={18} aria-hidden="true" />}
+                    onClick={onScan}
+                    icon={<Camera size={18} aria-hidden="true" />}
                   >
-                    Xem mô hình 3D
+                    Xem bằng camera AR
                   </Button>
                 )}
               </div>
@@ -141,34 +140,23 @@ function HeritageCatalog({ open, experiences, selectedExperience, onClose, onPre
 
 function ArExperiencePage() {
   const { experiences } = useArExperiences()
-  const { containerRef, error, recognizedExperience, startAR, status, stopAR } = useMindARSession(experiences)
+  const { containerRef, error, modelState, recognizedExperience, startAR, status, stopAR } = useMindARSession(experiences)
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [selectedExperience, setSelectedExperience] = useState(null)
-  const [previewExperience, setPreviewExperience] = useState(null)
   const isCameraActive = ['loading', 'scanning', 'recognized'].includes(status)
   const isRequesting = status === 'loading'
   const hasFallback = ['error', 'insecure', 'unsupported'].includes(status)
-  const isViewing = status === 'viewing' && recognizedExperience
-  const viewerExperience = isViewing ? recognizedExperience : previewExperience
 
   const openCatalog = () => setCatalogOpen(true)
   const closeCatalog = () => {
     setCatalogOpen(false)
     setSelectedExperience(null)
   }
-  const previewModel = useCallback((experience) => {
+  const scanFromCatalog = () => {
     setCatalogOpen(false)
     setSelectedExperience(null)
-    setPreviewExperience(experience)
-  }, [])
-  const closeResult = useCallback(() => {
-    setPreviewExperience(null)
-    if (isViewing) stopAR()
-  }, [isViewing, stopAR])
-  const scanAgain = useCallback(() => {
-    setPreviewExperience(null)
     startAR()
-  }, [startAR])
+  }
 
   return (
     <main className={`ar-page${isCameraActive ? ' ar-page--active' : ''}`}>
@@ -227,31 +215,49 @@ function ArExperiencePage() {
                 <div className="ar-scanner__guide-copy">
                   <strong>
                     {recognizedExperience
-                      ? 'Đang mở mô hình di sản'
+                      ? modelState.status === 'ready'
+                        ? 'Mô hình đang hiển thị trên thẻ'
+                        : modelState.status === 'loading'
+                          ? 'Đang tải mô hình di sản'
+                          : modelState.status === 'error'
+                            ? 'Không tải được mô hình'
+                            : 'Địa danh chưa có mô hình 3D'
                       : status === 'loading'
                         ? 'Đang chuẩn bị bộ nhận diện'
                         : 'Đưa hình địa danh vào giữa khung'}
                   </strong>
                   <span>
                     {recognizedExperience
-                      ? 'Camera sẽ tự tắt; mô hình 3D mở trong một cửa sổ riêng để bạn xoay và thu phóng.'
+                      ? modelState.status === 'ready'
+                        ? 'Giữ thẻ trong khung rồi di chuyển camera để ngắm mô hình từ nhiều góc.'
+                        : modelState.status === 'loading'
+                          ? 'Giữ thẻ ổn định trong lúc mô hình được chuẩn bị.'
+                          : modelState.message
                       : status === 'loading'
                         ? 'Lần khởi động đầu tiên có thể mất vài giây.'
                         : 'Giữ điện thoại ổn định, đủ sáng và cách hình khoảng 20–40 cm.'}
                   </span>
+                  {recognizedExperience && modelState.status === 'loading' && (
+                    <span className="ar-model-status" role="status" aria-live="polite">
+                      {Number.isFinite(modelState.progress) ? `Đã tải ${modelState.progress}%` : 'Đang tải mô hình…'}
+                      <span className="ar-model-status__track" aria-hidden="true">
+                        <span style={{ width: `${Number.isFinite(modelState.progress) ? modelState.progress : 28}%` }} />
+                      </span>
+                    </span>
+                  )}
                 </div>
               </div>
             </Card>
           </>
         )}
 
-        {!isCameraActive && !hasFallback && !viewerExperience && (
+        {!isCameraActive && !hasFallback && (
           <section className="ar-intro" aria-labelledby="ar-page-title">
             <div className="ar-intro__copy">
               <p className="ar-eyebrow"><Sparkles size={17} aria-hidden="true" /> TRẢI NGHIỆM DI SẢN SỐ</p>
               <h1 id="ar-page-title">Chạm vào di sản,<span>đánh thức câu chuyện</span></h1>
               <p className="ar-intro__lead">
-                Căn một trong 7 thẻ địa danh vào khung. Khi nhận diện thành công, camera tự tắt và mô hình 3D mở để bạn tự do khám phá.
+                Căn một trong 7 thẻ địa danh vào khung. Khi nhận diện thành công, mô hình 3D xuất hiện trực tiếp trên thẻ qua camera.
               </p>
               <div className="ar-intro__actions">
                 <Button
@@ -282,7 +288,7 @@ function ArExperiencePage() {
               className="ar-intro__guide-card"
               eyebrow="3 BƯỚC KHÁM PHÁ"
               title="Đưa thẻ vào khung"
-              description="Camera chỉ dùng để nhận diện thẻ và tự tắt trước khi mô hình 3D xuất hiện."
+              description="Camera nhận diện thẻ và giữ mô hình 3D đúng vị trí để bạn quan sát trong không gian thật."
             >
               <div className="ar-intro__preview" aria-hidden="true">
                 <span className="ar-intro__preview-corner ar-intro__preview-corner--tl" />
@@ -294,7 +300,7 @@ function ArExperiencePage() {
               <ol className="ar-intro__steps">
                 <li><span>01</span> Cho phép camera</li>
                 <li><span>02</span> Căn thẻ địa danh</li>
-                <li><span>03</span> Xoay và xem mô hình</li>
+                <li><span>03</span> Di chuyển để ngắm mô hình</li>
               </ol>
             </Card>
           </section>
@@ -303,20 +309,12 @@ function ArExperiencePage() {
         {hasFallback && <CameraFallback status={status} error={error} onBrowse={openCatalog} onRetry={startAR} />}
       </section>
 
-      {viewerExperience && (
-        <HeritageModelDialog
-          experience={viewerExperience}
-          onClose={closeResult}
-          onScanAgain={scanAgain}
-        />
-      )}
-
       <HeritageCatalog
         open={catalogOpen}
         experiences={experiences}
         selectedExperience={selectedExperience}
         onClose={closeCatalog}
-        onPreview={previewModel}
+        onScan={scanFromCatalog}
         onSelect={setSelectedExperience}
       />
     </main>

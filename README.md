@@ -48,7 +48,7 @@ AR là tính năng công khai, không yêu cầu đăng nhập và không sử d
 4. Frontend ánh xạ chỉ số này tới đúng địa danh và trải nghiệm AR đang hoạt động.
 5. Model `.glb`, poster và nội dung địa danh được tải từ CDN/object storage.
 6. Model được neo theo image target; khi mất target, model được tạm ẩn hoặc tạm dừng theo cấu hình engine.
-7. Nếu thiết bị không hỗ trợ AR hoặc người dùng từ chối camera, giao diện hiển thị poster, model viewer hoặc nội dung địa danh thay thế.
+7. Nếu thiết bị không hỗ trợ AR hoặc người dùng từ chối camera, giao diện hiển thị thẻ và nội dung địa danh thay thế; model 3D chỉ được xem trong camera AR.
 
 Camera frame và video của người dùng chỉ được xử lý trên thiết bị, không được gửi hoặc lưu trên backend.
 
@@ -146,7 +146,7 @@ Payment: pending -> success
 | Sản phẩm, giỏ hàng, đơn hàng, thanh toán API | Đã triển khai backend, checkout transaction và worker hết hạn đơn |
 | payOS provider/webhook | Đã có payment link, webhook xác minh chữ ký và xử lý idempotent |
 | Nội dung di sản | Đã có backend admin CRUD và public API `GET /chamsacviet/ar/experiences` cho cấu hình AR đã xuất bản |
-| Image tracking/WebAR | Đã có trang công khai `/ar`, MindAR image tracking cho 7 thẻ đầu tiên (`target_index` 0–6), tải lười model GLB, tiến độ/lỗi tải và model Tháp Rùa cho target Hồ Gươm (`target_index` 5) |
+| Image tracking/WebAR | Đã có trang công khai `/ar`, MindAR image tracking cho 7 thẻ đầu tiên (`target_index` 0–6), tải model GLB kèm tiến độ/lỗi và neo model trực tiếp lên thẻ trong camera; không có viewer 3D độc lập |
 | R2/CDN integration | Đã có upload ảnh sản phẩm trực tiếp từ frontend bằng presigned URL do backend cấp; cần cấu hình bucket, credential, public domain và CORS theo môi trường |
 | Admin | Đã có backend dashboard, quản lý user, sản phẩm, tồn kho, đơn, luật chơi, địa danh và cấu hình model AR; frontend chưa triển khai |
 | Automated tests | Đã có test cho auth, response contract, MongoDB, shop rules, order state và payOS |

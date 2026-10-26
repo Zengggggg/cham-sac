@@ -1,16 +1,40 @@
+import { useState } from 'react'
 import { ArrowLeft, Mail } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import Button from '../../components/ui/Button.jsx'
 import Card from '../../components/ui/Card.jsx'
 import Input from '../../components/ui/Input.jsx'
+import { requestPasswordResetOtp } from '../../services/authService.js'
 import wtmLogo from '../../assets/wtm.png'
 import './ForgotPassword.scss'
 
 export default function ForgotPassword() {
-  const handleSubmit = (event) => {
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    toast('Chức năng gửi OTP khôi phục mật khẩu sẽ được tích hợp trong bước tiếp theo.')
+    const email = String(new FormData(event.currentTarget).get('email') || '')
+      .trim()
+      .toLowerCase()
+
+    setErrorMessage('')
+    setLoading(true)
+    try {
+      const response = await requestPasswordResetOtp(email)
+      toast.success(response.message || 'Đã gửi OTP đặt lại mật khẩu đến email của bạn.')
+      navigate('/reset-password', {
+        state: { passwordReset: response.data },
+      })
+    } catch (error) {
+      const message = error.message || 'Không thể gửi OTP. Vui lòng thử lại.'
+      setErrorMessage(message)
+      toast.error(message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -43,10 +67,22 @@ export default function ForgotPassword() {
                   autoComplete="email"
                   placeholder="you@example.com"
                   required
+                  aria-invalid={Boolean(errorMessage)}
                 />
               </div>
 
-              <Button className="forgot-password-page__submit" type="submit" size="lg">
+              {errorMessage && (
+                <p className="forgot-password-page__error" role="alert">
+                  {errorMessage}
+                </p>
+              )}
+
+              <Button
+                className="forgot-password-page__submit"
+                type="submit"
+                size="lg"
+                loading={loading}
+              >
                 Gửi mã OTP
               </Button>
             </form>

@@ -11,6 +11,7 @@ import arRouter from './arRoutes.js';
 import cartRouter from './cartRoutes.js';
 import orderRouter from './orderRoutes.js';
 import paymentRouter from './paymentRoutes.js';
+import questionRouter from './questionRoutes.js';
 import shopRouter from './shopRoutes.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 
@@ -31,6 +32,7 @@ router.use('/cart', cartRouter);
 router.use('/orders', orderRouter);
 router.use('/payments', paymentRouter);
 router.use('/ar', arRouter);
+router.use('/questions', questionRouter);
 router.use('/admin', adminRouter);
 
 export default router;

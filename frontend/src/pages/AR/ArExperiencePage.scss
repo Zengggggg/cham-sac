@@ -444,6 +444,40 @@ body:has(.ar-page--active) .messenger-wrapper {
   box-shadow: 0 0 14px var(--ar-pink);
 }
 
+.ar-model-info-actions {
+  position: fixed;
+  top: 82px;
+  right: clamp(14px, 4vw, 48px);
+  z-index: 120;
+  display: grid;
+  gap: 10px;
+}
+
+.ar-model-info-actions__button {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  color: var(--ar-ink);
+  border: 2px solid var(--ar-paper);
+  border-radius: 50%;
+  background: var(--ar-paper);
+  box-shadow: 0 3px 14px rgba(19, 15, 23, 0.28);
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.ar-model-info-actions__button:hover {
+  color: var(--ar-white);
+  background: var(--ar-pink-dark);
+  transform: translateY(-2px);
+}
+
+.ar-model-info-actions__button:focus-visible {
+  outline: 3px solid var(--ar-gold);
+  outline-offset: 3px;
+}
+
 .ar-scanner__guide.ui-card {
   position: absolute;
   left: 50%;
@@ -822,6 +856,115 @@ body:has(.ar-catalog) .ui-modal__header p {
   margin-top: 20px;
 }
 
+.ar-info-modal .ui-modal__body {
+  max-height: min(64svh, 620px);
+  overflow-y: auto;
+}
+
+.ar-info-place {
+  color: var(--ar-ink);
+}
+
+.ar-info-place > p {
+  margin: 0;
+  color: var(--ar-muted);
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+
+.ar-info-place > p + p { margin-top: 14px; }
+.ar-info-place > .ar-info-place__summary { color: var(--ar-ink); font-weight: 700; }
+
+.ar-info-questions__state {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  margin: 0;
+  color: var(--ar-muted);
+}
+
+.ar-info-questions__state[role="status"] { display: block; }
+
+.ar-info-questions__list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 30px;
+}
+
+.ar-info-questions__list > li {
+  padding: 15px 16px;
+  border-left: 4px solid var(--ar-gold);
+  border-radius: 6px;
+  background: #fff9ed;
+  line-height: 1.55;
+}
+
+.ar-info-questions__list > li > p { margin: 0; font-weight: 700; }
+
+.ar-info-questions__options {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ar-info-questions__options li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--ar-line);
+  border-radius: 7px;
+  background: var(--ar-card);
+}
+
+.ar-info-questions__options li > span {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  align-items: center;
+  justify-content: center;
+  color: var(--ar-purple);
+  border-radius: 50%;
+  background: #f8e8f0;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.ar-info-questions__options li > p { margin: 1px 0 0; }
+
+.ar-info-questions__options li.is-correct {
+  color: #1f6a32;
+  border-color: #79b985;
+  background: #eaf7ec;
+}
+
+.ar-info-questions__options li.is-correct > span {
+  color: var(--ar-white);
+  background: #2f7d43;
+}
+
+.ar-info-questions__answer {
+  margin-top: 10px;
+  padding: 0;
+  color: var(--ar-pink-dark);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ar-info-questions__answer:focus-visible {
+  border-radius: 3px;
+  outline: 3px solid var(--ar-gold);
+  outline-offset: 3px;
+}
+
 @media (min-width: 680px) {
   .ar-place-detail__layout { grid-template-columns: minmax(210px, 0.7fr) minmax(0, 1.3fr); }
 }
@@ -880,6 +1023,8 @@ body:has(.ar-catalog) .ui-modal__header p {
   .ar-toolbar__stop { position: static; width: 42px; padding: 0; }
   .ar-toolbar__stop > span { display: none; }
   .ar-stage { min-height: calc(100svh - 112px); }
+  .ar-model-info-actions { top: 72px; right: 12px; gap: 8px; }
+  .ar-model-info-actions__button { width: 44px; height: 44px; }
 
   .ar-intro {
     width: min(100% - 28px, 470px);
@@ -926,6 +1071,8 @@ body:has(.ar-catalog) .ui-modal__header p {
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -6px 0 rgba(114, 50, 126, 0.18);
   }
+  .ar-info-modal { max-height: 92svh; }
+  .ar-info-modal .ui-modal__body { max-height: 70svh; }
   .ar-catalog__back.ui-button { width: 38px; padding: 0; }
   .ar-catalog__back.ui-button > span { display: none; }
   .ui-modal__header { padding: 19px 18px; }

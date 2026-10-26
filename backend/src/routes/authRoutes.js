@@ -1,12 +1,14 @@
 import express from 'express';
 import {
     getCurrentUser,
+    forgotPassword,
     googleLogin,
     linkGoogle,
     login,
     logout,
     refreshToken,
     register,
+    resetPassword,
     resendEmailVerificationOtp,
     verifyEmail
 } from '../controllers/authController.js';
@@ -20,6 +22,8 @@ import {
     validateEmailOtp,
     validateGoogleIdToken,
     validateLogin,
+    validatePasswordReset,
+    validatePasswordResetRequest,
     validateRefreshToken,
     validateRegistration,
     validateVerificationEmail
@@ -36,6 +40,18 @@ authRouter.post(
     resendEmailVerificationOtp
 );
 authRouter.post('/login', authRateLimit, validateLogin, login);
+authRouter.post(
+    '/forgot-password',
+    emailOtpResendRateLimit,
+    validatePasswordResetRequest,
+    forgotPassword
+);
+authRouter.post(
+    '/reset-password',
+    emailOtpVerificationRateLimit,
+    validatePasswordReset,
+    resetPassword
+);
 authRouter.post('/google', authRateLimit, validateGoogleIdToken, googleLogin);
 authRouter.post('/google/link', authRateLimit, authenticate, validateGoogleIdToken, linkGoogle);
 authRouter.post('/refresh-token', authRateLimit, validateRefreshToken, refreshToken);

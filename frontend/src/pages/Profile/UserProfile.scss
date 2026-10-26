@@ -139,9 +139,6 @@
   outline: 3px solid #eea53b;
   outline-offset: 3px;
 }
-.profile-page__avatar-input {
-  display: none;
-}
 .profile-page__summary h2 {
   color: #211832;
   font-family: "Baloo 2", sans-serif;
@@ -155,6 +152,88 @@
   margin: 5px 0 20px;
   text-align: center;
 }
+
+.profile-avatar-modal .ui-modal__body {
+  padding: 20px;
+}
+
+.profile-avatar-picker {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-avatar-picker__option {
+  align-items: center;
+  background: #fffefa;
+  border: 2px solid #eadfe6;
+  border-radius: 12px;
+  color: #211832;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.profile-avatar-picker__option:hover {
+  border-color: #ce337f;
+  transform: translateY(-2px);
+}
+
+.profile-avatar-picker__option:focus-visible {
+  outline: 3px solid #eea53b;
+  outline-offset: 3px;
+}
+
+.profile-avatar-picker__option.is-selected {
+  background: #fff4f8;
+  border-color: #b12069;
+  box-shadow: 0 0 0 2px rgba(177, 32, 105, 0.12);
+}
+
+.profile-avatar-picker__image {
+  align-items: center;
+  background: #fff9ed;
+  border-radius: 50%;
+  display: flex;
+  height: 132px;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  width: 132px;
+}
+
+.profile-avatar-picker__image img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.profile-avatar-picker__check {
+  align-items: center;
+  background: #2f7d43;
+  border: 2px solid #fffefa;
+  border-radius: 50%;
+  bottom: 3px;
+  color: #fff;
+  display: flex;
+  height: 26px;
+  justify-content: center;
+  position: absolute;
+  right: 3px;
+  width: 26px;
+}
+
+.profile-avatar-picker__label {
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
 .profile-page__summary-badges {
   display: flex;
   gap: 10px;
@@ -412,4 +491,14 @@
   .profile-page__header h1 {
     font-size: 44px;
   }
+  .profile-avatar-modal .ui-modal__footer {
+    flex-wrap: wrap;
+    padding: 14px 16px 18px;
+  }
+  .profile-avatar-modal .ui-modal__footer .ui-button {
+    flex: 1 1 auto;
+  }
+  .profile-avatar-picker { gap: 10px; }
+  .profile-avatar-picker__option { padding: 10px 6px; }
+  .profile-avatar-picker__image { height: 104px; width: 104px; }
 }

@@ -113,7 +113,7 @@ Sau khi cấu hình `MONGODB_URI` và `MONGODB_DB_NAME`, chạy:
 npm run db:init
 ```
 
-Script có thể chạy lặp lại: collection mới sẽ được tạo; collection có sẵn được cập nhật JSON Schema validator bằng `collMod`; index được tạo theo tên cố định. Nếu dữ liệu hiện có vi phạm unique index, script dừng và báo rõ index lỗi để tránh âm thầm làm mất dữ liệu.
+Script có thể chạy lặp lại: collection mới sẽ được tạo; collection có sẵn được cập nhật JSON Schema validator bằng `collMod`; index tương đương đã có được giữ nguyên kể cả khi tên khác, còn index mới được tạo theo định nghĩa hiện tại. Nếu dữ liệu hiện có vi phạm unique index, script dừng và báo rõ index lỗi để tránh âm thầm làm mất dữ liệu.
 
 Khi nâng cấp database đã có dữ liệu lên schema shop mới, chạy migration idempotent trước khi khởi động phiên bản mới:
 
@@ -121,13 +121,21 @@ Khi nâng cấp database đã có dữ liệu lên schema shop mới, chạy mig
 npm run db:migrate:shop
 ```
 
-Migration backfill cart/audit arrays, `expiresAt`, `refundRequired`, `statusHistory` và sau đó đồng bộ validator/index.
+Migration backfill cart/audit arrays, chuyển `changeHistory.changedBy` cũ từ chuỗi ObjectId hợp lệ sang BSON ObjectId, backfill `expiresAt`, `refundRequired`, `statusHistory` và sau đó đồng bộ validator/index. Nếu gặp actor ID không đúng định dạng ObjectId, migration dừng và báo số sản phẩm cần kiểm tra thay vì làm mất thông tin lịch sử.
 
 Seed development tối thiểu:
 
 ```bash
 npm run db:seed
 ```
+
+Seed 101 câu hỏi trắc nghiệm public kèm lựa chọn và đáp án đúng cho 9 địa danh:
+
+```bash
+npm run db:seed:questions
+```
+
+Dữ liệu nguồn nằm trong `scripts/data/publicQuestions.js` và `scripts/data/heritageSites.js`; script thực thi nằm trong `scripts/seedPublicQuestions.js`. Lệnh có thể chạy lặp lại và đồng bộ bộ câu hỏi chuẩn cho 9 địa danh: nếu dữ liệu khác nguồn seed, toàn bộ `publicQuestions` của địa danh tương ứng sẽ được thay thế. Khi địa danh chưa tồn tại, script tải ảnh địa danh tương ứng từ `frontend/src/assets/landmarks` lên R2 rồi tạo bản ghi trước khi thêm câu hỏi; vì vậy cần cấu hình đầy đủ các biến `R2_*`. Script không chạy lại bước đồng bộ collection/index.
 
 Để chỉ tạo hoặc cập nhật tài khoản admin development mà không seed dữ liệu mẫu khác:
 
@@ -158,6 +166,12 @@ Hai endpoint đọc sản phẩm `/shop/boxes` và endpoint cấu hình `/ar/exp
 | `GET` | `/chamsacviet/shop/boxes` | Danh sách sản phẩm đang bán (public) |
 | `GET` | `/chamsacviet/shop/boxes/:id` | Chi tiết sản phẩm (public) |
 | `GET` | `/chamsacviet/ar/experiences` | Nội dung địa danh và model AR đã xuất bản, sắp xếp theo `targetIndex` (public) |
+| `GET` | `/chamsacviet/questions/public` | Danh sách địa danh đang có câu hỏi public |
+| `GET` | `/chamsacviet/questions/public/:heritageSiteId` | Câu hỏi public của một địa danh |
+| `GET/POST` | `/chamsacviet/questions/lists` | Xem/tạo danh sách câu hỏi private của user |
+| `PATCH/DELETE` | `/chamsacviet/questions/lists/:listId` | Cập nhật/xóa danh sách private thuộc user |
+| `POST` | `/chamsacviet/questions/lists/:listId/items` | Thêm câu hỏi private |
+| `PATCH/DELETE` | `/chamsacviet/questions/lists/:listId/items/:questionId` | Cập nhật/xóa câu hỏi private |
 | `GET` | `/chamsacviet/cart` | Lấy giỏ hàng với giá/tồn kho hiện tại |
 | `POST` | `/chamsacviet/cart/items` | Thêm/gộp sản phẩm vào giỏ |
 | `PATCH/DELETE` | `/chamsacviet/cart/items/:productId` | Cập nhật hoặc xóa dòng giỏ |
@@ -189,10 +203,14 @@ Toàn bộ endpoint dưới đây yêu cầu access token của role `admin`. C�
 | `GET/PATCH/DELETE` | `/chamsacviet/admin/posts/:id` | Xem/cập nhật/xóa luật chơi |
 | `GET/POST` | `/chamsacviet/admin/heritage-sites` | Danh sách/tạo nội dung địa danh |
 | `GET/PATCH/DELETE` | `/chamsacviet/admin/heritage-sites/:id` | Xem/cập nhật/xóa địa danh chưa gắn model AR |
+| `GET/POST` | `/chamsacviet/admin/heritage-sites/:id/questions` | Xem/tạo câu hỏi public của địa danh |
+| `PATCH/DELETE` | `/chamsacviet/admin/heritage-sites/:id/questions/:questionId` | Cập nhật/xóa câu hỏi public với `expectedUpdatedAt` |
 | `GET/POST` | `/chamsacviet/admin/models` | Danh sách/tạo cấu hình model AR |
 | `GET/PATCH/DELETE` | `/chamsacviet/admin/models/:id` | Xem/cập nhật/soft-delete model AR |
 
 Model AR ở trạng thái `published` phải có `targetIndex` duy nhất từ 0 đến 8 để frontend ánh xạ đúng image target; draft có thể chưa gán chỉ số này.
+
+Câu hỏi public độc lập với trạng thái model AR; danh sách chỉ trả các địa danh đang có ít nhất một câu hỏi public. Câu trắc nghiệm có `options` và `correctOptionIndex`; API trả cả hai trường để frontend hiển thị lựa chọn và cho người dùng xem đáp án. Danh sách private được giới hạn theo đúng user lấy từ access token; client không được truyền user ID. Dữ liệu câu hỏi được nhúng trong hai collection hiện có (`heritage_sites` và `users`), vì vậy sau khi deploy cần chạy `npm run db:migrate:shop` để backfill các mảng mới và đồng bộ validator.
 
 Dashboard chỉ tính payment `success` của đơn vẫn có `paymentStatus=paid`, nhóm doanh thu theo `paidAt`; đơn đã hoàn tiền không được tính. Trường `traffic.available=false` cho biết lượt truy cập chưa có dữ liệu vì MVP chưa tích hợp analytics. Endpoint trạng thái user không cho quản trị viên khóa chính mình, không chỉnh trạng thái admin khác và không kích hoạt tài khoản chưa xác minh email.
 
@@ -206,6 +224,8 @@ Public registration luôn tạo role `user`; client không được phép tự c
 | `POST` | `/chamsacviet/auth/verify-email` | Public | Xác minh `email`, `otp`, kích hoạt tài khoản và nhận JWT |
 | `POST` | `/chamsacviet/auth/resend-verification-otp` | Public | Gửi lại OTP bằng `email` |
 | `POST` | `/chamsacviet/auth/login` | Public | Đăng nhập bằng `email`, `password` |
+| `POST` | `/chamsacviet/auth/forgot-password` | Public | Kiểm tra email đã đăng ký và gửi OTP đặt lại mật khẩu |
+| `POST` | `/chamsacviet/auth/reset-password` | Public | Xác minh `email`, `otp` và đặt mật khẩu mới |
 | `POST` | `/chamsacviet/auth/google` | Public | Đăng nhập/đăng ký bằng Google `idToken` |
 | `POST` | `/chamsacviet/auth/google/link` | Bearer access token | Liên kết Google vào tài khoản hiện tại |
 | `POST` | `/chamsacviet/auth/refresh-token` | Public | Xoay access/refresh token bằng `refreshToken` |
@@ -232,6 +252,8 @@ Ví dụ đăng ký:
 ```
 
 OTP mặc định hết hạn sau 10 phút, tối đa 5 lần nhập sai và phải chờ 60 giây trước khi yêu cầu gửi lại. Các giới hạn này cấu hình bằng biến môi trường. Đăng nhập email/mật khẩu bị từ chối cho đến khi xác minh thành công. Tài khoản Google được xem là đã xác minh vì backend kiểm tra `email_verified` từ Google.
+
+Luồng quên mật khẩu dùng cùng chính sách thời hạn, số lần thử và cooldown OTP. Gọi `/auth/forgot-password` với email đã đăng ký, sau đó gửi `email`, OTP 6 số và `password` mới đến `/auth/reset-password`. OTP chỉ lưu dưới dạng bcrypt hash; đặt lại mật khẩu thành công sẽ xóa OTP và thu hồi refresh token hiện tại của tài khoản.
 
 Route cần bảo vệ dùng `authenticate`; route admin ghép thêm `authorizeRoles('admin')`. Access token gửi qua header `Authorization: Bearer <token>`.
 

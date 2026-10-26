@@ -38,6 +38,22 @@ export function loginUser({ email, password }) {
   })
 }
 
+export function requestPasswordResetOtp(email) {
+  return apiRequest('/auth/forgot-password', {
+    auth: false,
+    body: { email },
+    method: 'POST',
+  })
+}
+
+export function resetPassword({ email, otp, password }) {
+  return apiRequest('/auth/reset-password', {
+    auth: false,
+    body: { email, otp, password },
+    method: 'POST',
+  })
+}
+
 export function loginWithGoogle(idToken) {
   return apiRequest('/auth/google', {
     auth: false,

@@ -30,3 +30,8 @@ export async function uploadProductImageToR2(file, upload) {
 }
 export const listAdminOrders = ({ page = 1, limit = 20, orderCode = '', orderStatus = '' } = {}) => apiRequest(`/admin/orders${buildQuery({ page, limit, orderCode, orderStatus })}`)
 export const getAdminOrder = (orderId) => apiRequest(`/admin/orders/${orderId}`)
+export const listAdminHeritageSites = ({ page = 1, limit = 100, search = '' } = {}) => apiRequest(`/admin/heritage-sites${buildQuery({ page, limit, search })}`)
+export const getAdminPublicQuestions = (heritageSiteId) => apiRequest(`/admin/heritage-sites/${heritageSiteId}/questions`)
+export const createAdminPublicQuestion = (heritageSiteId, content) => apiRequest(`/admin/heritage-sites/${heritageSiteId}/questions`, { method: 'POST', body: { content } })
+export const updateAdminPublicQuestion = (heritageSiteId, questionId, content, expectedUpdatedAt) => apiRequest(`/admin/heritage-sites/${heritageSiteId}/questions/${questionId}`, { method: 'PATCH', body: { content, expectedUpdatedAt } })
+export const deleteAdminPublicQuestion = (heritageSiteId, questionId, expectedUpdatedAt) => apiRequest(`/admin/heritage-sites/${heritageSiteId}/questions/${questionId}`, { method: 'DELETE', body: { expectedUpdatedAt } })

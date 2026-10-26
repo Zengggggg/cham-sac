@@ -19,7 +19,8 @@
     "db:migrate:is-verified": "node ./scripts/removeStoredIsVerified.js --apply",
     "db:migrate:shop": "node ./scripts/migrateShopSchema.js",
     "db:create-dev-admin": "node ./scripts/createDevelopmentAdmin.js",
-    "db:seed": "node ./scripts/seedDevelopment.js"
+    "db:seed": "node ./scripts/seedDevelopment.js",
+    "db:seed:questions": "node ./scripts/seedPublicQuestions.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",

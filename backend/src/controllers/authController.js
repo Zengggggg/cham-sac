@@ -5,6 +5,8 @@ import {
     logoutUser,
     refreshUserToken,
     registerUser,
+    requestPasswordResetOtp,
+    resetUserPassword,
     resendUserEmailVerificationOtp,
     verifyUserEmail
 } from '../services/authService.js';
@@ -82,6 +84,31 @@ export const login = async (req, res, next) => {
             statusCode: 200,
             message: 'Đăng nhập thành công.',
             data: auth
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+export const forgotPassword = async (req, res, next) => {
+    try {
+        const passwordReset = await requestPasswordResetOtp(req.body.email);
+        return sendSuccess(res, {
+            statusCode: 200,
+            message: 'Đã gửi OTP đặt lại mật khẩu đến email của bạn.',
+            data: passwordReset
+        });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+export const resetPassword = async (req, res, next) => {
+    try {
+        await resetUserPassword(req.body);
+        return sendSuccess(res, {
+            statusCode: 200,
+            message: 'Đặt lại mật khẩu thành công.'
         });
     } catch (error) {
         return next(error);

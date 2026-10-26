@@ -3,6 +3,8 @@ import test from 'node:test';
 import {
     validateEmailOtp,
     validateLogin,
+    validatePasswordReset,
+    validatePasswordResetRequest,
     validateRegistration,
     validateVerificationEmail
 } from '../src/validations/authValidation.js';
@@ -94,4 +96,39 @@ test('resend OTP validation accepts only a normalized email', () => {
 
     assert.equal(result.nextCalled, true);
     assert.deepEqual(result.req.body, { email: 'user@example.com' });
+});
+
+test('password reset validation normalizes input and enforces OTP and password rules', () => {
+    const request = runMiddleware(validatePasswordResetRequest, {
+        email: ' USER@EXAMPLE.COM '
+    });
+
+    assert.equal(request.nextCalled, true);
+    assert.deepEqual(request.req.body, { email: 'user@example.com' });
+
+    const valid = runMiddleware(validatePasswordReset, {
+        email: ' USER@EXAMPLE.COM ',
+        otp: '123456',
+        password: 'matkhaumoi123'
+    });
+
+    assert.equal(valid.nextCalled, true);
+    assert.deepEqual(valid.req.body, {
+        email: 'user@example.com',
+        otp: '123456',
+        password: 'matkhaumoi123'
+    });
+
+    const invalid = runMiddleware(validatePasswordReset, {
+        email: 'user@example.com',
+        otp: '12345x',
+        password: 'short'
+    });
+
+    assert.equal(invalid.nextCalled, false);
+    assert.equal(invalid.response.statusCode, 422);
+    assert.deepEqual(
+        invalid.response.payload.errors.map(({ field }) => field),
+        ['otp', 'password']
+    );
 });

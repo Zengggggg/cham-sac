@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ArrowLeft,
   BookOpen,
+  CircleHelp,
   Camera,
   CameraOff,
   ChevronLeft,
   ChevronRight,
   House,
+  Landmark,
   MapPin,
   RefreshCw,
   ScanLine,
@@ -17,9 +19,33 @@ import Button from '../../components/ui/Button.jsx'
 import Card from '../../components/ui/Card.jsx'
 import Modal from '../../components/ui/Modal.jsx'
 import brandMark from '../../assets/elements/wtm_withstroke.png'
+import { listPublicQuestionGroups } from '../../services/questionService.js'
 import useMindARSession from '../../hooks/useMindARSession.js'
 import useArExperiences from '../../hooks/useArExperiences.js'
 import './ArExperiencePage.scss'
+
+const normalizePlaceName = (name) => name
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLocaleLowerCase('vi')
+  .replace(/[–—]/g, '-')
+  .replace(/[^\p{L}\p{N}]+/gu, ' ')
+  .trim()
+
+const findQuestionGroup = (groups, experience) => {
+  const matchingId = groups.find((group) => (
+    experience.backendId && String(group.heritageSiteId) === String(experience.backendId)
+  ))
+  if (matchingId) return matchingId
+
+  const experienceName = normalizePlaceName(experience.name)
+  return groups.find((group) => {
+    const groupName = normalizePlaceName(group.name)
+    return groupName === experienceName
+      || groupName.startsWith(`${experienceName} `)
+      || experienceName.startsWith(`${groupName} `)
+  }) || null
+}
 
 const statusCopy = {
   loading: 'Đang tải bộ nhận diện MindAR…',
@@ -143,11 +169,56 @@ function ArExperiencePage() {
   const { containerRef, error, modelState, recognizedExperience, startAR, status, stopAR } = useMindARSession(experiences)
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [selectedExperience, setSelectedExperience] = useState(null)
+  const [infoType, setInfoType] = useState(null)
+  const [infoExperience, setInfoExperience] = useState(null)
+  const [questionState, setQuestionState] = useState({ status: 'idle', group: null, error: '' })
+  const [questionRetry, setQuestionRetry] = useState(0)
+  const [revealedAnswers, setRevealedAnswers] = useState({})
   const isCameraActive = ['loading', 'scanning', 'recognized'].includes(status)
   const isRequesting = status === 'loading'
   const hasFallback = ['error', 'insecure', 'unsupported'].includes(status)
 
+  useEffect(() => {
+    if (infoType !== 'questions' || !infoExperience) return undefined
+
+    let isCurrentRequest = true
+    listPublicQuestionGroups()
+      .then((response) => {
+        if (!isCurrentRequest) return
+        if (!Array.isArray(response?.data)) {
+          throw new Error('Dữ liệu câu hỏi không đúng định dạng.')
+        }
+        setQuestionState({
+          status: 'ready',
+          group: findQuestionGroup(response.data, infoExperience),
+          error: '',
+        })
+      })
+      .catch((requestError) => {
+        if (!isCurrentRequest) return
+        setQuestionState({
+          status: 'error',
+          group: null,
+          error: requestError.message || 'Không thể tải câu hỏi cho địa danh này.',
+        })
+      })
+
+    return () => { isCurrentRequest = false }
+  }, [infoType, infoExperience, questionRetry])
+
   const openCatalog = () => setCatalogOpen(true)
+  const openInfo = (type) => {
+    setInfoExperience(recognizedExperience)
+    setInfoType(type)
+    setRevealedAnswers({})
+    if (type === 'questions') {
+      setQuestionState({ status: 'loading', group: null, error: '' })
+    }
+  }
+  const closeInfo = () => {
+    setInfoType(null)
+    setInfoExperience(null)
+  }
   const closeCatalog = () => {
     setCatalogOpen(false)
     setSelectedExperience(null)
@@ -251,6 +322,29 @@ function ArExperiencePage() {
           </>
         )}
 
+        {recognizedExperience && modelState.status === 'ready' && (
+          <div className="ar-model-info-actions" aria-label="Thông tin mô hình đang hiển thị">
+            <button
+              className="ar-model-info-actions__button"
+              type="button"
+              onClick={() => openInfo('questions')}
+              aria-label={`Xem câu hỏi về ${recognizedExperience.name}`}
+              title="Câu hỏi về địa danh"
+            >
+              <CircleHelp size={22} aria-hidden="true" />
+            </button>
+            <button
+              className="ar-model-info-actions__button"
+              type="button"
+              onClick={() => openInfo('place')}
+              aria-label={`Xem thông tin ${recognizedExperience.name}`}
+              title="Thông tin địa danh"
+            >
+              <Landmark size={21} aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
         {!isCameraActive && !hasFallback && (
           <section className="ar-intro" aria-labelledby="ar-page-title">
             <div className="ar-intro__copy">
@@ -317,6 +411,84 @@ function ArExperiencePage() {
         onScan={scanFromCatalog}
         onSelect={setSelectedExperience}
       />
+
+      <Modal
+        open={Boolean(infoType && infoExperience)}
+        onClose={closeInfo}
+        title={infoType === 'questions' ? 'Câu hỏi địa danh' : infoExperience?.name || 'Thông tin địa danh'}
+        description={infoType === 'questions'
+          ? `Câu hỏi public về ${infoExperience?.name || 'địa danh đang xem'}.`
+          : [infoExperience?.tagline, infoExperience?.location].filter(Boolean).join(' · ')}
+        size="lg"
+        className="ar-info-modal"
+      >
+        {infoType === 'place' && infoExperience && (
+          <article className="ar-info-place">
+            <p className="ar-info-place__summary">{infoExperience.shortDescription}</p>
+            {infoExperience.content.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+          </article>
+        )}
+
+        {infoType === 'questions' && (
+          <section className="ar-info-questions" aria-label={`Câu hỏi về ${infoExperience?.name || 'địa danh'}`}>
+            {questionState.status === 'loading' ? (
+              <p className="ar-info-questions__state" role="status">Đang tải câu hỏi...</p>
+            ) : questionState.status === 'error' ? (
+              <div className="ar-info-questions__state" role="alert">
+                <p>{questionState.error}</p>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setQuestionState({ status: 'loading', group: null, error: '' })
+                    setQuestionRetry((retry) => retry + 1)
+                  }}
+                >
+                  Thử tải lại
+                </Button>
+              </div>
+            ) : !questionState.group?.questions?.length ? (
+              <p className="ar-info-questions__state">Chưa có câu hỏi public cho địa danh này.</p>
+            ) : (
+              <ol className="ar-info-questions__list">
+                {questionState.group.questions.map((question) => {
+                  const isRevealed = Boolean(revealedAnswers[question.id])
+                  return (
+                    <li key={question.id}>
+                      <p>{question.content}</p>
+                      {question.options?.length > 0 && (
+                        <>
+                          <ul className="ar-info-questions__options">
+                            {question.options.map((option, optionIndex) => (
+                              <li
+                                className={isRevealed && optionIndex === question.correctOptionIndex ? 'is-correct' : ''}
+                                key={`${question.id}-${optionIndex}`}
+                              >
+                                <span>{String.fromCharCode(65 + optionIndex)}</span>
+                                <p>{option}</p>
+                              </li>
+                            ))}
+                          </ul>
+                          <button
+                            className="ar-info-questions__answer"
+                            type="button"
+                            aria-expanded={isRevealed}
+                            onClick={() => setRevealedAnswers((current) => ({
+                              ...current,
+                              [question.id]: !current[question.id],
+                            }))}
+                          >
+                            {isRevealed ? 'Ẩn đáp án' : 'Xem đáp án'}
+                          </button>
+                        </>
+                      )}
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </section>
+        )}
+      </Modal>
     </main>
   )
 }

@@ -28,6 +28,12 @@ import {
     updateProduct,
     updateUserStatus
 } from '../controllers/adminController.js';
+import {
+    createAdminQuestion,
+    deleteAdminQuestion,
+    getAdminQuestions,
+    updateAdminQuestion
+} from '../controllers/questionController.js';
 import { authenticate, authorizeRoles } from '../middlewares/authMiddleware.js';
 import {
     validateObjectIdParam,
@@ -42,6 +48,10 @@ import {
     validateVersionedDelete
 } from '../validations/adminValidation.js';
 import { validateProductImageUpload } from '../validations/uploadValidation.js';
+import {
+    validateAdminQuestionDelete,
+    validateAdminQuestionWrite
+} from '../validations/questionValidation.js';
 
 const adminRouter = express.Router();
 adminRouter.use(authenticate, authorizeRoles('admin'));
@@ -84,6 +94,31 @@ adminRouter.delete(
 );
 adminRouter.get('/heritage-sites', listHeritageSites);
 adminRouter.post('/heritage-sites', validateHeritageSiteWrite, createHeritageSite);
+adminRouter.get(
+    '/heritage-sites/:id/questions',
+    validateObjectIdParam('id'),
+    getAdminQuestions
+);
+adminRouter.post(
+    '/heritage-sites/:id/questions',
+    validateObjectIdParam('id'),
+    validateAdminQuestionWrite,
+    createAdminQuestion
+);
+adminRouter.patch(
+    '/heritage-sites/:id/questions/:questionId',
+    validateObjectIdParam('id'),
+    validateObjectIdParam('questionId'),
+    validateAdminQuestionWrite,
+    updateAdminQuestion
+);
+adminRouter.delete(
+    '/heritage-sites/:id/questions/:questionId',
+    validateObjectIdParam('id'),
+    validateObjectIdParam('questionId'),
+    validateAdminQuestionDelete,
+    deleteAdminQuestion
+);
 adminRouter.get('/heritage-sites/:id', validateObjectIdParam('id'), getHeritageSite);
 adminRouter.patch(
     '/heritage-sites/:id',

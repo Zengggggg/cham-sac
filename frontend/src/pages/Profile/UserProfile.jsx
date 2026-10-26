@@ -1,15 +1,41 @@
-import { useEffect, useRef, useState } from 'react'
-import { Edit3, Pencil, Save, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Check, Edit3, Pencil, Save, X } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { Link } from 'react-router-dom'
 import Button from '../../components/ui/Button.jsx'
 import Card from '../../components/ui/Card.jsx'
 import Input from '../../components/ui/Input.jsx'
+import Modal from '../../components/ui/Modal.jsx'
 import authCover from '../../assets/pics/auth_cover.png'
 import elementFlag from '../../assets/elements/IMG_4820.PNG'
 import elementRedFold from '../../assets/elements/IMG_4821.PNG'
+import avatarFestival from '../../assets/characters/image-removebg-preview (1).png'
+import avatarExplorer from '../../assets/characters/image-removebg-preview (2).png'
+import avatarPhotographer from '../../assets/characters/image-removebg-preview (3).png'
+import avatarLotus from '../../assets/characters/image-removebg-preview (5).png'
 import { getCurrentUser } from '../../services/authService.js'
 import { listMyOrders } from '../../services/shopService.js'
 import './UserProfile.scss'
+
+const avatarOptions = [
+  { id: 'festival', label: 'Lễ hội Việt Nam', src: avatarFestival },
+  { id: 'explorer', label: 'Nhà thám hiểm', src: avatarExplorer },
+  { id: 'photographer', label: 'Nhiếp ảnh gia', src: avatarPhotographer },
+  { id: 'lotus', label: 'Sen Việt', src: avatarLotus },
+]
+
+const getAvatarById = (id) => avatarOptions.find((avatar) => avatar.id === id)
+const avatarStorageKey = (user) => `profile-avatar:${user?.email || user?._id || user?.id || 'guest'}`
+
+function readSelectedAvatarId(user) {
+  const storedAvatar = getAvatarById(user?.selectedAvatarId)
+  if (storedAvatar) return storedAvatar.id
+  try {
+    return getAvatarById(localStorage.getItem(avatarStorageKey(user)))?.id || ''
+  } catch {
+    return ''
+  }
+}
 
 const initialProfile = {
   name: 'Người khám phá',
@@ -35,7 +61,18 @@ const formatMoney = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency
 function readProfile() {
   try {
     const saved = JSON.parse(localStorage.getItem('user') || 'null')
-    return saved ? { ...initialProfile, ...saved, fullName: saved.fullName || saved.full_name || saved.name || initialProfile.fullName, authProvider: saved.authProvider || (saved.googleId ? 'google' : 'local') } : initialProfile
+    if (!saved) return initialProfile
+    const selectedAvatarId = readSelectedAvatarId(saved)
+    return {
+      ...initialProfile,
+      ...saved,
+      ...(selectedAvatarId && {
+        selectedAvatarId,
+        avatarUrl: getAvatarById(selectedAvatarId).src,
+      }),
+      fullName: saved.fullName || saved.full_name || saved.name || initialProfile.fullName,
+      authProvider: saved.authProvider || (saved.googleId ? 'google' : 'local'),
+    }
   } catch {
     return initialProfile
   }
@@ -46,7 +83,8 @@ export default function UserProfile() {
   const [draft, setDraft] = useState(profile)
   const [orders, setOrders] = useState([])
   const [isEditing, setIsEditing] = useState(false)
-  const avatarInputRef = useRef(null)
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false)
+  const [selectedAvatarId, setSelectedAvatarId] = useState(profile.selectedAvatarId || '')
 
   useEffect(() => {
     let active = true
@@ -54,16 +92,24 @@ export default function UserProfile() {
       .then(([userResponse, orderResponse]) => {
         if (!active) return
         const user = userResponse.data.user
+        const savedAvatarId = readSelectedAvatarId(user) || readProfile().selectedAvatarId
+        const savedAvatar = getAvatarById(savedAvatarId)
         const nextProfile = {
           ...initialProfile,
           ...user,
+          ...(savedAvatar && {
+            selectedAvatarId: savedAvatar.id,
+            avatarUrl: savedAvatar.src,
+          }),
           fullName: user.fullName || user.name || initialProfile.fullName,
           authProvider: user.googleId ? 'google' : 'local',
         }
         setProfile(nextProfile)
         setDraft(nextProfile)
+        setSelectedAvatarId(nextProfile.selectedAvatarId || '')
         setOrders(orderResponse.data || [])
         localStorage.setItem('user', JSON.stringify(user))
+        if (savedAvatar) localStorage.setItem('user', JSON.stringify(nextProfile))
       })
       .catch((error) => toast.error(error.message || 'Không thể đồng bộ hồ sơ.'))
     return () => { active = false }
@@ -80,26 +126,29 @@ export default function UserProfile() {
     toast.success('Đã cập nhật hồ sơ')
   }
   const cancelEdit = () => { setDraft(profile); setIsEditing(false) }
-  const handleAvatarChange = ({ target }) => {
-    const file = target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith('image/')) {
-      toast.error('Vui lòng chọn một tệp hình ảnh')
-      target.value = ''
+  const openAvatarPicker = () => {
+    setSelectedAvatarId(profile.selectedAvatarId || '')
+    setAvatarPickerOpen(true)
+  }
+  const closeAvatarPicker = () => setAvatarPickerOpen(false)
+  const saveAvatar = () => {
+    const selectedAvatar = getAvatarById(selectedAvatarId)
+    if (!selectedAvatar) {
+      toast.error('Vui lòng chọn một ảnh đại diện.')
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const updated = { ...profile, avatarUrl: reader.result }
-      setProfile(updated)
-      setDraft((current) => ({ ...current, avatarUrl: reader.result }))
-      localStorage.setItem('user', JSON.stringify(updated))
-      toast.success('Đã cập nhật ảnh đại diện')
+    const updated = {
+      ...profile,
+      selectedAvatarId: selectedAvatar.id,
+      avatarUrl: selectedAvatar.src,
     }
-    reader.readAsDataURL(file)
-    target.value = ''
+    setProfile(updated)
+    setDraft((current) => ({ ...current, selectedAvatarId: selectedAvatar.id, avatarUrl: selectedAvatar.src }))
+    localStorage.setItem('user', JSON.stringify(updated))
+    localStorage.setItem(avatarStorageKey(profile), selectedAvatar.id)
+    setAvatarPickerOpen(false)
+    toast.success('Đã cập nhật ảnh đại diện')
   }
 
   return (
@@ -125,24 +174,20 @@ export default function UserProfile() {
           <Card className="profile-page__summary">
             <div className="profile-page__avatar-wrap">
               <div className="profile-page__avatar">
-                <img src={profile.avatarUrl || authCover} alt={`Ảnh đại diện của ${profile.fullName}`} />
+                <img
+                  src={getAvatarById(profile.selectedAvatarId)?.src || profile.avatarUrl || authCover}
+                  alt={`Ảnh đại diện của ${profile.fullName}`}
+                />
               </div>
               <button
                 className="profile-page__avatar-edit"
                 type="button"
                 aria-label="Thay ảnh đại diện"
                 title="Thay ảnh đại diện"
-                onClick={() => avatarInputRef.current?.click()}
+                onClick={openAvatarPicker}
               >
                 <Pencil size={15} aria-hidden="true" />
               </button>
-              <input
-                ref={avatarInputRef}
-                className="profile-page__avatar-input"
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-              />
             </div>
             <h2>{profile.fullName}</h2>
             <p className="profile-page__email">{profile.email}</p>
@@ -179,11 +224,47 @@ export default function UserProfile() {
               <div className="profile-page__order-meta"><span className={`profile-page__order-status profile-page__order-status--${order.orderStatus || 'pending'}`}>{orderStatusLabel(order.orderStatus)}</span><span>{paymentStatusLabel(order.paymentStatus)}</span><strong>{formatMoney(order.totalAmount)}</strong></div>
             </article>)}</div> : <div className="profile-page__empty"><p>Bạn chưa có đơn hàng nào.</p></div>}
           </Card>
-          <Card eyebrow="Cộng đồng" title="Câu hỏi của tôi" description="Theo dõi các câu hỏi bạn đã tạo về những câu chuyện di sản." actions={<Button variant="secondary" size="sm" onClick={() => toast('Khu vực câu hỏi sẽ được kết nối trong bước tiếp theo')}>Xem câu hỏi</Button>}>
-            <p className="profile-page__card-copy">Chưa có câu hỏi nào được đồng bộ.</p>
+          <Card eyebrow="Cộng đồng" title="Câu hỏi của tôi" description="Tạo và quản lý các danh sách câu hỏi private theo từng địa danh." actions={<Button as={Link} to="/questions" variant="secondary" size="sm">Xem câu hỏi</Button>}>
+            <p className="profile-page__card-copy">Danh sách private chỉ hiển thị với tài khoản của bạn.</p>
           </Card>
         </section>
       </div>
+
+      <Modal
+        open={avatarPickerOpen}
+        onClose={closeAvatarPicker}
+        title="Chọn ảnh đại diện"
+        description="Chọn một nhân vật đồng hành cùng bạn trên hành trình khám phá."
+        size="md"
+        className="profile-avatar-modal"
+        actions={(
+          <>
+            <Button variant="ghost" onClick={closeAvatarPicker}>Hủy</Button>
+            <Button onClick={saveAvatar} disabled={!getAvatarById(selectedAvatarId)}>Lưu ảnh đại diện</Button>
+          </>
+        )}
+      >
+        <div className="profile-avatar-picker" role="group" aria-label="Các ảnh đại diện có sẵn">
+          {avatarOptions.map((avatar) => {
+            const isSelected = selectedAvatarId === avatar.id
+            return (
+              <button
+                className={`profile-avatar-picker__option${isSelected ? ' is-selected' : ''}`}
+                type="button"
+                aria-pressed={isSelected}
+                key={avatar.id}
+                onClick={() => setSelectedAvatarId(avatar.id)}
+              >
+                <span className="profile-avatar-picker__image">
+                  <img src={avatar.src} alt="" />
+                  {isSelected && <span className="profile-avatar-picker__check"><Check size={16} aria-hidden="true" /></span>}
+                </span>
+                <span className="profile-avatar-picker__label">{avatar.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      </Modal>
     </main>
   )
 }

@@ -30,6 +30,29 @@ const vector = {
     }
 };
 
+const questionItem = {
+    bsonType: 'object',
+    required: ['_id', 'content', 'createdAt', 'updatedAt'],
+    properties: {
+        _id: { bsonType: 'objectId' },
+        content: { bsonType: 'string', minLength: 3, maxLength: 500 },
+        options: {
+            bsonType: 'array',
+            minItems: 2,
+            maxItems: 4,
+            items: { bsonType: 'string', minLength: 1, maxLength: 500 }
+        },
+        correctOptionIndex: {
+            bsonType: ['int', 'long', 'double', 'decimal'],
+            minimum: 0,
+            maximum: 3,
+            multipleOf: 1
+        },
+        createdAt: { bsonType: 'date' },
+        updatedAt: { bsonType: 'date' }
+    }
+};
+
 const definition = (name, required, properties, indexes) => ({
     name,
     options: {
@@ -61,6 +84,10 @@ export const collectionDefinitions = [
         emailVerificationOtpExpiresAt: { bsonType: ['date', 'null'] },
         emailVerificationOtpAttempts: nonNegativeInteger,
         emailVerificationOtpSentAt: { bsonType: ['date', 'null'] },
+        passwordResetOtpHash: { bsonType: ['string', 'null'] },
+        passwordResetOtpExpiresAt: { bsonType: ['date', 'null'] },
+        passwordResetOtpAttempts: nonNegativeInteger,
+        passwordResetOtpSentAt: { bsonType: ['date', 'null'] },
         refreshTokenHash: { bsonType: ['string', 'null'] },
         refreshTokenExpiresAt: { bsonType: ['date', 'null'] },
         defaultShippingAddress: {
@@ -82,6 +109,28 @@ export const collectionDefinitions = [
                     quantity: positiveInteger,
                     selected: { bsonType: 'bool' },
                     addedAt: { bsonType: 'date' }
+                }
+            }
+        },
+        privateQuestionLists: {
+            bsonType: 'array',
+            maxItems: 20,
+            items: {
+                bsonType: 'object',
+                required: [
+                    '_id', 'name', 'heritageSiteId', 'questions', 'createdAt', 'updatedAt'
+                ],
+                properties: {
+                    _id: { bsonType: 'objectId' },
+                    name: { bsonType: 'string', minLength: 2, maxLength: 100 },
+                    heritageSiteId: { bsonType: 'objectId' },
+                    questions: {
+                        bsonType: 'array',
+                        maxItems: 100,
+                        items: questionItem
+                    },
+                    createdAt: { bsonType: 'date' },
+                    updatedAt: { bsonType: 'date' }
                 }
             }
         },
@@ -142,6 +191,11 @@ export const collectionDefinitions = [
             shortDescription: { bsonType: 'string', maxLength: 1000 },
             content: { bsonType: 'string', maxLength: 100000 },
             targetImageUrl: httpsUrl,
+            publicQuestions: {
+                bsonType: 'array',
+                maxItems: 100,
+                items: questionItem
+            },
             ...timestampProperties
         },
         [{

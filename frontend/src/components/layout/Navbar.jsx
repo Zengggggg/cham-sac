@@ -11,6 +11,7 @@ import {
   Package,
   ShoppingBag,
   Sparkles,
+  MessageCircleQuestion,
   UserPlus,
   UserRound,
   X,
@@ -43,6 +44,7 @@ const authenticatedAccountItems = [
   { label: "Đổi mật khẩu", href: "/enter-old-password", icon: KeyRound },
   { label: "Đơn hàng", href: "/my-orders", icon: Package },
   { label: "Trải nghiệm AR", href: "/ar", icon: Sparkles },
+  { label: "Câu hỏi của tôi", href: "/questions", icon: MessageCircleQuestion },
 ];
 
 const readStoredUser = () => {

@@ -3,21 +3,52 @@ import mongoose from 'mongoose';
 import connectDB from '../src/config/mongodb.js';
 import { getShopEnvironment } from '../src/config/environment.js';
 import { initializeDatabase } from '../src/database/initializeDatabase.js';
+import {
+    invalidProductHistoryActorFilter,
+    productHistoryActorMigrationFilter,
+    productHistoryActorMigrationPipeline
+} from '../src/database/productHistoryMigration.js';
 
 dotenv.config();
 
 const migrateShopSchema = async (database) => {
     const { paymentExpiresInMinutes } = getShopEnvironment();
     const expiryMilliseconds = paymentExpiresInMinutes * 60 * 1000;
+    const invalidProductHistoryActors = await database.collection('products')
+        .countDocuments(invalidProductHistoryActorFilter);
+    if (invalidProductHistoryActors > 0) {
+        throw new Error(
+            `Có ${invalidProductHistoryActors} sản phẩm chứa changedBy không phải ObjectId hợp lệ.`
+        );
+    }
 
-    const [users, products, orders, payments] = await Promise.all([
+    const [users, products, heritageSites, orders, payments] = await Promise.all([
         database.collection('users').updateMany(
-            { cartItems: { $exists: false } },
-            { $set: { cartItems: [] } }
+            {
+                $or: [
+                    { cartItems: { $exists: false } },
+                    { privateQuestionLists: { $exists: false } }
+                ]
+            },
+            [{
+                $set: {
+                    cartItems: { $ifNull: ['$cartItems', []] },
+                    privateQuestionLists: { $ifNull: ['$privateQuestionLists', []] }
+                }
+            }]
         ),
         database.collection('products').updateMany(
-            { changeHistory: { $exists: false } },
-            { $set: { changeHistory: [] } }
+            {
+                $or: [
+                    { changeHistory: { $exists: false } },
+                    productHistoryActorMigrationFilter
+                ]
+            },
+            productHistoryActorMigrationPipeline
+        ),
+        database.collection('heritage_sites').updateMany(
+            { publicQuestions: { $exists: false } },
+            { $set: { publicQuestions: [] } }
         ),
         database.collection('orders').updateMany(
             {
@@ -46,6 +77,7 @@ const migrateShopSchema = async (database) => {
     return {
         users: users.modifiedCount,
         products: products.modifiedCount,
+        heritageSites: heritageSites.modifiedCount,
         orders: orders.modifiedCount,
         payments: payments.modifiedCount
     };

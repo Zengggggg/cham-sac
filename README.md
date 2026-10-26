@@ -105,6 +105,8 @@ Frontend không được chứa access key của R2. Secret, token và credentia
 
 Các cấu trúc nội dung linh hoạt phải tuân theo JSON shape được định nghĩa trong đặc tả; không lưu dữ liệu tùy ý chỉ vì database hỗ trợ document/JSON.
 
+Câu hỏi không tạo thêm collection: câu hỏi public được nhúng trong `heritage_sites`, độc lập với trạng thái model AR và tối đa 100 câu hỏi mỗi địa danh. Câu hỏi trắc nghiệm public lưu tối đa 4 lựa chọn cùng `correctOptionIndex`. Mỗi user có tối đa 20 danh sách câu hỏi private được nhúng trong `users`, mỗi danh sách gắn với một địa danh và chứa tối đa 100 câu hỏi.
+
 ## Quy tắc nghiệp vụ quan trọng
 
 - Backend phải tự đọc giá từ dữ liệu sản phẩm và tính `line_total`, `subtotal_amount`, `shipping_fee`, `total_amount`; không tin giá do frontend gửi lên.
@@ -141,11 +143,12 @@ Payment: pending -> success
 | Express backend | Đã khởi tạo |
 | Kết nối MongoDB | Đã có cấu hình qua `MONGODB_URI` |
 | Health endpoint | Đã có `GET /chamsacviet/status` |
-| Auth email/mật khẩu, Google + JWT | Đã triển khai OTP email qua Resend, register/verify/resend, login, Google login/link, refresh, logout, `/me` và middleware phân quyền |
+| Auth email/mật khẩu, Google + JWT | Đã triển khai OTP email qua Resend, register/verify/resend, quên mật khẩu/đặt lại bằng OTP, login, Google login/link, refresh, logout, `/me` và middleware phân quyền |
 | MongoDB models/validators/indexes | Đã có 7 collections và script khởi tạo idempotent |
 | Sản phẩm, giỏ hàng, đơn hàng, thanh toán API | Đã triển khai backend, checkout transaction và worker hết hạn đơn |
 | payOS provider/webhook | Đã có payment link, webhook xác minh chữ ký và xử lý idempotent |
 | Nội dung di sản | Đã có backend admin CRUD và public API `GET /chamsacviet/ar/experiences` cho cấu hình AR đã xuất bản |
+| Câu hỏi địa danh | Đã có danh sách public theo địa danh, CRUD danh sách private của user và CRUD câu hỏi public dành cho admin |
 | Image tracking/WebAR | Đã có trang công khai `/ar`, MindAR image tracking cho 7 thẻ đầu tiên (`target_index` 0–6), tải model GLB kèm tiến độ/lỗi và neo model trực tiếp lên thẻ trong camera; không có viewer 3D độc lập |
 | R2/CDN integration | Đã có upload ảnh sản phẩm trực tiếp từ frontend bằng presigned URL do backend cấp; cần cấu hình bucket, credential, public domain và CORS theo môi trường |
 | Admin | Đã có backend dashboard, quản lý user, sản phẩm, tồn kho, đơn, luật chơi, địa danh và cấu hình model AR; frontend chưa triển khai |
@@ -324,6 +327,7 @@ Chạy trong `backend/`:
 | `npm run db:migrate:shop` | Backfill dữ liệu cũ và áp dụng schema/index của backend shop |
 | `npm run db:create-dev-admin` | Tạo/cập nhật riêng tài khoản admin development từ `DEV_ADMIN_*` |
 | `npm run db:seed` | Seed dữ liệu tối thiểu cho development; cần biến `DEV_ADMIN_*` |
+| `npm run db:seed:questions` | Tạo 9 địa danh còn thiếu, tải ảnh seed lên R2 và đồng bộ 101 câu hỏi trắc nghiệm public kèm đáp án |
 
 Chi tiết request/response của auth API nằm trong `backend/README.md`.
 

@@ -10,8 +10,13 @@ test('Swagger spec exposes the current API routes and Bearer authentication', ()
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/register`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/verify-email`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/resend-verification-otp`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/forgot-password`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/reset-password`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/me`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/ar/experiences`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/questions/public`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/questions/lists`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/questions/lists/{listId}/items/{questionId}`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/shop/boxes`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/cart/items`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/orders`]);
@@ -23,6 +28,7 @@ test('Swagger spec exposes the current API routes and Bearer authentication', ()
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/users/{id}/status`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/posts/{id}`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/heritage-sites/{id}`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/heritage-sites/{id}/questions/{questionId}`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/admin/models/{id}`]);
     assert.equal(swaggerSpec.components.securitySchemes.bearerAuth.scheme, 'bearer');
 });
@@ -32,6 +38,7 @@ test('Swagger response schemas enforce the backend-to-frontend contract', () => 
     const schemaNames = [
         'AuthResponse',
         'VerificationRequiredResponse',
+        'PasswordResetOtpResponse',
         'UserResponse',
         'StatusResponse',
         'EmptySuccessResponse',

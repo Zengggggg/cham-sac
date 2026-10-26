@@ -38,6 +38,8 @@ import CheckOutPage from './pages/Shopping/CheckOutPage.jsx'
 import PaymentPage from './pages/Shopping/PaymentPage.jsx'
 import MyOrderPage from './pages/Shopping/MyOrderPage.jsx'
 import ArExperiencePage from './pages/AR/ArExperiencePage.jsx'
+import QuestionsPage from './pages/Questions/QuestionsPage.jsx'
+import AdminQuestions from './pages/Admin/AdminQuestions.jsx'
 import './App.css'
 
 function ScrollToTop() {
@@ -81,6 +83,7 @@ function App() {
         <Route path="/admin/contacts" element={<AdminLayout><AdminListContact /></AdminLayout>} />
         <Route path="/admin/orders" element={<AdminLayout><AdminListOrder /></AdminLayout>} />
         <Route path="/admin/products" element={<AdminLayout><AdminListProduct /></AdminLayout>} />
+        <Route path="/admin/questions" element={<AdminLayout><AdminQuestions /></AdminLayout>} />
         <Route path="/products" element={<Layout><ListProductPage /></Layout>} />
         <Route path="/products/:productId" element={<Layout><ProductDetailPage /></Layout>} />
         <Route path="/cart" element={<Layout><MyCartPage /></Layout>} />
@@ -90,6 +93,7 @@ function App() {
         <Route path="/payment/cancel" element={<Layout><PaymentPage /></Layout>} />
         <Route path="/my-orders" element={<Layout><MyOrderPage /></Layout>} />
         <Route path="/ar" element={<Layout><ArExperiencePage /></Layout>} />
+        <Route path="/questions" element={<Layout><QuestionsPage /></Layout>} />
         <Route path="/haunted-ghost" element={<Navigate to="/ar" replace />} />
         <Route path="/introduce-hlw26" element={<Layout><ListProductPage /></Layout>} />
         <Route path="/data-policy" element={<Layout><DataPolicy /></Layout>} />

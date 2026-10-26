@@ -97,6 +97,36 @@ export const validateVerificationEmail = (req, res, next) => {
     return next();
 };
 
+export const validatePasswordResetRequest = validateVerificationEmail;
+
+export const validatePasswordReset = (req, res, next) => {
+    const body = req.body || {};
+    const email = typeof body.email === 'string'
+        ? body.email.trim().toLowerCase()
+        : '';
+    const otp = typeof body.otp === 'string' ? body.otp.trim() : '';
+    const password = typeof body.password === 'string' ? body.password : '';
+    const errors = [];
+
+    if (!EMAIL_PATTERN.test(email) || email.length > 254) {
+        errors.push({ field: 'email', message: 'Email không hợp lệ.' });
+    }
+    if (!EMAIL_OTP_PATTERN.test(otp)) {
+        errors.push({ field: 'otp', message: 'OTP phải gồm đúng 6 chữ số.' });
+    }
+    if (password.length < 8 || password.length > 72 || !PASSWORD_PATTERN.test(password)) {
+        errors.push({
+            field: 'password',
+            message: 'Mật khẩu phải có 8-72 ký tự, gồm ít nhất một chữ cái và một chữ số.'
+        });
+    }
+
+    if (errors.length > 0) return sendValidationError(res, errors);
+
+    req.body = { email, otp, password };
+    return next();
+};
+
 export const validateRefreshToken = (req, res, next) => {
     const body = req.body || {};
     const refreshToken = typeof body.refreshToken === 'string'

@@ -331,9 +331,15 @@ export const deleteAdminHeritageSite = async (heritageSiteId, expectedUpdatedAt)
         expectedUpdatedAt,
         'Địa danh'
     );
-    const hasArModel = await ArModel.exists({ heritageSiteId });
-    if (hasArModel) {
-        throw new AppError('Không thể xóa địa danh đang có model AR.', 409);
+    const [hasArModel, hasPrivateQuestionList] = await Promise.all([
+        ArModel.exists({ heritageSiteId }),
+        User.exists({ 'privateQuestionLists.heritageSiteId': heritageSiteId })
+    ]);
+    if (hasArModel || hasPrivateQuestionList) {
+        throw new AppError(
+            'Không thể xóa địa danh đang được dùng bởi model AR hoặc danh sách câu hỏi.',
+            409
+        );
     }
     await heritageSite.deleteOne();
 };

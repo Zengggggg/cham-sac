@@ -8,7 +8,10 @@ import {
 } from './tokenService.js';
 import { getAuthEnvironment, getEmailEnvironment } from '../config/environment.js';
 import { verifyGoogleIdToken } from '../providers/googleAuthProvider.js';
-import { sendVerificationOtpEmail } from '../providers/emailProvider.js';
+import {
+    sendPasswordResetOtpEmail,
+    sendVerificationOtpEmail
+} from '../providers/emailProvider.js';
 import { createEmailOtp, verifyEmailOtpHash } from '../utils/emailOtp.js';
 
 const getUserWithSecrets = (filter) => User.findOne(filter)
@@ -21,6 +24,10 @@ const getUserWithSecrets = (filter) => User.findOne(filter)
         +emailVerificationOtpExpiresAt
         +emailVerificationOtpAttempts
         +emailVerificationOtpSentAt
+        +passwordResetOtpHash
+        +passwordResetOtpExpiresAt
+        +passwordResetOtpAttempts
+        +passwordResetOtpSentAt
     `);
 
 const saveRefreshToken = async (user, tokenPair) => {
@@ -189,6 +196,100 @@ export const loginUser = async ({ email, password }) => {
     const tokenPair = createTokenPair(user);
     await saveRefreshToken(user, tokenPair);
     return buildAuthResponse(user, tokenPair);
+};
+
+export const requestPasswordResetOtp = async (email) => {
+    const user = await getUserWithSecrets({ email });
+    const emailEnvironment = getEmailEnvironment();
+
+    if (!user) {
+        throw new AppError('Email chưa được đăng ký trong hệ thống.', 404);
+    }
+    if (user.status === 'pending_verification') {
+        throw new AppError('Tài khoản chưa xác minh email. Vui lòng hoàn tất đăng ký trước.', 409);
+    }
+
+    const cooldownMilliseconds = emailEnvironment.otpResendCooldownSeconds * 1000;
+    const nextAllowedAt = user.passwordResetOtpSentAt
+        ? user.passwordResetOtpSentAt.getTime() + cooldownMilliseconds
+        : 0;
+
+    if (nextAllowedAt > Date.now()) {
+        const retryAfterSeconds = Math.ceil((nextAllowedAt - Date.now()) / 1000);
+        throw new AppError(
+            `Vui lòng đợi ${retryAfterSeconds} giây trước khi yêu cầu OTP mới.`,
+            429
+        );
+    }
+
+    const { bcryptSaltRounds } = getAuthEnvironment();
+    const otpData = await createEmailOtp({
+        saltRounds: bcryptSaltRounds,
+        expiresInMinutes: emailEnvironment.otpExpiresInMinutes
+    });
+
+    user.passwordResetOtpHash = otpData.hash;
+    user.passwordResetOtpExpiresAt = otpData.expiresAt;
+    user.passwordResetOtpAttempts = 0;
+    user.passwordResetOtpSentAt = otpData.issuedAt;
+    await user.save({ validateBeforeSave: false });
+
+    await sendPasswordResetOtpEmail({
+        to: user.email,
+        name: user.name,
+        otp: otpData.otp,
+        expiresInMinutes: emailEnvironment.otpExpiresInMinutes,
+        idempotencyKey: `password-reset/${user.id}/${otpData.issuedAt.getTime()}`
+    });
+
+    return {
+        email: user.email,
+        passwordResetRequired: true,
+        expiresInSeconds: emailEnvironment.otpExpiresInMinutes * 60,
+        resendAvailableInSeconds: emailEnvironment.otpResendCooldownSeconds
+    };
+};
+
+export const resetUserPassword = async ({ email, otp, password }) => {
+    const user = await getUserWithSecrets({ email });
+    const { bcryptSaltRounds } = getAuthEnvironment();
+    const { otpMaxAttempts } = getEmailEnvironment();
+
+    if (!user || !user.passwordResetOtpHash || !user.passwordResetOtpExpiresAt) {
+        throw new AppError('OTP đặt lại mật khẩu không hợp lệ hoặc không còn tồn tại.', 400);
+    }
+    if (user.passwordResetOtpAttempts >= otpMaxAttempts) {
+        throw new AppError(
+            'OTP đã bị khóa do nhập sai quá nhiều lần. Vui lòng yêu cầu mã mới.',
+            429
+        );
+    }
+    if (user.passwordResetOtpExpiresAt <= new Date()) {
+        throw new AppError('OTP đã hết hạn. Vui lòng yêu cầu mã mới.', 410);
+    }
+
+    const isOtpValid = await verifyEmailOtpHash(otp, user.passwordResetOtpHash);
+    if (!isOtpValid) {
+        user.passwordResetOtpAttempts += 1;
+        await user.save({ validateBeforeSave: false });
+
+        if (user.passwordResetOtpAttempts >= otpMaxAttempts) {
+            throw new AppError(
+                'OTP đã bị khóa do nhập sai quá nhiều lần. Vui lòng yêu cầu mã mới.',
+                429
+            );
+        }
+        throw new AppError('OTP không đúng.', 400);
+    }
+
+    user.passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
+    user.passwordResetOtpHash = null;
+    user.passwordResetOtpExpiresAt = null;
+    user.passwordResetOtpAttempts = 0;
+    user.passwordResetOtpSentAt = null;
+    user.refreshTokenHash = null;
+    user.refreshTokenExpiresAt = null;
+    await user.save({ validateBeforeSave: false });
 };
 
 export const mergeGoogleProfileIntoExistingUser = (

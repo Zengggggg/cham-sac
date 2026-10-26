@@ -27,7 +27,7 @@ const menuItems = [
   { label: "Sản phẩm", href: "/admin/products", icon: Archive },
   { label: "Nội dung di sản", icon: FileText },
   { label: "Trải nghiệm AR", icon: Sparkles },
-  { label: "Câu hỏi cộng đồng", icon: MessageCircleQuestion },
+  { label: "Câu hỏi địa danh", href: "/admin/questions", icon: MessageCircleQuestion },
 ];
 
 const readStoredUser = () => {

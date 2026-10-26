@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import User from '../src/models/userModel.js';
 import {
+    buildPasswordResetEmail,
     buildVerificationEmail,
     sendVerificationOtpEmail
 } from '../src/providers/emailProvider.js';
@@ -29,6 +30,19 @@ test('verification email escapes user content and includes the OTP', () => {
     });
 
     assert.match(email.html, /123456/);
+    assert.doesNotMatch(email.html, /<script>/);
+    assert.match(email.text, /10 phút/);
+});
+
+test('password reset email identifies the reset flow and escapes user content', () => {
+    const email = buildPasswordResetEmail({
+        name: '<script>alert(1)</script>',
+        otp: '654321',
+        expiresInMinutes: 10
+    });
+
+    assert.match(email.subject, /đặt lại mật khẩu/i);
+    assert.match(email.html, /654321/);
     assert.doesNotMatch(email.html, /<script>/);
     assert.match(email.text, /10 phút/);
 });
@@ -88,7 +102,10 @@ test('pending verification fields are valid and OTP secrets are hidden from JSON
         status: 'pending_verification',
         emailVerificationOtpHash: 'otp-hash',
         emailVerificationOtpExpiresAt: new Date(Date.now() + 600000),
-        emailVerificationOtpAttempts: 1
+        emailVerificationOtpAttempts: 1,
+        passwordResetOtpHash: 'password-reset-otp-hash',
+        passwordResetOtpExpiresAt: new Date(Date.now() + 600000),
+        passwordResetOtpAttempts: 1
     });
 
     assert.equal(user.validateSync(), undefined);
@@ -97,4 +114,7 @@ test('pending verification fields are valid and OTP secrets are hidden from JSON
     assert.equal(json.emailVerificationOtpHash, undefined);
     assert.equal(json.emailVerificationOtpExpiresAt, undefined);
     assert.equal(json.emailVerificationOtpAttempts, undefined);
+    assert.equal(json.passwordResetOtpHash, undefined);
+    assert.equal(json.passwordResetOtpExpiresAt, undefined);
+    assert.equal(json.passwordResetOtpAttempts, undefined);
 });

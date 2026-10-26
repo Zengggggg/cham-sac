@@ -1,0 +1,47 @@
+.admin-questions-page { color: #211832; }
+.admin-questions-page__hero { align-items: flex-start; display: flex; justify-content: space-between; margin-bottom: 26px; }
+.admin-questions-page__hero p { align-items: center; color: #b12069; display: flex; font-size: 12px; font-weight: 800; gap: 7px; letter-spacing: .13em; margin: 0 0 7px; }
+.admin-questions-page__hero h1 { font-family: 'Baloo 2', sans-serif; font-size: clamp(36px, 5vw, 52px); line-height: 1; margin: 0 0 8px; }
+.admin-questions-page__hero span { color: #6b6375; }
+.admin-questions-page__layout { align-items: start; display: grid; gap: 20px; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); }
+.admin-questions-page__sites { padding: 16px; position: sticky; top: 18px; }
+.admin-questions-page__sites h2 { font-size: 18px; margin: 0 0 12px; }
+.admin-questions-page__sites nav { display: grid; gap: 7px; }
+.admin-questions-page__sites button { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 7px; color: #514653; cursor: pointer; display: flex; font: inherit; gap: 9px; padding: 10px; text-align: left; }
+.admin-questions-page__sites button:hover,
+.admin-questions-page__sites button.is-active { background: #f8e8f0; border-color: #ce337f; color: #72327e; }
+.admin-questions-page__workspace { display: grid; gap: 18px; }
+.admin-questions-page__composer,
+.admin-questions-page__list-card { padding: 22px; }
+.admin-questions-page__composer > .ui-card__body > div > span { color: #b12069; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.admin-questions-page__composer h2 { margin: 4px 0; }
+.admin-questions-page__composer p { color: #6b6375; line-height: 1.55; margin: 0; }
+.admin-questions-page__composer form { display: flex; gap: 10px; margin-top: 18px; }
+.admin-questions-page__composer .ui-input { flex: 1; }
+.admin-questions-page__list-heading { align-items: center; display: flex; justify-content: space-between; }
+.admin-questions-page__list-heading h2 { font-size: 20px; margin: 0; }
+.admin-questions-page__list-heading span { background: #f8e8f0; border-radius: 999px; color: #72327e; font-size: 12px; font-weight: 800; padding: 5px 9px; }
+.admin-questions-page__list-card ol { display: grid; gap: 9px; margin: 18px 0 0; padding-left: 28px; }
+.admin-questions-page__list-card li { background: #fff9ed; border-radius: 7px; line-height: 1.5; padding: 11px 12px; }
+.admin-questions-page__list-card li::marker { color: #b12069; font-weight: 800; }
+.admin-questions-page__list-card li { align-items: center; display: list-item; }
+.admin-questions-page__list-card li > span { display: inline-block; max-width: calc(100% - 86px); overflow-wrap: anywhere; vertical-align: middle; }
+.admin-questions-page__list-card li > div { display: flex; float: right; gap: 6px; }
+.admin-questions-page__list-card li button { align-items: center; background: #f1dce7; border: 0; border-radius: 6px; color: #72327e; cursor: pointer; display: inline-flex; padding: 7px; }
+.admin-questions-page__list-card li button:last-child { color: #d52841; }
+.admin-questions-page__state,
+.admin-questions-page__empty { background: #fffefa; border: 1px solid #eadde4; border-radius: 10px; padding: 28px; text-align: center; }
+.admin-questions-page__state strong { display: block; margin-top: 8px; }
+.admin-questions-page__state p { color: #6b6375; }
+
+@media (max-width: 850px) {
+  .admin-questions-page__layout { grid-template-columns: 1fr; }
+  .admin-questions-page__sites { position: static; }
+  .admin-questions-page__sites nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .admin-questions-page__sites nav { grid-template-columns: 1fr; }
+  .admin-questions-page__composer form { flex-direction: column; }
+  .admin-questions-page__composer .ui-button { width: 100%; }
+}

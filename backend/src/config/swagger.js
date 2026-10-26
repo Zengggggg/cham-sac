@@ -164,6 +164,23 @@ const swaggerDefinition = {
                     }
                 }
             },
+            PasswordResetOtpResponse: {
+                type: 'object',
+                required: responseRequiredFields,
+                properties: {
+                    ...successProperties('Đã gửi OTP đặt lại mật khẩu đến email của bạn.'),
+                    data: {
+                        type: 'object',
+                        required: ['email', 'passwordResetRequired'],
+                        properties: {
+                            email: { type: 'string', format: 'email', example: 'an@example.com' },
+                            passwordResetRequired: { type: 'boolean', example: true },
+                            expiresInSeconds: { type: 'integer', example: 600 },
+                            resendAvailableInSeconds: { type: 'integer', example: 60 }
+                        }
+                    }
+                }
+            },
             UserResponse: {
                 type: 'object',
                 required: responseRequiredFields,
@@ -331,6 +348,71 @@ const swaggerDefinition = {
                 }
             }
         },
+        [`${API_PREFIX}/auth/forgot-password`]: {
+            post: {
+                tags: ['Auth'],
+                summary: 'Gửi OTP đặt lại mật khẩu đến email đã đăng ký',
+                operationId: 'forgotPassword',
+                requestBody: jsonRequest({
+                    type: 'object',
+                    required: ['email'],
+                    properties: {
+                        email: { type: 'string', format: 'email', example: 'an@example.com' }
+                    }
+                }),
+                responses: {
+                    200: {
+                        description: 'Đã gửi OTP đặt lại mật khẩu.',
+                        content: {
+                            'application/json': {
+                                schema: { $ref: '#/components/schemas/PasswordResetOtpResponse' }
+                            }
+                        }
+                    },
+                    404: errorResponse('Email chưa được đăng ký trong hệ thống.'),
+                    409: errorResponse('Tài khoản chưa hoàn tất xác minh email.'),
+                    422: errorResponse('Email không hợp lệ.'),
+                    429: errorResponse('Yêu cầu OTP quá sớm hoặc vượt giới hạn.'),
+                    502: errorResponse('Không thể gửi email OTP qua Resend.')
+                }
+            }
+        },
+        [`${API_PREFIX}/auth/reset-password`]: {
+            post: {
+                tags: ['Auth'],
+                summary: 'Đặt lại mật khẩu bằng OTP',
+                operationId: 'resetPassword',
+                requestBody: jsonRequest({
+                    type: 'object',
+                    required: ['email', 'otp', 'password'],
+                    properties: {
+                        email: { type: 'string', format: 'email', example: 'an@example.com' },
+                        otp: { type: 'string', pattern: '^\\d{6}$', example: '123456' },
+                        password: {
+                            type: 'string',
+                            format: 'password',
+                            minLength: 8,
+                            maxLength: 72,
+                            example: 'matkhaumoi123'
+                        }
+                    }
+                }),
+                responses: {
+                    200: {
+                        description: 'Đặt lại mật khẩu và thu hồi phiên đăng nhập cũ thành công.',
+                        content: {
+                            'application/json': {
+                                schema: { $ref: '#/components/schemas/EmptySuccessResponse' }
+                            }
+                        }
+                    },
+                    400: errorResponse('OTP không đúng hoặc không còn tồn tại.'),
+                    410: errorResponse('OTP đã hết hạn.'),
+                    422: errorResponse('Email, OTP hoặc mật khẩu mới không hợp lệ.'),
+                    429: errorResponse('Đã vượt quá giới hạn thử OTP.')
+                }
+            }
+        },
         [`${API_PREFIX}/auth/login`]: {
             post: {
                 tags: ['Auth'],
@@ -482,6 +564,7 @@ swaggerDefinition.tags.push(
     { name: 'Cart', description: 'Giỏ hàng của user' },
     { name: 'Orders', description: 'Checkout và đơn hàng của user' },
     { name: 'Payments', description: 'Thanh toán payOS' },
+    { name: 'Questions', description: 'Câu hỏi public và danh sách private của user' },
     { name: 'Admin Shop', description: 'Quản trị sản phẩm và đơn hàng' }
 );
 
@@ -637,6 +720,84 @@ Object.assign(swaggerDefinition.paths, {
                     }
                 }
             }
+        }
+    },
+    [`${API_PREFIX}/questions/public`]: {
+        get: {
+            tags: ['Questions'], summary: 'Câu hỏi public theo địa danh',
+            responses: { 200: shopListResponse }
+        }
+    },
+    [`${API_PREFIX}/questions/public/{heritageSiteId}`]: {
+        get: {
+            tags: ['Questions'], summary: 'Câu hỏi public của một địa danh',
+            parameters: [objectIdParameter('heritageSiteId')],
+            responses: { 200: shopObjectResponse, 404: errorResponse('Địa danh không tồn tại.') }
+        }
+    },
+    [`${API_PREFIX}/questions/lists`]: {
+        get: {
+            tags: ['Questions'], summary: 'Danh sách câu hỏi private của user',
+            security: bearerSecurity,
+            responses: { 200: shopListResponse }
+        },
+        post: {
+            tags: ['Questions'], summary: 'Tạo danh sách câu hỏi private',
+            security: bearerSecurity,
+            requestBody: jsonRequest({
+                type: 'object',
+                required: ['name', 'heritageSiteId'],
+                properties: {
+                    name: { type: 'string', minLength: 2, maxLength: 100 },
+                    heritageSiteId: { type: 'string' }
+                }
+            }),
+            responses: { 201: shopObjectResponse, 409: errorResponse('Đã đạt giới hạn danh sách.') }
+        }
+    },
+    [`${API_PREFIX}/questions/lists/{listId}`]: {
+        patch: {
+            tags: ['Questions'], summary: 'Cập nhật danh sách câu hỏi private',
+            security: bearerSecurity,
+            parameters: [objectIdParameter('listId')],
+            requestBody: jsonRequest({ type: 'object' }),
+            responses: { 200: shopObjectResponse }
+        },
+        delete: {
+            tags: ['Questions'], summary: 'Xóa danh sách câu hỏi private',
+            security: bearerSecurity,
+            parameters: [objectIdParameter('listId')],
+            responses: { 200: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/questions/lists/{listId}/items`]: {
+        post: {
+            tags: ['Questions'], summary: 'Thêm câu hỏi vào danh sách private',
+            security: bearerSecurity,
+            parameters: [objectIdParameter('listId')],
+            requestBody: jsonRequest({
+                type: 'object', required: ['content'],
+                properties: { content: { type: 'string', minLength: 3, maxLength: 500 } }
+            }),
+            responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/questions/lists/{listId}/items/{questionId}`]: {
+        patch: {
+            tags: ['Questions'], summary: 'Cập nhật câu hỏi private',
+            security: bearerSecurity,
+            parameters: [objectIdParameter('listId'), objectIdParameter('questionId')],
+            requestBody: jsonRequest({
+                type: 'object', required: ['content'],
+                properties: { content: { type: 'string', minLength: 3, maxLength: 500 } }
+            }),
+            responses: { 200: shopObjectResponse }
+        },
+        delete: {
+            tags: ['Questions'], summary: 'Xóa câu hỏi private',
+            security: bearerSecurity,
+            parameters: [objectIdParameter('listId'), objectIdParameter('questionId')],
+            responses: { 200: shopObjectResponse }
         }
     },
     [`${API_PREFIX}/shop/boxes`]: {
@@ -886,6 +1047,42 @@ Object.assign(swaggerDefinition.paths, {
             parameters: [objectIdParameter('id')],
             requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
             responses: { 200: shopObjectResponse, 409: errorResponse('Địa danh đang được sử dụng.') }
+        }
+    },
+    [`${API_PREFIX}/admin/heritage-sites/{id}/questions`]: {
+        get: {
+            tags: ['Admin'], summary: 'Danh sách câu hỏi public của địa danh',
+            security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            responses: { 200: shopObjectResponse }
+        },
+        post: {
+            tags: ['Admin'], summary: 'Tạo câu hỏi public cho địa danh',
+            security: bearerSecurity,
+            parameters: [objectIdParameter('id')],
+            requestBody: jsonRequest({
+                type: 'object', required: ['content'],
+                properties: { content: { type: 'string', minLength: 3, maxLength: 500 } }
+            }),
+            responses: { 201: shopObjectResponse }
+        }
+    },
+    [`${API_PREFIX}/admin/heritage-sites/{id}/questions/{questionId}`]: {
+        patch: {
+            tags: ['Admin'], summary: 'Cập nhật câu hỏi public',
+            security: bearerSecurity,
+            parameters: [objectIdParameter('id'), objectIdParameter('questionId')],
+            requestBody: jsonRequest({
+                type: 'object', required: ['content', 'expectedUpdatedAt']
+            }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
+        },
+        delete: {
+            tags: ['Admin'], summary: 'Xóa câu hỏi public',
+            security: bearerSecurity,
+            parameters: [objectIdParameter('id'), objectIdParameter('questionId')],
+            requestBody: jsonRequest({ type: 'object', required: ['expectedUpdatedAt'] }),
+            responses: { 200: shopObjectResponse, 409: errorResponse('Concurrent update.') }
         }
     },
     [`${API_PREFIX}/admin/models`]: {

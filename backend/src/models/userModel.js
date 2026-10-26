@@ -27,6 +27,39 @@ const cartItemSchema = new mongoose.Schema({
     addedAt: { type: Date, default: Date.now }
 }, { _id: false });
 
+const privateQuestionSchema = new mongoose.Schema({
+    content: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 3,
+        maxlength: 500
+    }
+}, { timestamps: true });
+
+const privateQuestionListSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+        trim: true,
+        minlength: 2,
+        maxlength: 100
+    },
+    heritageSiteId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HeritageSite',
+        required: true
+    },
+    questions: {
+        type: [privateQuestionSchema],
+        default: [],
+        validate: {
+            validator: (questions) => questions.length <= 100,
+            message: 'Mỗi danh sách chỉ được có tối đa 100 câu hỏi.'
+        }
+    }
+}, { timestamps: true });
+
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -75,6 +108,15 @@ const userSchema = new mongoose.Schema({
         default: [],
         select: false
     },
+    privateQuestionLists: {
+        type: [privateQuestionListSchema],
+        default: [],
+        select: false,
+        validate: {
+            validator: (lists) => lists.length <= 20,
+            message: 'Mỗi tài khoản chỉ được có tối đa 20 danh sách câu hỏi private.'
+        }
+    },
     role: {
         type: String,
         enum: ['user', 'admin'],
@@ -112,6 +154,27 @@ const userSchema = new mongoose.Schema({
         select: false,
         default: null
     },
+    passwordResetOtpHash: {
+        type: String,
+        select: false,
+        default: null
+    },
+    passwordResetOtpExpiresAt: {
+        type: Date,
+        select: false,
+        default: null
+    },
+    passwordResetOtpAttempts: {
+        type: Number,
+        select: false,
+        default: 0,
+        min: 0
+    },
+    passwordResetOtpSentAt: {
+        type: Date,
+        select: false,
+        default: null
+    },
     refreshTokenHash: {
         type: String,
         select: false,
@@ -135,9 +198,14 @@ const userSchema = new mongoose.Schema({
             delete returnedObject.emailVerificationOtpExpiresAt;
             delete returnedObject.emailVerificationOtpAttempts;
             delete returnedObject.emailVerificationOtpSentAt;
+            delete returnedObject.passwordResetOtpHash;
+            delete returnedObject.passwordResetOtpExpiresAt;
+            delete returnedObject.passwordResetOtpAttempts;
+            delete returnedObject.passwordResetOtpSentAt;
             delete returnedObject.refreshTokenHash;
             delete returnedObject.refreshTokenExpiresAt;
             delete returnedObject.cartItems;
+            delete returnedObject.privateQuestionLists;
             return returnedObject;
         }
     }

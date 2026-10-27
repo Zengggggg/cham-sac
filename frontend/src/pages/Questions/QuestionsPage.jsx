@@ -29,6 +29,7 @@ export default function QuestionsPage() {
   const [newList, setNewList] = useState({ name: '', heritageSiteId: '' })
   const [newQuestions, setNewQuestions] = useState({})
   const [revealedAnswers, setRevealedAnswers] = useState({})
+  const [selectedAnswers, setSelectedAnswers] = useState({})
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -184,7 +185,14 @@ export default function QuestionsPage() {
                 {publicGroups.length > 0 && (
                   <label>
                     <span>Địa danh</span>
-                    <select value={activeGroup?.heritageSiteId || ''} onChange={(event) => setActiveSiteId(event.target.value)}>
+                    <select
+                      value={activeGroup?.heritageSiteId || ''}
+                      onChange={(event) => {
+                        setActiveSiteId(event.target.value)
+                        setRevealedAnswers({})
+                        setSelectedAnswers({})
+                      }}
+                    >
                       {publicGroups.map((group) => <option key={group.heritageSiteId} value={group.heritageSiteId}>{group.name}</option>)}
                     </select>
                   </label>
@@ -203,6 +211,9 @@ export default function QuestionsPage() {
                     <ol className="questions-page__question-list">
                       {activeGroup.questions.map((question) => {
                         const isRevealed = Boolean(revealedAnswers[question.id])
+                        const selectedOptionIndex = selectedAnswers[question.id]
+                        const isAnswered = Number.isInteger(selectedOptionIndex)
+                        const isCorrect = selectedOptionIndex === question.correctOptionIndex
                         return (
                           <li key={question.id}>
                             <p>{question.content}</p>
@@ -210,23 +221,45 @@ export default function QuestionsPage() {
                               <>
                                 <ul className="questions-page__answer-options">
                                   {question.options.map((option, optionIndex) => (
-                                    <li className={isRevealed && optionIndex === question.correctOptionIndex ? 'is-correct' : ''} key={`${question.id}-${optionIndex}`}>
-                                      <span>{String.fromCharCode(65 + optionIndex)}</span>
-                                      <p>{option}</p>
+                                    <li
+                                      className={[
+                                        (isRevealed || isAnswered) && optionIndex === question.correctOptionIndex ? 'is-correct' : '',
+                                        isAnswered && optionIndex === selectedOptionIndex && !isCorrect ? 'is-incorrect' : '',
+                                      ].filter(Boolean).join(' ')}
+                                      key={`${question.id}-${optionIndex}`}
+                                    >
+                                      <button
+                                        type="button"
+                                        disabled={isAnswered}
+                                        aria-pressed={selectedOptionIndex === optionIndex}
+                                        onClick={() => setSelectedAnswers((current) => ({
+                                          ...current,
+                                          [question.id]: optionIndex,
+                                        }))}
+                                      >
+                                        <span>{String.fromCharCode(65 + optionIndex)}</span>
+                                        <p>{option}</p>
+                                      </button>
                                     </li>
                                   ))}
                                 </ul>
-                                <button
-                                  className="questions-page__reveal-answer"
-                                  type="button"
-                                  aria-expanded={isRevealed}
-                                  onClick={() => setRevealedAnswers((current) => ({
-                                    ...current,
-                                    [question.id]: !current[question.id],
-                                  }))}
-                                >
-                                  {isRevealed ? 'Ẩn đáp án' : 'Xem đáp án'}
-                                </button>
+                                {isAnswered ? (
+                                  <p className={`questions-page__answer-feedback ${isCorrect ? 'is-correct' : 'is-incorrect'}`} role="status">
+                                    {isCorrect ? 'Chính xác!' : 'Chưa đúng. Đáp án đúng đã được đánh dấu.'}
+                                  </p>
+                                ) : (
+                                  <button
+                                    className="questions-page__reveal-answer"
+                                    type="button"
+                                    aria-expanded={isRevealed}
+                                    onClick={() => setRevealedAnswers((current) => ({
+                                      ...current,
+                                      [question.id]: !current[question.id],
+                                    }))}
+                                  >
+                                    {isRevealed ? 'Ẩn đáp án' : 'Xem đáp án'}
+                                  </button>
+                                )}
                               </>
                             )}
                           </li>

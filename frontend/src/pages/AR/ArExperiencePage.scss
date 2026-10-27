@@ -911,16 +911,33 @@ body:has(.ar-catalog) .ui-modal__header p {
 }
 
 .ar-info-questions__options li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 9px 11px;
+  overflow: hidden;
   border: 1px solid var(--ar-line);
   border-radius: 7px;
   background: var(--ar-card);
 }
 
-.ar-info-questions__options li > span {
+.ar-info-questions__options li > button {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 11px;
+  color: inherit;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.ar-info-questions__options li > button:disabled { opacity: 1; cursor: default; }
+.ar-info-questions__options li > button:not(:disabled):hover { background: #fff3dc; }
+.ar-info-questions__options li > button:focus-visible { outline: 3px solid var(--ar-gold); outline-offset: -3px; }
+
+.ar-info-questions__options li > button > span {
   display: inline-flex;
   width: 26px;
   height: 26px;
@@ -934,7 +951,7 @@ body:has(.ar-catalog) .ui-modal__header p {
   font-weight: 800;
 }
 
-.ar-info-questions__options li > p { margin: 1px 0 0; }
+.ar-info-questions__options li > button > p { margin: 1px 0 0; }
 
 .ar-info-questions__options li.is-correct {
   color: #1f6a32;
@@ -942,10 +959,30 @@ body:has(.ar-catalog) .ui-modal__header p {
   background: #eaf7ec;
 }
 
-.ar-info-questions__options li.is-correct > span {
+.ar-info-questions__options li.is-correct > button > span {
   color: var(--ar-white);
   background: #2f7d43;
 }
+
+.ar-info-questions__options li.is-incorrect {
+  color: #9c2534;
+  border-color: #df8791;
+  background: #fff0f1;
+}
+
+.ar-info-questions__options li.is-incorrect > button > span {
+  color: var(--ar-white);
+  background: #c43b4d;
+}
+
+.ar-info-questions__feedback {
+  margin: 10px 0 0;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.ar-info-questions__feedback.is-correct { color: #1f6a32; }
+.ar-info-questions__feedback.is-incorrect { color: #9c2534; }
 
 .ar-info-questions__answer {
   margin-top: 10px;

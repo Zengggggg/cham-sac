@@ -174,6 +174,7 @@ function ArExperiencePage() {
   const [questionState, setQuestionState] = useState({ status: 'idle', group: null, error: '' })
   const [questionRetry, setQuestionRetry] = useState(0)
   const [revealedAnswers, setRevealedAnswers] = useState({})
+  const [selectedAnswers, setSelectedAnswers] = useState({})
   const isCameraActive = ['loading', 'scanning', 'recognized'].includes(status)
   const isRequesting = status === 'loading'
   const hasFallback = ['error', 'insecure', 'unsupported'].includes(status)
@@ -211,6 +212,7 @@ function ArExperiencePage() {
     setInfoExperience(recognizedExperience)
     setInfoType(type)
     setRevealedAnswers({})
+    setSelectedAnswers({})
     if (type === 'questions') {
       setQuestionState({ status: 'loading', group: null, error: '' })
     }
@@ -452,6 +454,9 @@ function ArExperiencePage() {
               <ol className="ar-info-questions__list">
                 {questionState.group.questions.map((question) => {
                   const isRevealed = Boolean(revealedAnswers[question.id])
+                  const selectedOptionIndex = selectedAnswers[question.id]
+                  const isAnswered = Number.isInteger(selectedOptionIndex)
+                  const isCorrect = selectedOptionIndex === question.correctOptionIndex
                   return (
                     <li key={question.id}>
                       <p>{question.content}</p>
@@ -460,25 +465,44 @@ function ArExperiencePage() {
                           <ul className="ar-info-questions__options">
                             {question.options.map((option, optionIndex) => (
                               <li
-                                className={isRevealed && optionIndex === question.correctOptionIndex ? 'is-correct' : ''}
+                                className={[
+                                  (isRevealed || isAnswered) && optionIndex === question.correctOptionIndex ? 'is-correct' : '',
+                                  isAnswered && optionIndex === selectedOptionIndex && !isCorrect ? 'is-incorrect' : '',
+                                ].filter(Boolean).join(' ')}
                                 key={`${question.id}-${optionIndex}`}
                               >
-                                <span>{String.fromCharCode(65 + optionIndex)}</span>
-                                <p>{option}</p>
+                                <button
+                                  type="button"
+                                  disabled={isAnswered}
+                                  aria-pressed={selectedOptionIndex === optionIndex}
+                                  onClick={() => setSelectedAnswers((current) => ({
+                                    ...current,
+                                    [question.id]: optionIndex,
+                                  }))}
+                                >
+                                  <span>{String.fromCharCode(65 + optionIndex)}</span>
+                                  <p>{option}</p>
+                                </button>
                               </li>
                             ))}
                           </ul>
-                          <button
-                            className="ar-info-questions__answer"
-                            type="button"
-                            aria-expanded={isRevealed}
-                            onClick={() => setRevealedAnswers((current) => ({
-                              ...current,
-                              [question.id]: !current[question.id],
-                            }))}
-                          >
-                            {isRevealed ? 'Ẩn đáp án' : 'Xem đáp án'}
-                          </button>
+                          {isAnswered ? (
+                            <p className={`ar-info-questions__feedback ${isCorrect ? 'is-correct' : 'is-incorrect'}`} role="status">
+                              {isCorrect ? 'Chính xác!' : 'Chưa đúng. Đáp án đúng đã được đánh dấu.'}
+                            </p>
+                          ) : (
+                            <button
+                              className="ar-info-questions__answer"
+                              type="button"
+                              aria-expanded={isRevealed}
+                              onClick={() => setRevealedAnswers((current) => ({
+                                ...current,
+                                [question.id]: !current[question.id],
+                              }))}
+                            >
+                              {isRevealed ? 'Ẩn đáp án' : 'Xem đáp án'}
+                            </button>
+                          )}
                         </>
                       )}
                     </li>

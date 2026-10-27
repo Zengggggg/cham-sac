@@ -18,7 +18,7 @@ const disposeObject3D = (root) => {
   })
 }
 
-const normalizeModelForTarget = (model, config = {}) => {
+const normalizeModelForScreen = (model, config = {}) => {
   const rotation = config.rotation || {}
   model.rotation.set(rotation.x || 0, rotation.y || 0, rotation.z || 0)
   model.updateMatrixWorld(true)
@@ -31,12 +31,12 @@ const normalizeModelForTarget = (model, config = {}) => {
   model.scale.multiplyScalar((0.78 / maxDimension) * (config.scale || 1))
   model.updateMatrixWorld(true)
 
-  const center = new THREE.Box3().setFromObject(model).getCenter(new THREE.Vector3())
-  const position = config.position || {}
+  const normalizedBox = new THREE.Box3().setFromObject(model)
+  const center = normalizedBox.getCenter(new THREE.Vector3())
   model.position.set(
-    -center.x + (position.x || 0),
-    -center.y + (position.y || 0),
-    -center.z + (position.z || 0),
+    -center.x,
+    -normalizedBox.min.y,
+    -center.z,
   )
 }
 
@@ -73,6 +73,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const mountedRef = useRef(true)
   const recognizedTargetRef = useRef(null)
   const modelRootsRef = useRef([])
+  const screenLockedModelsRef = useRef([])
   const mixersRef = useRef([])
   const dracoLoaderRef = useRef(null)
   const [status, setStatus] = useState(getSupportStatus)
@@ -88,6 +89,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     mixersRef.current = []
     modelRootsRef.current.forEach(disposeObject3D)
     modelRootsRef.current = []
+    screenLockedModelsRef.current = []
     dracoLoaderRef.current?.dispose()
     dracoLoaderRef.current = null
 
@@ -208,9 +210,16 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
             }
 
             try {
-              normalizeModelForTarget(gltf.scene, experience.model)
-              anchor.group.add(gltf.scene)
+              normalizeModelForScreen(gltf.scene, experience.model)
+
+              const screenLockedRoot = new THREE.Group()
+              const position = experience.model.position || {}
+              screenLockedRoot.position.set(position.x || 0, position.y || 0, position.z || 0)
+              screenLockedRoot.add(gltf.scene)
+              anchor.group.add(screenLockedRoot)
+
               modelRootsRef.current.push(gltf.scene)
+              screenLockedModelsRef.current.push({ anchorGroup: anchor.group, root: screenLockedRoot })
 
               if (gltf.animations?.length) {
                 const mixer = new THREE.AnimationMixer(gltf.scene)
@@ -240,9 +249,19 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       if (!mountedRef.current || sessionId !== sessionIdRef.current) return
 
       const clock = new THREE.Clock()
+      const anchorWorldQuaternion = new THREE.Quaternion()
+      const cameraWorldQuaternion = new THREE.Quaternion()
       mindAR.renderer.setAnimationLoop(() => {
         const delta = clock.getDelta()
         mixersRef.current.forEach((mixer) => mixer.update(delta))
+
+        mindAR.scene.updateMatrixWorld(true)
+        mindAR.camera.getWorldQuaternion(cameraWorldQuaternion)
+        screenLockedModelsRef.current.forEach(({ anchorGroup, root }) => {
+          anchorGroup.getWorldQuaternion(anchorWorldQuaternion)
+          root.quaternion.copy(anchorWorldQuaternion).invert().multiply(cameraWorldQuaternion)
+        })
+
         mindAR.renderer.render(mindAR.scene, mindAR.camera)
       })
       setStatus('scanning')

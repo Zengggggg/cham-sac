@@ -10,6 +10,7 @@ const AR_ASSET_ORIGIN = 'https://assets.chamsacviet.io.vn'
 
 export const THAP_RUA_MODEL_URL = '/ar-assets/models/thap-rua/Meshy_AI_turtle_tower_ar_optim_1015064523_texture.glb'
 export const QUOC_TU_GIAM_MODEL_URL = '/ar-assets/models/quoc-tu-giam/ban%20mau%20quoc%20tu%20giam%20final.glb'
+export const CAU_RONG_MODEL_URL = '/ar-assets/models/cau-rong/Cau%20rong%20Da%20Nang%20Minh%20Dang%20an%20Cut.glb'
 
 const toSameOriginAssetUrl = (url) => {
   if (typeof url !== 'string' || !url.startsWith(`${AR_ASSET_ORIGIN}/`)) return url
@@ -37,6 +38,13 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Đà Nẵng',
     tagline: 'Rồng vàng vươn ra biển lớn',
     targetImage: dragonBridgeTarget,
+    model: {
+      url: CAU_RONG_MODEL_URL,
+      scale: 2,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      thumbnail: null,
+    },
     shortDescription: 'Biểu tượng kiến trúc hiện đại bắc qua sông Hàn với màn trình diễn phun lửa, phun nước đặc trưng.',
     content: [
       'Cầu Rồng mô phỏng hình dáng một con rồng đang uốn lượn và hướng ra biển. Cầu được khởi công năm 2009, khánh thành ngày 29/3/2013, dài khoảng 666 m và có 6 làn xe cơ giới.',

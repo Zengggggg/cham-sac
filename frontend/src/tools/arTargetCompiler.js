@@ -8,6 +8,7 @@ const targetSources = [
   '/src/assets/ar-targets/card-24.png',
   '/src/assets/ar-targets/card-25.png',
   '/src/assets/ar-targets/card-27.png',
+  '/src/assets/landmarks/fansipan.jpg',
 ]
 
 const loadImage = (source) => new Promise((resolve, reject) => {
@@ -25,7 +26,7 @@ compileButton.addEventListener('click', async () => {
   compileButton.disabled = true
 
   try {
-    statusElement.textContent = 'Đang tải 7 ảnh thẻ…'
+    statusElement.textContent = `Đang tải ${targetSources.length} ảnh thẻ…`
     const images = await Promise.all(targetSources.map(loadImage))
     const compiler = new Compiler()
 

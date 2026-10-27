@@ -52,7 +52,7 @@ const statusCopy = {
   scanning: 'Căn thẻ địa danh để nhận diện',
 }
 
-function CameraFallback({ status, error, onBrowse, onRetry }) {
+function CameraFallback({ status, error, experienceCount, onBrowse, onRetry }) {
   const isInsecure = status === 'insecure'
   const isUnsupported = status === 'unsupported'
   const title = isInsecure
@@ -89,7 +89,7 @@ function CameraFallback({ status, error, onBrowse, onRetry }) {
           Khám phá Chạm Sắc Việt
         </Button>
         <Button variant="ghost" onClick={onBrowse} icon={<BookOpen size={18} aria-hidden="true" />}>
-          Xem 7 địa danh
+          Xem {experienceCount} địa danh
         </Button>
       </div>
     </section>
@@ -97,7 +97,7 @@ function CameraFallback({ status, error, onBrowse, onRetry }) {
 }
 
 function HeritageCatalog({ open, experiences, selectedExperience, onClose, onScan, onSelect }) {
-  const title = selectedExperience ? selectedExperience.name : 'Khám phá 7 địa danh'
+  const title = selectedExperience ? selectedExperience.name : `Khám phá ${experiences.length} địa danh`
   const description = selectedExperience
     ? selectedExperience.tagline
     : 'Xem trước nội dung văn hóa ngay cả khi camera chưa sẵn sàng.'
@@ -353,7 +353,7 @@ function ArExperiencePage() {
               <p className="ar-eyebrow"><Sparkles size={17} aria-hidden="true" /> TRẢI NGHIỆM DI SẢN SỐ</p>
               <h1 id="ar-page-title">Chạm vào di sản,<span>đánh thức câu chuyện</span></h1>
               <p className="ar-intro__lead">
-                Căn một trong 7 thẻ địa danh vào khung. Khi nhận diện thành công, mô hình 3D xuất hiện trực tiếp trên thẻ qua camera.
+                Căn một trong {experiences.length} thẻ địa danh vào khung. Khi nhận diện thành công, mô hình 3D xuất hiện trực tiếp trên thẻ qua camera.
               </p>
               <div className="ar-intro__actions">
                 <Button
@@ -372,7 +372,7 @@ function ArExperiencePage() {
                   onClick={openCatalog}
                   icon={<BookOpen size={18} aria-hidden="true" />}
                 >
-                  Xem 7 địa danh
+                  Xem {experiences.length} địa danh
                 </Button>
               </div>
               <p className="ar-intro__consent">
@@ -402,7 +402,15 @@ function ArExperiencePage() {
           </section>
         )}
 
-        {hasFallback && <CameraFallback status={status} error={error} onBrowse={openCatalog} onRetry={startAR} />}
+        {hasFallback && (
+          <CameraFallback
+            status={status}
+            error={error}
+            experienceCount={experiences.length}
+            onBrowse={openCatalog}
+            onRetry={startAR}
+          />
+        )}
       </section>
 
       <HeritageCatalog

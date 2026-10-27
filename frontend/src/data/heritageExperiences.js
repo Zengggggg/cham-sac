@@ -5,12 +5,15 @@ import independencePalaceTarget from '../assets/ar-targets/card-23.png'
 import templeOfLiteratureTarget from '../assets/ar-targets/card-24.png'
 import swordLakeTarget from '../assets/ar-targets/card-25.png'
 import hueTarget from '../assets/ar-targets/card-27.png'
+import fansipanTarget from '../assets/landmarks/fansipan.jpg'
 
 const AR_ASSET_ORIGIN = 'https://assets.chamsacviet.io.vn'
 
 export const THAP_RUA_MODEL_URL = '/ar-assets/models/thap-rua/Meshy_AI_turtle_tower_ar_optim_1015064523_texture.glb'
 export const QUOC_TU_GIAM_MODEL_URL = '/ar-assets/models/quoc-tu-giam/ban%20mau%20quoc%20tu%20giam%20final.glb'
 export const CAU_RONG_MODEL_URL = '/ar-assets/models/cau-rong/Cau%20rong%20Da%20Nang%20Minh%20Dang%20an%20Cut.glb'
+export const DINH_DOC_LAP_MODEL_URL = '/ar-assets/models/dinh-doc-lap/Dinh%20doc%20lap%20nhe.glb'
+export const FANSIPAN_MODEL_URL = '/ar-assets/models/fansipan/test%20fansipan.glb'
 
 const toSameOriginAssetUrl = (url) => {
   if (typeof url !== 'string' || !url.startsWith(`${AR_ASSET_ORIGIN}/`)) return url
@@ -71,6 +74,13 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Thành phố Hồ Chí Minh',
     tagline: 'Dấu ấn lịch sử thống nhất đất nước',
     targetImage: independencePalaceTarget,
+    model: {
+      url: DINH_DOC_LAP_MODEL_URL,
+      scale: 1,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      thumbnail: null,
+    },
     shortDescription: 'Di tích quốc gia đặc biệt gắn với dấu mốc giải phóng miền Nam, thống nhất đất nước ngày 30/4/1975.',
     content: [
       'Công trình hiện nay do kiến trúc sư Ngô Viết Thụ thiết kế, được khởi công năm 1962 và khánh thành năm 1966.',
@@ -128,6 +138,26 @@ export const HERITAGE_EXPERIENCES = [
     content: [
       'Cố đô Huế là kinh đô của Việt Nam dưới triều Nguyễn từ năm 1802 đến năm 1945, với những công trình nổi bật như Ngọ Môn, Điện Thái Hòa, Tử Cấm Thành và các lăng tẩm vua Nguyễn.',
       'Năm 1993, Quần thể di tích Cố đô Huế được UNESCO ghi danh là Di sản Thế giới.',
+    ],
+  },
+  {
+    id: 'fansipan',
+    targetIndex: 7,
+    name: 'Đỉnh Fansipan',
+    location: 'Sa Pa, Lào Cai',
+    tagline: 'Nóc nhà Đông Dương giữa đại ngàn Hoàng Liên Sơn',
+    targetImage: fansipanTarget,
+    model: {
+      url: FANSIPAN_MODEL_URL,
+      scale: 1,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      thumbnail: null,
+    },
+    shortDescription: 'Đỉnh núi cao nhất Việt Nam, nằm trong dãy Hoàng Liên Sơn và được mệnh danh là Nóc nhà Đông Dương.',
+    content: [
+      'Fansipan thuộc dãy Hoàng Liên Sơn, gần thị xã Sa Pa, tỉnh Lào Cai. Địa danh nổi bật với cảnh quan núi cao, khí hậu phân tầng và hệ sinh thái đa dạng.',
+      'Với độ cao 3.147,3 m, Fansipan là điểm đến tiêu biểu của vùng Tây Bắc và hành trình khám phá thiên nhiên Việt Nam.',
     ],
   },
 ]

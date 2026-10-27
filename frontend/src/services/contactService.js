@@ -1,4 +1,4 @@
-const API_PREFIX = '/chamsacviet'
+const API_PREFIX = '/cham_sac_viet'
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 async function request(path, options = {}) {

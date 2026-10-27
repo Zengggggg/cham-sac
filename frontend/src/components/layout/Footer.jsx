@@ -19,7 +19,7 @@ const linkGroups = [
     title: "Khám phá",
     links: [
       ["Trang chủ", "/"],
-      ["Về chúng tôi", "/about-us"],
+      ["Về chúng mình", "/about-us"],
       ["Liên hệ", "/contact-us"],
     ],
   },
@@ -39,10 +39,10 @@ const linkGroups = [
     ],
   },
   {
-    title: "Câu hỏi của tôi",
+    title: "Câu hỏi của bạn",
     links: [
       ["Danh sách câu hỏi", "/questions"],
-      ["Câu hỏi của tôi", "/profile/questions"],
+      ["Câu hỏi của bạn", "/profile/questions"],
       ["Tạo câu hỏi", "/profile/questions/create"],
     ],
   },
@@ -91,13 +91,9 @@ function Footer() {
               <span className="fpt-footer__contact-icon" aria-hidden="true">
                 <LocationOnIcon fontSize="small" />
               </span>
-              <p className="fpt-footer__contact-text">
-                Đại học FPT
-                <br />
-                Khu Công nghệ cao Hòa Lạc
-              </p>
+              <p className="fpt-footer__contact-text">Hoà Lạc, Hà Nội</p>
             </div>
-            <h4 className="fpt-footer__social-title">Kết nối với chúng tôi</h4>
+            <h4 className="fpt-footer__social-title">Kết nối với chúng mình</h4>
             <div className="fpt-footer__social-buttons">
               <a
                 href="https://zalo.me/0374385234"
@@ -121,12 +117,29 @@ function Footer() {
           </div>
           <div className="fpt-footer__links-grid">
             {linkGroups.map((group) => (
-              <div className={`fpt-footer__link-group${openGroup === group.title ? " is-open" : ""}`} key={group.title}>
-                <button className="fpt-footer__link-title" type="button" onClick={() => setOpenGroup((current) => current === group.title ? "" : group.title)} aria-expanded={openGroup === group.title}>
-                  <span>{group.title}</span><ChevronDown size={18} aria-hidden="true" />
+              <div
+                className={`fpt-footer__link-group${openGroup === group.title ? " is-open" : ""}`}
+                key={group.title}
+              >
+                <button
+                  className="fpt-footer__link-title"
+                  type="button"
+                  onClick={() =>
+                    setOpenGroup((current) =>
+                      current === group.title ? "" : group.title,
+                    )
+                  }
+                  aria-expanded={openGroup === group.title}
+                >
+                  <span>{group.title}</span>
+                  <ChevronDown size={18} aria-hidden="true" />
                 </button>
                 <div className="fpt-footer__link-list">
-                  {group.links.map(([label, href]) => <Link className="fpt-footer__link" to={href} key={href}>{label}</Link>)}
+                  {group.links.map(([label, href]) => (
+                    <Link className="fpt-footer__link" to={href} key={href}>
+                      {label}
+                    </Link>
+                  ))}
                 </div>
               </div>
             ))}
@@ -135,7 +148,7 @@ function Footer() {
       </div>
       <hr className="fpt-footer__divider" />
       <div className="fpt-footer__copyright">
-      © {year} ChamSacViet. Bảo lưu mọi quyền
+        © {year} ChamSacViet. Bảo lưu mọi quyền
       </div>
     </footer>
   );

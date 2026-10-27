@@ -15,3 +15,8 @@ Các ảnh được tải ở kích thước phù hợp cho giao diện, sau đ�
 | `mui-ca-mau.jpg` | *Mui Ca Mau 005* — Ctvn wikiviet | Public domain | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Mui_Ca_Mau_005.JPG) |
 
 Văn bản giấy phép: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+
+## Downloaded Wikimedia Commons images
+
+
+Album variants - generated crops of each original landmark image; original attribution applies.

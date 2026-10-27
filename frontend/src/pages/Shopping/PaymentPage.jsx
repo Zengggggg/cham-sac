@@ -259,7 +259,7 @@ function PaymentResultCard({
         onClick={isSuccess ? onContinueShopping : onBackToPayment}
       >
         {isSuccess
-          ? "Xem đơn hàng của tôi"
+          ? "Xem đơn hàng của bạn"
           : "Quay lại thông tin chuyển khoản"}
       </Button>
     </div>

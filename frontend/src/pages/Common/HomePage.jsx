@@ -1,7 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Compass,
   Building2,
   Castle,
@@ -35,6 +37,11 @@ import cauRongImage from "../../assets/landmarks/cau-rong.jpg";
 import dinhDocLapImage from "../../assets/landmarks/dinh-doc-lap.jpg";
 import cuChiImage from "../../assets/landmarks/cu-chi.jpg";
 import muiCaMauImage from "../../assets/landmarks/mui-ca-mau.jpg";
+const landmarkImageFiles = import.meta.glob("../../assets/landmarks/new/**/*.{jpg,jpeg,png,webp}", {
+  eager: true,
+  import: "default",
+  query: "?url",
+});
 import FloatingCharacter from "../../components/layout/FloatingCharacter.jsx";
 import "./HomePage.scss";
 
@@ -47,6 +54,7 @@ const landmarks = [
     tone: "gold",
     icon: Mountain,
     image: fansipanImage,
+    albumKey: "fansipan",
   },
   {
     name: "Hồ Gươm",
@@ -56,6 +64,7 @@ const landmarks = [
     tone: "pink",
     icon: Landmark,
     image: hoGuomImage,
+    albumKey: "ho-guom",
   },
   {
     name: "Văn Miếu – Quốc Tử Giám",
@@ -65,6 +74,7 @@ const landmarks = [
     tone: "turquoise",
     icon: GraduationCap,
     image: vanMieuImage,
+    albumKey: "van-mieu",
   },
   {
     name: "Cố đô Hoa Lư",
@@ -74,6 +84,7 @@ const landmarks = [
     tone: "pink",
     icon: Castle,
     image: hoaLuImage,
+    albumKey: "co-do-hoa-lu",
   },
   {
     name: "Cố đô Huế",
@@ -83,6 +94,7 @@ const landmarks = [
     tone: "gold",
     icon: Castle,
     image: hueImage,
+    albumKey: "co-do-hue",
   },
   {
     name: "Cầu Rồng",
@@ -92,6 +104,7 @@ const landmarks = [
     tone: "turquoise",
     icon: Waves,
     image: cauRongImage,
+    albumKey: "cau-rong",
   },
   {
     name: "Dinh Độc Lập",
@@ -101,6 +114,7 @@ const landmarks = [
     tone: "gold",
     icon: Building2,
     image: dinhDocLapImage,
+    albumKey: "dinh-doc-lap",
   },
   {
     name: "Địa đạo Củ Chi",
@@ -110,6 +124,7 @@ const landmarks = [
     tone: "pink",
     icon: Compass,
     image: cuChiImage,
+    albumKey: "dia-dao-cu-chi",
   },
   {
     name: "Mũi Cà Mau",
@@ -119,6 +134,7 @@ const landmarks = [
     tone: "turquoise",
     icon: Trees,
     image: muiCaMauImage,
+    albumKey: "mui-ca-mau",
   },
 ];
 
@@ -437,6 +453,46 @@ function HeroModel() {
 }
 
 function HomePage() {
+  const [albumLandmark, setAlbumLandmark] = useState(null);
+  const [albumIndex, setAlbumIndex] = useState(0);
+
+  const openAlbum = (landmark) => {
+    setAlbumLandmark(landmark);
+    setAlbumIndex(0);
+  };
+
+  const closeAlbum = () => setAlbumLandmark(null);
+
+  const activeAlbumImages = albumLandmark
+    ? Object.entries(landmarkImageFiles)
+        .filter(([path]) => path.includes(`/landmarks/new/${albumLandmark.albumKey}/`))
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([, image]) => image)
+    : [];
+
+  useEffect(() => {
+    if (!albumLandmark) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") closeAlbum();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [albumLandmark]);
+
+  useEffect(() => {
+    if (!albumLandmark || activeAlbumImages.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setAlbumIndex((current) => (current + 1) % activeAlbumImages.length);
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [albumLandmark, activeAlbumImages.length]);
+
+  const changeAlbumImage = (direction) => {
+    setAlbumIndex((current) =>
+      (current + direction + activeAlbumImages.length) % activeAlbumImages.length,
+    );
+  };
+
   const scrollToJourney = (event) => {
     const journey = document.getElementById("hanh-trinh");
     if (!journey) return;
@@ -566,6 +622,15 @@ function HomePage() {
                 eyebrow={`${String(index + 1).padStart(2, "0")} / ${landmark.region}`}
                 title={landmark.name}
                 description={landmark.location}
+                onClick={() => openAlbum(landmark)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openAlbum(landmark);
+                  }
+                }}
               >
                 <img
                   className="home-landmark__background"
@@ -581,6 +646,32 @@ function HomePage() {
             );
           })}
         </div>
+        {albumLandmark && (
+          <div className="home-album-modal" role="dialog" aria-modal="true" aria-label={`Album ảnh ${albumLandmark.name}`} onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeAlbum();
+          }}>
+            <div className="home-album-modal__panel">
+              <button className="home-album-modal__close" type="button" onClick={closeAlbum} aria-label="Đóng album">×</button>
+              <p className="home-eyebrow">Album ảnh · {albumLandmark.location}</p>
+              <div className="home-album-modal__heading">
+                <h2>{albumLandmark.name}</h2>
+                <p>{albumLandmark.fact}</p>
+              </div>
+              <div className="home-album-modal__main">
+                <img key={activeAlbumImages[albumIndex] || albumLandmark.image} src={activeAlbumImages[albumIndex] || albumLandmark.image} alt={`${albumLandmark.name} - ảnh ${albumIndex + 1}`} />
+                <button className="home-album-modal__nav home-album-modal__nav--prev" type="button" onClick={() => changeAlbumImage(-1)} aria-label="Ảnh trước"><ChevronLeft size={30} strokeWidth={2.5} aria-hidden="true" /></button>
+                <button className="home-album-modal__nav home-album-modal__nav--next" type="button" onClick={() => changeAlbumImage(1)} aria-label="Ảnh tiếp theo"><ChevronRight size={30} strokeWidth={2.5} aria-hidden="true" /></button>
+              </div>
+              <div className="home-album-modal__thumbs" aria-label="Chọn ảnh trong album">
+                {activeAlbumImages.map((image, index) => (
+                  <button className={index === albumIndex ? "is-active" : ""} type="button" key={`${albumLandmark.name}-${index}`} onClick={() => setAlbumIndex(index)} aria-label={`Xem ảnh ${index + 1}`}>
+                    <img src={image} alt="" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         <div className="home-journey__footer">
           <span>Đi một vòng Việt Nam, nghe chín câu chuyện.</span>
           <Button

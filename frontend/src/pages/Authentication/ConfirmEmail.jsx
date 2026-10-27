@@ -180,7 +180,7 @@ export default function ConfirmEmail() {
               className="confirm-email-page__card"
               eyebrow="BƯỚC 1"
               title="Kiểm tra địa chỉ email"
-              description="Chúng tôi sẽ gửi email xác thực đến địa chỉ email này:"
+              description="Chúng mình sẽ gửi email xác thực đến địa chỉ email này:"
             >
               <div className="confirm-email-page__email-field">
                 <Mail size={18} aria-hidden="true" />

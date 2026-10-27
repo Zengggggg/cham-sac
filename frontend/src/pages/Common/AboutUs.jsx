@@ -20,26 +20,28 @@ import elementMaskPurple from "../../assets/elements/IMG_4818.PNG";
 import elementMaskBlue from "../../assets/elements/IMG_4819.PNG";
 import elementFlowerOne from "../../assets/elements/IMG_4825.PNG";
 import elementFlowerTwo from "../../assets/elements/IMG_4826.PNG";
+import productImage from "../../assets/product.png";
+import statementBackground from "../../assets/aboutus_1.png";
 import "./AboutUs.scss";
 
 const values = [
   {
-    icon: HeartHandshake,
-    title: "Tôn trọng di sản",
+    icon: Landmark,
+    title: "Trân trọng văn hóa Việt",
     description:
-      "Mỗi câu chuyện văn hóa được tiếp cận với sự trân trọng, chọn lọc và tinh thần gìn giữ giá trị nguyên bản.",
+      "Tìm hiểu và chọn lọc thông tin về danh lam thắng cảnh, di tích lịch sử và đặc trưng vùng miền để truyền tải những giá trị văn hóa một cách gần gũi, phù hợp.",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Lấy gia đình làm trung tâm",
+    description:
+      "Thiết kế trải nghiệm để cha mẹ và con cùng tham gia, tương tác và tận hưởng thời gian bên nhau qua mỗi ván chơi.",
   },
   {
     icon: Sparkles,
-    title: "Đổi mới trải nghiệm",
+    title: "Chạm đến trải nghiệm mới",
     description:
-      "Công nghệ được dùng để mở thêm một cách nhìn gần gũi, trực quan và dễ nhớ về di sản Việt Nam.",
-  },
-  {
-    icon: UsersRound,
-    title: "Cùng nhau khám phá",
-    description:
-      "Chạm Sắc Việt kết nối người trẻ với những câu chuyện địa phương qua trải nghiệm có tính tương tác.",
+      "Ứng dụng WebAR để bổ sung hình ảnh, mô hình 3D và âm thanh sống động, giúp khám phá văn hóa trực quan mà vẫn giữ board game làm trải nghiệm chính.",
   },
 ];
 
@@ -139,7 +141,13 @@ function AboutUs() {
             <p className="about-page__eyebrow">
               <Sparkles size={16} aria-hidden="true" /> VỀ CHẠM SẮC VIỆT
             </p>
-            <h1>Chạm vào di sản, kể tiếp câu chuyện Việt.</h1>
+            <h1>
+              Đi qua mọi miền,
+              <br />
+              <span className="about-page__hero-title-line">
+                nối liền yêu thương
+              </span>
+            </h1>
             <p className="about-page__lead">
               Một không gian số giúp bạn khám phá văn hóa và di sản Việt Nam qua
               những trải nghiệm trực quan, gần gũi và giàu cảm hứng.
@@ -154,7 +162,7 @@ function AboutUs() {
                 Bắt đầu khám phá
               </Button>
               <Button as={Link} to="/contact-us" variant="secondary">
-                Liên hệ với chúng tôi
+                Liên hệ với chúng mình
               </Button>
             </div>
           </div>
@@ -166,9 +174,11 @@ function AboutUs() {
           >
             <FloatingCharacter variant={2} className="about-page__character" />
             <div className="about-page__visual-frame">
-              <Image size={42} aria-hidden="true" />
-              <strong>Ảnh minh họa</strong>
-              <span>Placeholder hình ảnh di sản</span>
+              <img
+                className="about-page__product-image"
+                src={productImage}
+                alt="Sản phẩm Chạm Sắc Việt"
+              />
             </div>
             <span className="about-page__visual-stamp">
               CHẠM
@@ -222,6 +232,7 @@ function AboutUs() {
 
       <section
         className="about-page__statement"
+        style={{ "--statement-background": `url(${statementBackground})` }}
         aria-label="Tuyên ngôn Chạm Sắc Việt"
       >
         <FloatingCharacter
@@ -243,11 +254,12 @@ function AboutUs() {
         <div className="about-page__shell about-page__statement-content">
           <p className="about-page__eyebrow">TINH THẦN CHẠM SẮC VIỆT</p>
           <blockquote>
-            “Chạm vào di sản hôm nay, cùng nhau tạo nên những cách kể mới cho
-            ngày mai.”
+            “Cùng nhau khám phá{" "}
+            <span style={{ whiteSpace: "nowrap" }}>Việt Nam</span>, cùng nhau
+            lưu giữ những khoảnh khắc đẹp”
           </blockquote>
           <span className="about-page__statement-caption">
-            Placeholder nội dung tuyên ngôn thương hiệu
+            Kết nối gia đình qua từng cuộc chơi
           </span>
         </div>
       </section>
@@ -327,18 +339,29 @@ function AboutUs() {
         />
         <div className="about-page__shell about-page__belief-grid">
           <div className="about-page__section-heading">
-            <p className="about-page__eyebrow">CÂU CHUYỆN CỦA CHÚNG TÔI</p>
-            <h2>Di sản sẽ gần hơn khi được kể bằng ngôn ngữ của hôm nay.</h2>
+            <p className="about-page__eyebrow">CÂU CHUYỆN CỦA CHÚNG MÌNH</p>
+            <h2>Chạm sắc Việt - Kết nối gia đình qua từng cuộc chơi</h2>
           </div>
           <div className="about-page__belief-copy">
             <p>
-              Chạm Sắc Việt là dự án tạm thời được xây dựng với mong muốn đưa
-              những câu chuyện văn hóa Việt đến gần hơn với đời sống số.
+              Chạm Sắc Việt ra đời từ mong muốn đưa văn hóa Việt Nam đến gần hơn
+              với các gia đình thông qua những trải nghiệm vui chơi ý nghĩa.
+              Chúng mình tin rằng, những câu chuyện về danh lam thắng cảnh, di
+              tích lịch sử và vẻ đẹp của từng vùng miền sẽ trở nên gần gũi hơn
+              khi được khám phá qua những khoảnh khắc vui chơi bên nhau.
             </p>
             <p>
-              Nội dung, hình ảnh và các trải nghiệm chuyên sâu sẽ tiếp tục được
-              hoàn thiện. Phiên bản hiện tại là không gian placeholder để giới
-              thiệu hướng đi của sản phẩm.
+              Từ đó, Hành Trình Xuyên Việt được hình thành – một trò chơi board
+              game đưa cha mẹ và con trẻ cùng du hành từ Hà Nội đến TP. Hồ Chí
+              Minh, vượt qua thử thách, lựa chọn chiến thuật và khám phá những
+              nét đặc sắc của quê hương. Với WebAR bổ trợ bằng hình ảnh, mô hình
+              3D và âm thanh, hành trình khám phá văn hóa trở nên sinh động hơn
+              mà không làm mất đi niềm vui tương tác trực tiếp.
+            </p>
+            <p style={{ fontWeight: "bold" }}>
+              Với Chạm Sắc Việt, chúng mình không muốn biến giờ chơi thành giờ
+              học, mà mong mỗi ván chơi sẽ là dịp để gia đình cùng cười, cùng
+              khám phá và tạo nên những kỷ niệm đáng nhớ.
             </p>
           </div>
         </div>
@@ -372,12 +395,11 @@ function AboutUs() {
         <div className="about-page__shell">
           <div className="about-page__center-heading">
             <p className="about-page__eyebrow">
-              <Landmark size={16} aria-hidden="true" /> GIÁ TRỊ CỐT LÕI
+              GIÁ TRỊ CỐT LÕI
             </p>
-            <h2>Điều định hình Chạm Sắc Việt</h2>
+            <h2>Giá trị tạo nên Chạm Sắc Việt</h2>
             <p>
-              Ba nguyên tắc giúp mỗi trải nghiệm vừa có chiều sâu văn hóa, vừa
-              dễ tiếp cận với người dùng hôm nay.
+              Từ cách gìn giữ văn hóa đến cách tạo nên những trải nghiệm ý nghĩa cho mỗi gia đình.
             </p>
           </div>
 

@@ -154,7 +154,7 @@ function MyOrderPage() {
         <header className="my-order-hero">
           <div className="my-order-hero__copy">
             <p className="my-order-kicker"><PackageCheck size={17} aria-hidden="true" /> Đơn hàng của bạn</p>
-            <h1>Đơn hàng của tôi</h1>
+            <h1>Đơn hàng của bạn</h1>
             <p>Theo dõi trạng thái và sản phẩm trong các đơn hàng của bạn.</p>
           </div>
           <div className="my-order-count" aria-label={`${orders.length} đơn hàng`}>

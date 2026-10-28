@@ -56,6 +56,11 @@ Các biến cần nhập:
 | `PAYOS_CHECKSUM_KEY` | Checksum key của kênh thanh toán payOS |
 | `PAYOS_RETURN_URL` | URL frontend sau thanh toán, ví dụ `https://cham-sac-viet.vercel.app/payment/success` |
 | `PAYOS_CANCEL_URL` | URL frontend khi hủy, ví dụ `https://cham-sac-viet.vercel.app/payment/cancel` |
+| `R2_ACCOUNT_ID` | Cloudflare Account ID chứa bucket ảnh sản phẩm |
+| `R2_ACCESS_KEY_ID` | Access Key ID của R2 có quyền ghi vào bucket |
+| `R2_SECRET_ACCESS_KEY` | Secret Access Key tương ứng, chỉ lưu trên Render |
+| `R2_BUCKET_NAME` | Tên bucket lưu ảnh sản phẩm |
+| `R2_PUBLIC_BASE_URL` | Custom/public domain HTTPS của bucket, ví dụ `https://assets.chamsacviet.io.vn` |
 
 `JWT_SECRET` và `REFRESH_TOKEN_SECRET` được Render sinh tự động, độc lập, chỉ trong lần tạo Blueprint đầu tiên.
 
@@ -95,7 +100,7 @@ VITE_GOOGLE_CLIENT_ID=<same-google-client-id>
 
 Sau đó build/deploy lại frontend. Nếu domain frontend thay đổi, cập nhật `FRONTEND_URL` trên Render rồi redeploy backend để CORS cho phép origin mới.
 
-Nếu dùng upload ảnh R2, thêm thủ công các biến `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL` trong Render Dashboard.
+Các biến `R2_*` được khai báo `sync: false` trong Blueprint. Nhập giá trị thật trong Render Dashboard trước khi dùng chức năng tạo sản phẩm có ảnh; sau khi cập nhật biến môi trường, redeploy backend.
 
 ## 6. Lưu ý về gói Free và hoàn tồn kho
 

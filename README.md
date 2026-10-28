@@ -149,7 +149,7 @@ Payment: pending -> success
 | payOS provider/webhook | Đã có payment link, webhook xác minh chữ ký và xử lý idempotent |
 | Nội dung di sản | Đã có backend admin CRUD và public API `GET /chamsacviet/ar/experiences` cho cấu hình AR đã xuất bản |
 | Câu hỏi địa danh | Đã có danh sách public theo địa danh, CRUD danh sách private của user và CRUD câu hỏi public dành cho admin |
-| Image tracking/WebAR | Đã có trang công khai `/ar`, MindAR image tracking cho 7 thẻ đầu tiên (`target_index` 0–6), tải model GLB kèm tiến độ/lỗi và neo model trực tiếp lên thẻ trong camera; không có viewer 3D độc lập |
+| Image tracking/WebAR | Đã có trang công khai `/ar`, MindAR image tracking cho 8 thẻ đầu tiên (`target_index` 0–7), tải model GLB kèm tiến độ/lỗi và neo model trực tiếp lên thẻ trong camera; không có viewer 3D độc lập |
 | R2/CDN integration | Đã có upload ảnh sản phẩm trực tiếp từ frontend bằng presigned URL do backend cấp; cần cấu hình bucket, credential, public domain và CORS theo môi trường |
 | Admin | Đã có backend dashboard, quản lý user, sản phẩm, tồn kho, đơn, luật chơi, địa danh và cấu hình model AR; frontend chưa triển khai |
 | Automated tests | Đã có test cho auth, response contract, MongoDB, shop rules, order state và payOS |

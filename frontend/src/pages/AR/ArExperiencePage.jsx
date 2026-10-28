@@ -114,7 +114,7 @@ function CameraFallback({ status, error, onBrowse, onRetry }) {
           onClick={onBrowse}
           icon={<BookOpen size={18} aria-hidden="true" />}
         >
-          Xem 9 địa danh
+          Xem 7 địa danh
         </Button>
       </div>
     </section>
@@ -489,7 +489,7 @@ function ArExperiencePage() {
                   onClick={openCatalog}
                   icon={<BookOpen size={18} aria-hidden="true" />}
                 >
-                  Xem 9 địa danh
+                  Xem 7 địa danh
                 </Button>
               </div>
               <p className="ar-intro__consent">

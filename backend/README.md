@@ -157,6 +157,8 @@ Khi thanh toán thành công, webhook cập nhật `paymentStatus` thành `paid`
 
 `transactionDateTime` không kèm múi giờ từ PayOS được hiểu là giờ Việt Nam (UTC+07:00). Webhook gửi lại cho giao dịch thành công sẽ thử khôi phục đơn do hệ thống hủy nhầm vì diễn giải sai mốc giờ; thao tác chỉ khôi phục khi lịch sử hủy là do hệ thống, thời gian thanh toán thực tế không muộn hơn `expiresAt`, và tồn kho còn đủ.
 
+Admin cập nhật tiến trình đơn theo thứ tự `pending` → `confirmed` → `shipping` → `done`. Đơn chỉ được chuyển từ chờ xác nhận sang đã xác nhận sau khi thanh toán thành công; các bước tiếp theo được thao tác từ chi tiết đơn trong màn quản trị.
+
 ### Kiểm thử thanh toán local qua ngrok
 
 PayOS phải gửi webhook tới đúng backend/database đã tạo đơn. Nếu frontend chạy qua ngrok ở cổng 5173, Vite proxy `/chamsacviet` tới backend local ở cổng 8080; webhook URL dùng hostname ngrok hiện tại và path:

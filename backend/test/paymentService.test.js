@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
     createPayOSTransferContent,
+    isLatePayment,
     isRecoverableExpiredOrder,
     normalizeVerifiedPayment,
     processPayOSWebhook
@@ -28,6 +29,19 @@ test('verified payOS data is normalized to trusted payment fields', () => {
     assert.ok(normalized.paidAt instanceof Date);
 });
 
+test('timezone-less payOS transaction time is interpreted as Vietnam local time', () => {
+    const normalized = normalizeVerifiedPayment({
+        orderCode: 123,
+        amount: 5000,
+        reference: 'FT-001',
+        paymentLinkId: 'link-1',
+        transactionDateTime: '2026-10-28 22:26:12',
+        code: '00'
+    });
+
+    assert.equal(normalized.paidAt.toISOString(), '2026-10-28T15:26:12.000Z');
+});
+
 test('a timely payment can recover an order cancelled by the expiry worker', () => {
     const order = {
         orderStatus: 'cancelled',
@@ -48,7 +62,39 @@ test('a timely payment can recover an order cancelled by the expiry worker', () 
     }, new Date('2026-10-14T10:14:00.000Z')), false);
 });
 
-test('valid payOS registration sample is acknowledged when it has no matching payment', async () => {
+test('a timely payment can recover an order cancelled by timezone misinterpretation', () => {
+    const order = {
+        orderStatus: 'cancelled',
+        cancellationReason: 'Thanh toán đến sau thời hạn.',
+        expiresAt: new Date('2026-10-28T16:04:21.284Z'),
+        statusHistory: [{
+            to: 'cancelled',
+            actorRole: 'system',
+            reason: 'Thanh toán đến sau thời hạn.'
+        }]
+    };
+
+    assert.equal(
+        isRecoverableExpiredOrder(order, new Date('2026-10-28T15:26:12.000Z')),
+        true
+    );
+    assert.equal(
+        isRecoverableExpiredOrder(order, new Date('2026-10-28T16:26:12.000Z')),
+        false
+    );
+});
+
+test('a payment at the exact expiry timestamp is not considered late', () => {
+    const expiresAt = new Date('2026-10-28T22:26:12.000Z');
+    const order = { orderStatus: 'pending', expiresAt };
+
+    assert.equal(isLatePayment(order, new Date(expiresAt)), false);
+    assert.equal(isLatePayment(order, new Date(expiresAt.getTime() + 1)), true);
+    assert.equal(isLatePayment({ ...order, orderStatus: 'cancelled' }, new Date(expiresAt)), true);
+});
+
+test('valid payOS registration sample is acknowledged when it has no matching payment', async (t) => {
+    const warning = t.mock.method(console, 'warn', () => {});
     const result = await processPayOSWebhook(
         { signature: 'valid-signature' },
         {
@@ -69,6 +115,10 @@ test('valid payOS registration sample is acknowledged when it has no matching pa
         duplicate: false,
         ignored: true
     });
+    assert.deepEqual(warning.mock.calls[0].arguments, [
+        'Ignoring payOS webhook without a matching payment',
+        { providerOrderCode: 123 }
+    ]);
 });
 
 test('payOS webhook with an invalid signature is still rejected', async () => {

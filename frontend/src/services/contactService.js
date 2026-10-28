@@ -1,10 +1,11 @@
-const API_PREFIX = '/cham_sac_viet'
+const API_PREFIX = '/chamsacviet'
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('accessToken')
   const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, {
     ...options,
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

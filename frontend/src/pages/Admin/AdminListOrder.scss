@@ -485,6 +485,22 @@
   font-size: 20px;
 }
 
+.admin-order-page__status-action {
+  align-items: center;
+  border-top: 1px solid #eadfe6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding-top: 18px;
+}
+
+.admin-order-page__status-action p {
+  color: #8b5b20;
+  font-size: 13px;
+  margin: 0;
+}
+
 .admin-order-page__detail-loading {
   align-items: center;
   color: #6b6375;

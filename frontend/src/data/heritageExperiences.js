@@ -5,7 +5,8 @@ import independencePalaceTarget from '../assets/ar-targets/card-23.png'
 import templeOfLiteratureTarget from '../assets/ar-targets/card-24.png'
 import swordLakeTarget from '../assets/ar-targets/card-25.png'
 import hueTarget from '../assets/ar-targets/card-27.png'
-import fansipanTarget from '../assets/landmarks/fansipan.jpg'
+import fansipanTarget from '../assets/ar-targets/fansipan-card.png'
+import muiCaMauTarget from '../assets/ar-targets/mui-ca-mau-card.png'
 
 const AR_ASSET_ORIGIN = 'https://assets.chamsacviet.io.vn'
 
@@ -158,6 +159,19 @@ export const HERITAGE_EXPERIENCES = [
     content: [
       'Fansipan thuộc dãy Hoàng Liên Sơn, gần thị xã Sa Pa, tỉnh Lào Cai. Địa danh nổi bật với cảnh quan núi cao, khí hậu phân tầng và hệ sinh thái đa dạng.',
       'Với độ cao 3.147,3 m, Fansipan là điểm đến tiêu biểu của vùng Tây Bắc và hành trình khám phá thiên nhiên Việt Nam.',
+    ],
+  },
+  {
+    id: 'mui-ca-mau',
+    targetIndex: 8,
+    name: 'Mũi Cà Mau',
+    location: 'Ngọc Hiển, Cà Mau',
+    tagline: 'Cực Nam đất liền, nơi rừng gặp biển',
+    targetImage: muiCaMauTarget,
+    shortDescription: 'Vùng cực Nam đất liền Việt Nam với cảnh quan ven biển và hệ sinh thái rừng ngập mặn đặc trưng.',
+    content: [
+      'Mũi Cà Mau thuộc huyện Ngọc Hiển, tỉnh Cà Mau. Khu vực nổi bật với quá trình bồi tụ phù sa, rừng ngập mặn và các biểu tượng đánh dấu vùng Đất Mũi.',
+      'Đây là nơi có thể ngắm mặt trời trên biển ở cả phía Đông và phía Tây, đồng thời là một phần của Khu dự trữ sinh quyển thế giới Mũi Cà Mau.',
     ],
   },
 ]

@@ -11,6 +11,16 @@ import {
 } from './orderService.js';
 
 const EXPIRED_ORDER_CANCELLATION_REASON = 'Đơn hàng hết thời hạn thanh toán.';
+const LATE_PAYMENT_CANCELLATION_REASON = 'Thanh toán đến sau thời hạn.';
+
+const parsePayOSTransactionDate = (value) => {
+    if (typeof value !== 'string') return new Date(value);
+    const timezoneMissing = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(value);
+    const normalizedValue = timezoneMissing
+        ? `${value.replace(' ', 'T')}+07:00`
+        : value;
+    return new Date(normalizedValue);
+};
 
 const toPaymentResponse = (payment) => {
     const value = typeof payment.toJSON === 'function' ? payment.toJSON() : { ...payment };
@@ -20,13 +30,21 @@ const toPaymentResponse = (payment) => {
 
 export const isRecoverableExpiredOrder = (order, paidAt) => {
     const lastStatusChange = order.statusHistory?.[order.statusHistory.length - 1];
+    const recoverableCancellationReasons = [
+        EXPIRED_ORDER_CANCELLATION_REASON,
+        LATE_PAYMENT_CANCELLATION_REASON
+    ];
     return order.orderStatus === 'cancelled'
-        && order.cancellationReason === EXPIRED_ORDER_CANCELLATION_REASON
+        && recoverableCancellationReasons.includes(order.cancellationReason)
         && lastStatusChange?.to === 'cancelled'
         && lastStatusChange.actorRole === 'system'
-        && lastStatusChange.reason === EXPIRED_ORDER_CANCELLATION_REASON
+        && lastStatusChange.reason === order.cancellationReason
         && paidAt <= order.expiresAt;
 };
+
+export const isLatePayment = (order, paidAt) => (
+    order.orderStatus === 'cancelled' || paidAt > order.expiresAt
+);
 
 const recoverDelayedSuccessfulPayment = async (paymentId, paidAt) => {
     const session = await mongoose.startSession();
@@ -38,6 +56,7 @@ const recoverDelayedSuccessfulPayment = async (paymentId, paidAt) => {
             if (!order) return;
             if (payment.status !== 'success' || !isRecoverableExpiredOrder(order, paidAt)) return;
 
+            payment.paidAt = paidAt;
             const stockReserved = await reserveOrderStock(order, session);
             if (!stockReserved) {
                 payment.requiresManualReview = true;
@@ -73,7 +92,7 @@ export const createPayOSTransferContent = (providerOrderCode) => {
 };
 
 export const normalizeVerifiedPayment = (verifiedData) => {
-    const paidAt = new Date(verifiedData.transactionDateTime);
+    const paidAt = parsePayOSTransactionDate(verifiedData.transactionDateTime);
     return {
         providerOrderCode: verifiedData.orderCode,
         amount: verifiedData.amount,
@@ -208,8 +227,8 @@ export const processPayOSWebhook = async (
         })
         : null;
     if (existingTransaction) {
-        if (existingTransaction.status === 'success' && existingTransaction.paidAt) {
-            await recoverDelayedSuccessfulPayment(existingTransaction._id, existingTransaction.paidAt);
+        if (existingTransaction.status === 'success') {
+            await recoverDelayedSuccessfulPayment(existingTransaction._id, normalized.paidAt);
             const updated = await Payment.findById(existingTransaction._id);
             return { payment: toPaymentResponse(updated), duplicate: true };
         }
@@ -217,7 +236,12 @@ export const processPayOSWebhook = async (
     }
 
     const payment = await findPayment({ providerOrderCode: normalized.providerOrderCode });
-    if (!payment) return { payment: null, duplicate: false, ignored: true };
+    if (!payment) {
+        console.warn('Ignoring payOS webhook without a matching payment', {
+            providerOrderCode: normalized.providerOrderCode
+        });
+        return { payment: null, duplicate: false, ignored: true };
+    }
     const order = await Order.findById(payment.orderId);
     if (!order) throw new AppError('Không tìm thấy đơn hàng tương ứng.', 404);
 
@@ -283,8 +307,7 @@ export const processPayOSWebhook = async (
                     transactionalOrder.refundRequired = true;
                 }
             } else {
-                const isLate = transactionalOrder.orderStatus === 'cancelled'
-                    || transactionalOrder.expiresAt <= normalized.paidAt;
+                const isLate = isLatePayment(transactionalOrder, normalized.paidAt);
                 transactionalPayment.requiresManualReview = isLate;
                 transactionalPayment.reviewReason = isLate
                     ? 'Thanh toán thành công sau khi đơn đã hết hạn hoặc bị hủy.'

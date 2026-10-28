@@ -153,7 +153,23 @@ Lớp tích hợp tại `src/providers/payOSProvider.js` hỗ trợ tạo paymen
 
 Checkout trừ tồn kho trong MongoDB transaction. Đơn unpaid hết hạn được worker hủy và hoàn tồn đúng một lần. Không cập nhật trạng thái thanh toán từ `returnUrl`; trạng thái chỉ được xác nhận từ webhook đã qua `payOS.webhooks.verify()`. Webhook có chữ ký hợp lệ nhưng không khớp giao dịch (bao gồm payload mẫu khi payOS đăng ký URL) được trả `200` và bỏ qua; webhook sai chữ ký vẫn bị từ chối.
 
-Nếu webhook đến muộn nhưng thời điểm thanh toán PayOS trước hạn, backend khôi phục đơn từ trạng thái hết hạn về chờ xác nhận và giữ lại tồn kho nếu còn đủ. Nếu không còn đủ hàng, đơn cần được đối soát/hoàn tiền thủ công thay vì xác nhận nhầm.
+Khi thanh toán thành công, webhook cập nhật `paymentStatus` thành `paid`; `orderStatus` vẫn là `pending` để admin xác nhận đơn. Nếu đơn bị hủy nhưng đã chuyển khoản, hãy kiểm tra log backend có cảnh báo `Ignoring payOS webhook without a matching payment` hay không và đối chiếu `providerOrderCode` với đơn hàng. Không tự chuyển đơn sang `confirmed` trước khi đối soát giao dịch trong payOS.
+
+`transactionDateTime` không kèm múi giờ từ PayOS được hiểu là giờ Việt Nam (UTC+07:00). Webhook gửi lại cho giao dịch thành công sẽ thử khôi phục đơn do hệ thống hủy nhầm vì diễn giải sai mốc giờ; thao tác chỉ khôi phục khi lịch sử hủy là do hệ thống, thời gian thanh toán thực tế không muộn hơn `expiresAt`, và tồn kho còn đủ.
+
+Admin cập nhật tiến trình đơn theo thứ tự `pending` → `confirmed` → `shipping` → `done`. Đơn chỉ được chuyển từ chờ xác nhận sang đã xác nhận sau khi thanh toán thành công; các bước tiếp theo được thao tác từ chi tiết đơn trong màn quản trị.
+
+### Kiểm thử thanh toán local qua ngrok
+
+PayOS phải gửi webhook tới đúng backend/database đã tạo đơn. Nếu frontend chạy qua ngrok ở cổng 5173, Vite proxy `/chamsacviet` tới backend local ở cổng 8080; webhook URL dùng hostname ngrok hiện tại và path:
+
+```text
+https://<ngrok-host-hiện-tại>/chamsacviet/payments/payos/webhook
+```
+
+Cập nhật webhook của kênh payOS sang URL này khi kiểm thử local và xác nhận URL trong dashboard payOS. Chỉ đặt `PAYOS_WEBHOOK_URL` trong `.env` không tự đăng ký/cập nhật webhook với payOS. URL ngrok có thể đổi sau khi khởi động lại tunnel. Sau khi kiểm thử, khôi phục webhook production; không để payOS gửi webhook production vào máy local.
+
+Worker hủy đơn chưa được ghi nhận thanh toán sau `ORDER_PAYMENT_EXPIRES_MINUTES` (mặc định 15 phút). Nếu webhook đến muộn nhưng `transactionDateTime` cho thấy đã trả trước hạn, backend có thể khôi phục đơn; giao dịch sau hạn cần đối soát/hoàn tiền thủ công.
 
 Trước khi thử đăng ký, tạo API key trên Resend, xác minh domain gửi và điền `RESEND_API_KEY`, `RESEND_FROM_EMAIL`. Backend không log hoặc trả OTP trong API response.
 

@@ -59,7 +59,7 @@ const statusCopy = {
   scanning: "Căn thẻ địa danh để nhận diện",
 };
 
-function CameraFallback({ status, error, onBrowse, onRetry }) {
+function CameraFallback({ status, error, experienceCount, onBrowse, onRetry }) {
   const isInsecure = status === "insecure";
   const isUnsupported = status === "unsupported";
   const title = isInsecure
@@ -114,7 +114,7 @@ function CameraFallback({ status, error, onBrowse, onRetry }) {
           onClick={onBrowse}
           icon={<BookOpen size={18} aria-hidden="true" />}
         >
-          Xem 7 địa danh
+          Xem {experienceCount} địa danh
         </Button>
       </div>
     </section>
@@ -131,7 +131,7 @@ function HeritageCatalog({
 }) {
   const title = selectedExperience
     ? selectedExperience.name
-    : "Khám phá 7 địa danh";
+    : `Khám phá ${experiences.length} địa danh`;
   const description = selectedExperience
     ? selectedExperience.tagline
     : "Xem trước nội dung văn hóa ngay cả khi camera chưa sẵn sàng.";
@@ -469,8 +469,9 @@ function ArExperiencePage() {
                 Chạm vào di sản,<span>đánh thức câu chuyện</span>
               </h1>
               <p className="ar-intro__lead">
-                Căn một trong 7 thẻ địa danh vào khung. Khi nhận diện thành
-                công, mô hình 3D xuất hiện trực tiếp trên thẻ qua camera.
+                Căn một trong {experiences.length} thẻ địa danh vào khung. Khi
+                nhận diện thành công, mô hình 3D xuất hiện trực tiếp trên thẻ
+                qua camera.
               </p>
               <div className="ar-intro__actions">
                 <Button
@@ -489,7 +490,7 @@ function ArExperiencePage() {
                   onClick={openCatalog}
                   icon={<BookOpen size={18} aria-hidden="true" />}
                 >
-                  Xem 7 địa danh
+                  Xem {experiences.length} địa danh
                 </Button>
               </div>
               <p className="ar-intro__consent">
@@ -529,6 +530,7 @@ function ArExperiencePage() {
           <CameraFallback
             status={status}
             error={error}
+            experienceCount={experiences.length}
             onBrowse={openCatalog}
             onRetry={startAR}
           />

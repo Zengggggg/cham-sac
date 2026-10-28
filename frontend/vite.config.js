@@ -21,6 +21,7 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    allowedHosts: ['internecine-undeciphered-karan.ngrok-free.dev'],
     proxy: {
       '/chamsacviet': 'http://localhost:8080',
       '/ar-assets': {

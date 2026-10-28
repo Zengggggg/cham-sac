@@ -14,7 +14,7 @@ const sections = [
     heading: "2. Tài khoản người dùng",
     paragraphs: [
       "Một số tính năng như quản lý câu hỏi có thể yêu cầu tài khoản. Bạn chịu trách nhiệm về thông tin đã cung cấp và mọi hoạt động phát sinh từ tài khoản của mình.",
-      "Chúng tôi có thể tạm khóa hoặc giới hạn tài khoản nếu phát hiện hành vi vi phạm điều khoản, gây ảnh hưởng đến người dùng khác hoặc đến an toàn của hệ thống.",
+      "Chúng mình có thể tạm khóa hoặc giới hạn tài khoản nếu phát hiện hành vi vi phạm điều khoản, gây ảnh hưởng đến người dùng khác hoặc đến an toàn của hệ thống.",
     ],
   },
   {
@@ -48,7 +48,7 @@ export default function TermOfUse() {
       title="Điều khoản sử dụng"
       intro="Khi truy cập website hoặc sử dụng các dịch vụ của Chạm Sắc Việt, bạn đồng ý với những điều khoản dưới đây."
       sections={sections}
-      note="Nếu bạn không đồng ý với một phần của điều khoản, vui lòng dừng sử dụng tính năng liên quan và liên hệ với chúng tôi để được giải đáp."
+      note="Nếu bạn không đồng ý với một phần của điều khoản, vui lòng dừng sử dụng tính năng liên quan và liên hệ với chúng mình để được giải đáp."
     />
   );
 }

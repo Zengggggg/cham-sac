@@ -275,7 +275,7 @@ export default function QuestionsPage() {
 
             <section className="questions-page__section" aria-labelledby="private-questions-title">
               <div className="questions-page__section-heading">
-                <div><p>KHÔNG GIAN CÁ NHÂN</p><h2 id="private-questions-title">Danh sách private của tôi</h2></div>
+                <div><p>KHÔNG GIAN CÁ NHÂN</p><h2 id="private-questions-title">Danh sách private của bạn</h2></div>
               </div>
 
               {!user ? (

@@ -34,7 +34,7 @@ const navigationItems = [
   { label: "TRANG CHỦ", href: "/" },
   { label: "MUA SẮM", href: "/products" },
   { label: "TRẢI NGHIỆM AR", href: "/ar" },
-  { label: "VỀ CHÚNG TÔI", href: "/about-us" },
+  { label: "VỀ CHÚNG MÌNH", href: "/about-us" },
   { label: "LIÊN HỆ", href: "/contact-us" },
   { label: "QUẢN TRỊ", href: "/admin/dashboard" },
 ];
@@ -44,7 +44,7 @@ const authenticatedAccountItems = [
   { label: "Đổi mật khẩu", href: "/enter-old-password", icon: KeyRound },
   { label: "Đơn hàng", href: "/my-orders", icon: Package },
   { label: "Trải nghiệm AR", href: "/ar", icon: Sparkles },
-  { label: "Câu hỏi của tôi", href: "/questions", icon: MessageCircleQuestion },
+  { label: "Câu hỏi của bạn", href: "/questions", icon: MessageCircleQuestion },
 ];
 
 const readStoredUser = () => {

@@ -29,7 +29,7 @@ const groups = [
         "Chạm Sắc Việt là không gian khám phá di sản Việt Nam thông qua câu chuyện, hình ảnh và trải nghiệm tương tác.",
       ],
       [
-        "Tôi có thể bắt đầu khám phá ở đâu?",
+        "Bạn có thể bắt đầu khám phá ở đâu?",
         "Bạn có thể bắt đầu từ danh sách địa danh lịch sử hoặc mở trải nghiệm AR để nhận diện landmark quanh mình.",
       ],
       [
@@ -51,18 +51,18 @@ const groups = [
         "Hãy kiểm tra ánh sáng, giữ landmark trong khung hình và đảm bảo trình duyệt đang được cấp quyền camera.",
       ],
       [
-        "Camera có lưu hình ảnh của tôi không?",
+        "Camera có lưu hình ảnh của bạn không?",
         "Camera được xử lý trên thiết bị cho mục đích nhận diện trải nghiệm. Bạn luôn kiểm soát quyền truy cập camera của mình.",
       ],
     ],
   },
   {
-    title: "Hãy cùng tham gia đóng góp với chúng tôi",
+    title: "Hãy cùng tham gia đóng góp với chúng mình",
     icon: <MessageCircle size={20} aria-hidden="true" />,
     questions: [
       [
-        "Tôi có thể tạo bộ câu hỏi riêng không?",
-        "Có. Bạn có thể tạo và quản lý các bộ câu hỏi cá nhân trong khu vực Câu hỏi của tôi.",
+        "Bạn có thể tạo bộ câu hỏi riêng không?",
+        "Có. Bạn có thể tạo và quản lý các bộ câu hỏi cá nhân trong khu vực Câu hỏi của bạn.",
       ],
       [
         "Làm thế nào để xem các câu hỏi về địa danh?",
@@ -79,7 +79,7 @@ const groups = [
     icon: <ShieldCheck size={20} aria-hidden="true" />,
     questions: [
       [
-        "Tôi có thể đăng nhập bằng Google không?",
+        "Bạn có thể đăng nhập bằng Google không?",
         "Có. Bạn có thể đăng nhập bằng Google hoặc bằng email và mật khẩu đã đăng ký.",
       ],
       [
@@ -87,7 +87,7 @@ const groups = [
         "Chọn “Quên mật khẩu?” trên màn hình đăng nhập và làm theo hướng dẫn khôi phục tài khoản.",
       ],
       [
-        "Tôi có thể cập nhật thông tin cá nhân ở đâu?",
+        "Bạn có thể cập nhật thông tin cá nhân ở đâu?",
         "Mở Hồ sơ cá nhân, chọn Chỉnh sửa hồ sơ, cập nhật thông tin và bấm Lưu thay đổi.",
       ],
     ],
@@ -239,7 +239,7 @@ export default function FAQ() {
             </span>
             <div>
               <strong>Vẫn còn thắc mắc?</strong>
-              <p>Gửi câu hỏi cho chúng tôi, đội ngũ sẽ phản hồi sớm nhất.</p>
+              <p>Gửi câu hỏi cho chúng mình, đội ngũ sẽ phản hồi sớm nhất.</p>
             </div>
           </div>
         </Card>

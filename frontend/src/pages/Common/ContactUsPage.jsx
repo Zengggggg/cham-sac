@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  ArrowUpRight,
-  Ghost,
-  Mail,
-  MapPin,
-  Phone,
-  Send,
-} from "lucide-react";
+import { ArrowUpRight, Ghost, Mail, MapPin, Phone, Send } from "lucide-react";
 import toast from "react-hot-toast";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import { FaFacebookMessenger } from "react-icons/fa";
@@ -17,6 +10,7 @@ import Input from "../../components/ui/Input.jsx";
 import FloatingCharacter from "../../components/layout/FloatingCharacter.jsx";
 import elementStar from "../../assets/elements/IMG_4811.PNG";
 import elementTealFold from "../../assets/elements/IMG_4822.PNG";
+import contactBackground from "../../assets/contactUs_background.jpg";
 import "./ContactUsPage.css";
 
 const initialForm = {
@@ -53,7 +47,7 @@ const contactLinks = [
   {
     icon: MapPin,
     title: "Địa chỉ",
-    text: "Đại học FPT Hà Nội",
+    text: "Hoà Lạc, Hà Nội",
     href: "https://maps.app.goo.gl/LzyaNJFQpxyvtAYq5",
   },
   {
@@ -75,7 +69,7 @@ const phoneLinks = [
   {
     icon: FaFacebookMessenger,
     title: "Messenger",
-    text: "Nhắn tin với chúng tôi",
+    text: "Nhắn tin với chúng mình",
     href: "https://m.me/61592108695547",
   },
 ];
@@ -125,17 +119,30 @@ export default function ContactUsPage() {
   };
 
   return (
-    <main className="contact-page">
-      <img className="contact-page__element contact-page__element--teal" src={elementTealFold} alt="" aria-hidden="true" />
-      <img className="contact-page__element contact-page__element--star" src={elementStar} alt="" aria-hidden="true" />
+    <main
+      className="contact-page"
+      style={{ "--contact-background": `url(${contactBackground})` }}
+    >
+      <img
+        className="contact-page__element contact-page__element--teal"
+        src={elementTealFold}
+        alt=""
+        aria-hidden="true"
+      />
+      <img
+        className="contact-page__element contact-page__element--star"
+        src={elementStar}
+        alt=""
+        aria-hidden="true"
+      />
       <div className="contact-page__shell">
         <header className="contact-page__hero">
           <FloatingCharacter variant={1} className="contact-page__character" />
           <p className="contact-page__eyebrow">
             <Mail size={16} aria-hidden="true" /> KẾT NỐI CÙNG CHẠM SẮC VIỆT
           </p>
-          <h1>Liên hệ với chúng tôi</h1>
-          <p>Hãy để lại thông tin, chúng tôi sẽ phản hồi sớm nhất.</p>
+          <h1>Liên hệ với chúng mình</h1>
+          <p>Hãy để lại thông tin, chúng mình sẽ phản hồi sớm nhất.</p>
         </header>
 
         <div className="contact-page__layout">
@@ -257,40 +264,41 @@ export default function ContactUsPage() {
                   <ArrowUpRight size={16} aria-hidden="true" />
                 </a>
               ))}
-              {phoneLinks.map(({ icon: Icon = Phone, title, text, phone, href }) =>
-                href ? (
-                  <a
-                    className="contact-page__info-card"
-                    href={href}
-                    target="_blank"
-                    rel="noreferrer"
-                    key={title}
-                  >
-                    <span>
-                      <Icon size={20} aria-hidden="true" />
-                    </span>
-                    <div>
-                      <strong>{title}</strong>
-                      <p>{text}</p>
-                    </div>
-                    <ArrowUpRight size={16} aria-hidden="true" />
-                  </a>
-                ) : (
-                  <button
-                    className="contact-page__info-card contact-page__info-card--copyable"
-                    type="button"
-                    onClick={() => copyPhone(phone)}
-                    key={title}
-                  >
-                    <span>
-                      <Icon size={20} aria-hidden="true" />
-                    </span>
-                    <div>
-                      <strong>{title}</strong>
-                      <p>{text}</p>
-                    </div>
-                  </button>
-                ),
+              {phoneLinks.map(
+                ({ icon: Icon = Phone, title, text, phone, href }) =>
+                  href ? (
+                    <a
+                      className="contact-page__info-card"
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                      key={title}
+                    >
+                      <span>
+                        <Icon size={20} aria-hidden="true" />
+                      </span>
+                      <div>
+                        <strong>{title}</strong>
+                        <p>{text}</p>
+                      </div>
+                      <ArrowUpRight size={16} aria-hidden="true" />
+                    </a>
+                  ) : (
+                    <button
+                      className="contact-page__info-card contact-page__info-card--copyable"
+                      type="button"
+                      onClick={() => copyPhone(phone)}
+                      key={title}
+                    >
+                      <span>
+                        <Icon size={20} aria-hidden="true" />
+                      </span>
+                      <div>
+                        <strong>{title}</strong>
+                        <p>{text}</p>
+                      </div>
+                    </button>
+                  ),
               )}
             </div>
           </section>

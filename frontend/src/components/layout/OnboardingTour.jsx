@@ -29,7 +29,7 @@ const tourSteps = [
   },
   {
     target: '[data-onboarding-target="about"]',
-    title: "Về chúng tôi",
+    title: "Về chúng mình",
     text: "Tìm hiểu câu chuyện và sứ mệnh của Chạm Sắc Việt.",
   },
   {

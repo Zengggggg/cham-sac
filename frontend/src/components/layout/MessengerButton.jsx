@@ -46,7 +46,7 @@ export default function MessengerButton() {
           <div className="popup-body">
             <div className="messenger-chat-bubble">
               Xin chào! <br />
-              Chúng tôi có thể hỗ trợ gì cho bạn.
+              Chúng mình có thể hỗ trợ gì cho bạn.
             </div>
           </div>
 
@@ -59,7 +59,7 @@ export default function MessengerButton() {
               className="start-chat-btn"
               icon={<FaFacebookMessenger className="btn-icon" aria-hidden="true" />}
             >
-              Nhắn tin với chúng tôi
+              Nhắn tin với chúng mình
             </Button>
           </div>
         </div>

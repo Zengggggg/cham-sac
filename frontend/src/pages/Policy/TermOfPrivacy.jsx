@@ -27,8 +27,8 @@ const sections = [
   {
     heading: "4. Bảo mật tài khoản",
     paragraphs: [
-      "Bạn chịu trách nhiệm bảo vệ mật khẩu và thông tin đăng nhập. Hãy thông báo ngay cho chúng tôi nếu phát hiện hoạt động bất thường hoặc nghi ngờ tài khoản bị truy cập trái phép.",
-      "Chúng tôi không yêu cầu bạn cung cấp mật khẩu qua email, tin nhắn hoặc các kênh không chính thức.",
+      "Bạn chịu trách nhiệm bảo vệ mật khẩu và thông tin đăng nhập. Hãy thông báo ngay cho chúng mình nếu phát hiện hoạt động bất thường hoặc nghi ngờ tài khoản bị truy cập trái phép.",
+      "Chúng mình không yêu cầu bạn cung cấp mật khẩu qua email, tin nhắn hoặc các kênh không chính thức.",
     ],
   },
   {

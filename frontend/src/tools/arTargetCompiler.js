@@ -8,7 +8,8 @@ const targetSources = [
   '/src/assets/ar-targets/card-24.png',
   '/src/assets/ar-targets/card-25.png',
   '/src/assets/ar-targets/card-27.png',
-  '/src/assets/landmarks/fansipan.jpg',
+  '/src/assets/ar-targets/fansipan-card.png',
+  '/src/assets/ar-targets/mui-ca-mau-card.png',
 ]
 
 const loadImage = (source) => new Promise((resolve, reject) => {

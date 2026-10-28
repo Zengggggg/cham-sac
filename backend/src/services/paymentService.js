@@ -217,7 +217,12 @@ export const processPayOSWebhook = async (
     }
 
     const payment = await findPayment({ providerOrderCode: normalized.providerOrderCode });
-    if (!payment) return { payment: null, duplicate: false, ignored: true };
+    if (!payment) {
+        console.warn('Ignoring payOS webhook without a matching payment', {
+            providerOrderCode: normalized.providerOrderCode
+        });
+        return { payment: null, duplicate: false, ignored: true };
+    }
     const order = await Order.findById(payment.orderId);
     if (!order) throw new AppError('Không tìm thấy đơn hàng tương ứng.', 404);
 

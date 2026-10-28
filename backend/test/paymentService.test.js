@@ -48,7 +48,8 @@ test('a timely payment can recover an order cancelled by the expiry worker', () 
     }, new Date('2026-10-14T10:14:00.000Z')), false);
 });
 
-test('valid payOS registration sample is acknowledged when it has no matching payment', async () => {
+test('valid payOS registration sample is acknowledged when it has no matching payment', async (t) => {
+    const warning = t.mock.method(console, 'warn', () => {});
     const result = await processPayOSWebhook(
         { signature: 'valid-signature' },
         {
@@ -69,6 +70,10 @@ test('valid payOS registration sample is acknowledged when it has no matching pa
         duplicate: false,
         ignored: true
     });
+    assert.deepEqual(warning.mock.calls[0].arguments, [
+        'Ignoring payOS webhook without a matching payment',
+        { providerOrderCode: 123 }
+    ]);
 });
 
 test('payOS webhook with an invalid signature is still rejected', async () => {

@@ -1,4 +1,4 @@
-const API_PREFIX = '/cham_sac_viet'
+const API_PREFIX = '/chamsacviet'
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 let refreshPromise = null
@@ -43,6 +43,9 @@ function createApiError(payload, response) {
 async function parseResponse(response) {
   const payload = await response.json().catch(() => null)
   if (!response.ok || payload?.success === false) throw createApiError(payload, response)
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw createApiError({ message: 'Máy chủ trả về phản hồi không hợp lệ.' }, response)
+  }
   return payload
 }
 
@@ -53,6 +56,7 @@ async function refreshSession() {
 
   refreshPromise = fetch(`${API_BASE_URL}${API_PREFIX}/auth/refresh-token`, {
     method: 'POST',
+    cache: 'no-store',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
   })
@@ -85,6 +89,7 @@ export async function apiRequest(path, options = {}) {
   try {
     response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, {
       ...fetchOptions,
+      cache: 'no-store',
       headers: requestHeaders,
       ...(body !== undefined ? { body: body instanceof FormData || typeof body === 'string' ? body : JSON.stringify(body) } : {}),
     })

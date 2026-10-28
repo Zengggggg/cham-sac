@@ -29,6 +29,19 @@ test('verified payOS data is normalized to trusted payment fields', () => {
     assert.ok(normalized.paidAt instanceof Date);
 });
 
+test('timezone-less payOS transaction time is interpreted as Vietnam local time', () => {
+    const normalized = normalizeVerifiedPayment({
+        orderCode: 123,
+        amount: 5000,
+        reference: 'FT-001',
+        paymentLinkId: 'link-1',
+        transactionDateTime: '2026-10-28 22:26:12',
+        code: '00'
+    });
+
+    assert.equal(normalized.paidAt.toISOString(), '2026-10-28T15:26:12.000Z');
+});
+
 test('a timely payment can recover an order cancelled by the expiry worker', () => {
     const order = {
         orderStatus: 'cancelled',
@@ -47,6 +60,28 @@ test('a timely payment can recover an order cancelled by the expiry worker', () 
         ...order,
         statusHistory: [{ ...order.statusHistory[0], actorRole: 'admin' }]
     }, new Date('2026-10-14T10:14:00.000Z')), false);
+});
+
+test('a timely payment can recover an order cancelled by timezone misinterpretation', () => {
+    const order = {
+        orderStatus: 'cancelled',
+        cancellationReason: 'Thanh toán đến sau thời hạn.',
+        expiresAt: new Date('2026-10-28T16:04:21.284Z'),
+        statusHistory: [{
+            to: 'cancelled',
+            actorRole: 'system',
+            reason: 'Thanh toán đến sau thời hạn.'
+        }]
+    };
+
+    assert.equal(
+        isRecoverableExpiredOrder(order, new Date('2026-10-28T15:26:12.000Z')),
+        true
+    );
+    assert.equal(
+        isRecoverableExpiredOrder(order, new Date('2026-10-28T16:26:12.000Z')),
+        false
+    );
 });
 
 test('a payment at the exact expiry timestamp is not considered late', () => {

@@ -19,6 +19,7 @@ import Card from '../../components/ui/Card.jsx'
 import Input from '../../components/ui/Input.jsx'
 import Modal from '../../components/ui/Modal.jsx'
 import { getOrderById, getOrders } from '../../services/orderService.js'
+import { updateAdminOrderStatus } from '../../services/adminService.js'
 import './AdminListOrder.scss'
 
 const PAGE_SIZE = 8
@@ -35,6 +36,12 @@ const paymentLabels = {
   unpaid: 'Chưa thanh toán',
   paid: 'Đã thanh toán',
   refunded: 'Đã hoàn tiền',
+}
+
+const nextOrderStatus = {
+  pending: { status: 'confirmed', label: 'Xác nhận đơn hàng' },
+  confirmed: { status: 'shipping', label: 'Chuyển sang đang giao' },
+  shipping: { status: 'done', label: 'Xác nhận hoàn tất' },
 }
 
 const getErrorMessage = (error) => error?.message || 'Không thể tải danh sách đơn hàng.'
@@ -54,6 +61,7 @@ function AdminListOrder() {
   const [error, setError] = useState('')
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [isDetailLoading, setIsDetailLoading] = useState(false)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
   const loadOrders = useCallback(async (requestedPage = 1) => {
     setIsLoading(true)
@@ -104,6 +112,32 @@ function AdminListOrder() {
       toast.error(getErrorMessage(requestError))
     } finally {
       setIsDetailLoading(false)
+    }
+  }
+
+  const advanceOrderStatus = async (order) => {
+    const next = nextOrderStatus[order.orderStatus]
+    if (!next || isUpdatingStatus) return
+    if (order.orderStatus === 'pending' && order.paymentStatus !== 'paid') {
+      toast.error('Chỉ có thể xác nhận đơn sau khi thanh toán thành công.')
+      return
+    }
+
+    setIsUpdatingStatus(true)
+    try {
+      const response = await updateAdminOrderStatus(order._id, next.status, order.updatedAt)
+      const updatedOrder = response?.data?.order
+      if (!updatedOrder) throw new Error('Máy chủ chưa trả về đơn hàng đã cập nhật.')
+
+      setSelectedOrder(updatedOrder)
+      setOrders((currentOrders) => currentOrders.map((currentOrder) => (
+        currentOrder._id === updatedOrder._id ? updatedOrder : currentOrder
+      )))
+      toast.success(`Đã chuyển đơn sang trạng thái ${statusLabels[next.status]}.`)
+    } catch (requestError) {
+      toast.error(getErrorMessage(requestError))
+    } finally {
+      setIsUpdatingStatus(false)
     }
   }
 
@@ -172,13 +206,19 @@ function AdminListOrder() {
       </Card>
 
       <Modal open={Boolean(selectedOrder)} onClose={() => setSelectedOrder(null)} title={`Chi tiết đơn hàng #${selectedOrder?.orderCode || selectedOrder?._id || ''}`} description={selectedOrder ? `${statusLabels[selectedOrder.orderStatus] || 'Chưa cập nhật'} · ${formatDate(selectedOrder.createdAt)}` : ''} size="lg">
-        {selectedOrder && <OrderDetail order={selectedOrder} isLoading={isDetailLoading} />}
+        {selectedOrder && <OrderDetail
+          order={selectedOrder}
+          isLoading={isDetailLoading}
+          nextStatus={nextOrderStatus[selectedOrder.orderStatus]}
+          isUpdatingStatus={isUpdatingStatus}
+          onAdvanceStatus={() => advanceOrderStatus(selectedOrder)}
+        />}
       </Modal>
     </div>
   )
 }
 
-function OrderDetail({ order, isLoading }) {
+function OrderDetail({ order, isLoading, nextStatus, isUpdatingStatus, onAdvanceStatus }) {
   const customer = getCustomer(order)
   if (isLoading) return <div className="admin-order-page__detail-loading"><LoaderCircle className="admin-order-page__spinner" size={24} aria-hidden="true" /> Đang tải chi tiết đơn hàng...</div>
 
@@ -191,6 +231,21 @@ function OrderDetail({ order, isLoading }) {
     </div></section>
     <section className="admin-order-page__detail-section"><p className="admin-order-page__detail-eyebrow">SẢN PHẨM</p><div className="admin-order-page__items">{(order.items || []).map((item, index) => <div key={`${item.productId || item.productName || 'item'}-${index}`}><span><strong>{item.productName || 'Sản phẩm'}</strong><small>Số lượng: {item.quantity || 0}</small></span><strong>{formatMoney(Number(item.unitPrice || 0) * Number(item.quantity || 0))}</strong></div>)}</div></section>
     <div className="admin-order-page__detail-total"><span><small>Thanh toán</small><strong>{paymentLabels[order.paymentStatus] || 'Chưa cập nhật'}</strong></span><span><small>Tổng cộng</small><strong>{formatMoney(order.totalAmount)}</strong></span></div>
+    {nextStatus && (
+      <section className="admin-order-page__status-action">
+        {order.orderStatus === 'pending' && order.paymentStatus !== 'paid' && (
+          <p>Đơn chỉ có thể xác nhận sau khi thanh toán thành công.</p>
+        )}
+        <Button
+          variant="primary"
+          loading={isUpdatingStatus}
+          disabled={order.orderStatus === 'pending' && order.paymentStatus !== 'paid'}
+          onClick={onAdvanceStatus}
+        >
+          {nextStatus.label}
+        </Button>
+      </section>
+    )}
   </div>
 }
 

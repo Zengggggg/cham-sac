@@ -1,6 +1,7 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getR2Environment } from '../config/environment.js';
+import AppError from '../utils/appError.js';
 
 const UPLOAD_URL_EXPIRES_IN_SECONDS = 300;
 
@@ -24,7 +25,17 @@ const getR2Client = (environment) => {
 };
 
 export const createPresignedProductImageUpload = async ({ objectKey, contentType }) => {
-    const environment = getR2Environment();
+    let environment;
+
+    try {
+        environment = getR2Environment();
+    } catch {
+        throw new AppError(
+            'Kho ảnh sản phẩm chưa được cấu hình. Vui lòng bổ sung đầy đủ biến môi trường R2 trên máy chủ.',
+            503
+        );
+    }
+
     const command = new PutObjectCommand({
         Bucket: environment.bucketName,
         Key: objectKey,

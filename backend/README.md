@@ -155,6 +155,8 @@ Checkout trừ tồn kho trong MongoDB transaction. Đơn unpaid hết hạn đ�
 
 Khi thanh toán thành công, webhook cập nhật `paymentStatus` thành `paid`; `orderStatus` vẫn là `pending` để admin xác nhận đơn. Nếu đơn bị hủy nhưng đã chuyển khoản, hãy kiểm tra log backend có cảnh báo `Ignoring payOS webhook without a matching payment` hay không và đối chiếu `providerOrderCode` với đơn hàng. Không tự chuyển đơn sang `confirmed` trước khi đối soát giao dịch trong payOS.
 
+`transactionDateTime` không kèm múi giờ từ PayOS được hiểu là giờ Việt Nam (UTC+07:00). Webhook gửi lại cho giao dịch thành công sẽ thử khôi phục đơn do hệ thống hủy nhầm vì diễn giải sai mốc giờ; thao tác chỉ khôi phục khi lịch sử hủy là do hệ thống, thời gian thanh toán thực tế không muộn hơn `expiresAt`, và tồn kho còn đủ.
+
 ### Kiểm thử thanh toán local qua ngrok
 
 PayOS phải gửi webhook tới đúng backend/database đã tạo đơn. Nếu frontend chạy qua ngrok ở cổng 5173, Vite proxy `/chamsacviet` tới backend local ở cổng 8080; webhook URL dùng hostname ngrok hiện tại và path:

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
     createPayOSTransferContent,
+    isLatePayment,
     isRecoverableExpiredOrder,
     normalizeVerifiedPayment,
     processPayOSWebhook
@@ -46,6 +47,15 @@ test('a timely payment can recover an order cancelled by the expiry worker', () 
         ...order,
         statusHistory: [{ ...order.statusHistory[0], actorRole: 'admin' }]
     }, new Date('2026-10-14T10:14:00.000Z')), false);
+});
+
+test('a payment at the exact expiry timestamp is not considered late', () => {
+    const expiresAt = new Date('2026-10-28T22:26:12.000Z');
+    const order = { orderStatus: 'pending', expiresAt };
+
+    assert.equal(isLatePayment(order, new Date(expiresAt)), false);
+    assert.equal(isLatePayment(order, new Date(expiresAt.getTime() + 1)), true);
+    assert.equal(isLatePayment({ ...order, orderStatus: 'cancelled' }, new Date(expiresAt)), true);
 });
 
 test('valid payOS registration sample is acknowledged when it has no matching payment', async (t) => {

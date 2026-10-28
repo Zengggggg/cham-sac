@@ -28,6 +28,10 @@ export const isRecoverableExpiredOrder = (order, paidAt) => {
         && paidAt <= order.expiresAt;
 };
 
+export const isLatePayment = (order, paidAt) => (
+    order.orderStatus === 'cancelled' || paidAt > order.expiresAt
+);
+
 const recoverDelayedSuccessfulPayment = async (paymentId, paidAt) => {
     const session = await mongoose.startSession();
     try {
@@ -288,8 +292,7 @@ export const processPayOSWebhook = async (
                     transactionalOrder.refundRequired = true;
                 }
             } else {
-                const isLate = transactionalOrder.orderStatus === 'cancelled'
-                    || transactionalOrder.expiresAt <= normalized.paidAt;
+                const isLate = isLatePayment(transactionalOrder, normalized.paidAt);
                 transactionalPayment.requiresManualReview = isLate;
                 transactionalPayment.reviewReason = isLate
                     ? 'Thanh toán thành công sau khi đơn đã hết hạn hoặc bị hủy.'

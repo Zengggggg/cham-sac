@@ -13,8 +13,12 @@ const AR_ASSET_ORIGIN = 'https://assets.chamsacviet.io.vn'
 export const THAP_RUA_MODEL_URL = '/ar-assets/models/thap-rua/Meshy_AI_turtle_tower_ar_optim_1015064523_texture.glb'
 export const QUOC_TU_GIAM_MODEL_URL = '/ar-assets/models/quoc-tu-giam/ban%20mau%20quoc%20tu%20giam%20final.glb'
 export const CAU_RONG_MODEL_URL = '/ar-assets/models/cau-rong/Cau%20rong%20Da%20Nang%20Minh%20Dang%20an%20Cut.glb'
-export const DINH_DOC_LAP_MODEL_URL = '/ar-assets/models/dinh-doc-lap/Dinh%20doc%20lap%20nhe.glb'
+export const CU_CHI_MODEL_URL = '/ar-assets/models/cu-chi/cu%20chi.glb'
+export const HOA_LU_MODEL_URL = '/ar-assets/models/hoa-lu/Hoa%20Lu%20da%20nen.glb'
+export const DINH_DOC_LAP_MODEL_URL = '/ar-assets/models/dinh-doc-lap/Dinh%20doc%20lap%20final.glb'
+export const NGO_MON_HUE_MODEL_URL = '/ar-assets/models/ngo-mon-hue/Ngo%20Mon%20Hue%20final%20nhe.glb'
 export const FANSIPAN_MODEL_URL = '/ar-assets/models/fansipan/test%20fansipan.glb'
+export const MUI_CA_MAU_MODEL_URL = '/ar-assets/models/mui-ca-mau/Mui%20Ca%20Mau%20nhe.glb'
 
 const toSameOriginAssetUrl = (url) => {
   if (typeof url !== 'string' || !url.startsWith(`${AR_ASSET_ORIGIN}/`)) return url
@@ -29,6 +33,13 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Thành phố Hồ Chí Minh',
     tagline: 'Kỳ tích dưới lòng đất',
     targetImage: cuChiTarget,
+    model: {
+      url: CU_CHI_MODEL_URL,
+      scale: 1,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      thumbnail: null,
+    },
     shortDescription: 'Công trình quân sự đặc biệt, biểu tượng cho tinh thần kiên cường của quân dân vùng đất thép.',
     content: [
       'Địa đạo Củ Chi nằm tại khu vực Củ Chi, Thành phố Hồ Chí Minh, gắn liền với cuộc kháng chiến chống thực dân Pháp và đế quốc Mỹ. Hệ thống đường hầm được xây dựng, mở rộng qua nhiều giai đoạn để trú ẩn, sinh hoạt, liên lạc và tổ chức chiến đấu.',
@@ -62,6 +73,13 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Ninh Bình',
     tagline: 'Nơi khởi đầu một triều đại độc lập',
     targetImage: hoaLuTarget,
+    model: {
+      url: HOA_LU_MODEL_URL,
+      scale: 1,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      thumbnail: null,
+    },
     shortDescription: 'Kinh đô đầu tiên của nhà nước phong kiến trung ương tập quyền Việt Nam, giữa địa thế núi đá vôi hùng vĩ.',
     content: [
       'Cố đô Hoa Lư từng là kinh đô của nước Đại Cồ Việt từ năm 968 đến năm 1010, gắn với các triều đại Đinh, Tiền Lê và buổi đầu triều Lý. Năm 968, Đinh Bộ Lĩnh thống nhất đất nước, lên ngôi Hoàng đế và chọn Hoa Lư làm kinh đô.',
@@ -135,6 +153,13 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Huế',
     tagline: 'Dấu ấn vàng son của triều Nguyễn',
     targetImage: hueTarget,
+    model: {
+      url: NGO_MON_HUE_MODEL_URL,
+      scale: 1,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      thumbnail: null,
+    },
     shortDescription: 'Kinh đô triều Nguyễn bên dòng sông Hương, nơi lưu giữ quần thể kiến trúc cung đình được UNESCO ghi danh.',
     content: [
       'Cố đô Huế là kinh đô của Việt Nam dưới triều Nguyễn từ năm 1802 đến năm 1945, với những công trình nổi bật như Ngọ Môn, Điện Thái Hòa, Tử Cấm Thành và các lăng tẩm vua Nguyễn.',
@@ -168,6 +193,13 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Ngọc Hiển, Cà Mau',
     tagline: 'Cực Nam đất liền, nơi rừng gặp biển',
     targetImage: muiCaMauTarget,
+    model: {
+      url: MUI_CA_MAU_MODEL_URL,
+      scale: 1,
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      thumbnail: null,
+    },
     shortDescription: 'Vùng cực Nam đất liền Việt Nam với cảnh quan ven biển và hệ sinh thái rừng ngập mặn đặc trưng.',
     content: [
       'Mũi Cà Mau thuộc huyện Ngọc Hiển, tỉnh Cà Mau. Khu vực nổi bật với quá trình bồi tụ phù sa, rừng ngập mặn và các biểu tượng đánh dấu vùng Đất Mũi.',

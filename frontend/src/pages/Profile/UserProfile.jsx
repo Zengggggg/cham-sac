@@ -13,7 +13,7 @@ import avatarFestival from '../../assets/characters/image-removebg-preview (1).p
 import avatarExplorer from '../../assets/characters/image-removebg-preview (2).png'
 import avatarPhotographer from '../../assets/characters/image-removebg-preview (3).png'
 import avatarLotus from '../../assets/characters/image-removebg-preview (5).png'
-import { getCurrentUser } from '../../services/authService.js'
+import { getCurrentUser, updateCurrentUser } from '../../services/authService.js'
 import { listMyOrders } from '../../services/shopService.js'
 import './UserProfile.scss'
 
@@ -41,7 +41,7 @@ const initialProfile = {
   name: 'Người khám phá',
   fullName: 'Người khám phá',
   email: 'you@example.com',
-  phone: 'Chưa cập nhật',
+  phone: '',
   avatarUrl: '',
   role: 'user',
   status: 'active',
@@ -66,6 +66,7 @@ function readProfile() {
     return {
       ...initialProfile,
       ...saved,
+      phone: saved.phone && saved.phone !== 'Chưa cập nhật' ? saved.phone : '',
       ...(selectedAvatarId && {
         selectedAvatarId,
         avatarUrl: getAvatarById(selectedAvatarId).src,
@@ -83,12 +84,18 @@ export default function UserProfile() {
   const [draft, setDraft] = useState(profile)
   const [orders, setOrders] = useState([])
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false)
   const [selectedAvatarId, setSelectedAvatarId] = useState(profile.selectedAvatarId || '')
 
   useEffect(() => {
     let active = true
-    Promise.all([getCurrentUser(), listMyOrders()])
+    getCurrentUser()
+      .then((userResponse) => {
+        const user = userResponse.data.user
+        if (user.role === 'admin') return [userResponse, { data: [] }]
+        return Promise.all([userResponse, listMyOrders()])
+      })
       .then(([userResponse, orderResponse]) => {
         if (!active) return
         const user = userResponse.data.user
@@ -101,7 +108,8 @@ export default function UserProfile() {
             selectedAvatarId: savedAvatar.id,
             avatarUrl: savedAvatar.src,
           }),
-          fullName: user.fullName || user.name || initialProfile.fullName,
+      fullName: user.fullName || user.name || initialProfile.fullName,
+      phone: user.phone || '',
           authProvider: user.googleId ? 'google' : 'local',
         }
         setProfile(nextProfile)
@@ -116,14 +124,22 @@ export default function UserProfile() {
   }, [])
 
   const handleChange = ({ target }) => setDraft((current) => ({ ...current, [target.name]: target.value }))
-  const handleSave = (event) => {
+  const handleSave = async (event) => {
     event.preventDefault()
-    const updated = { ...profile, ...draft }
-    setProfile(updated)
-    setDraft(updated)
-    localStorage.setItem('user', JSON.stringify(updated))
-    setIsEditing(false)
-    toast.success('Đã cập nhật hồ sơ')
+    setIsSaving(true)
+    try {
+      const response = await updateCurrentUser({ fullName: draft.fullName, phone: draft.phone })
+      const updated = { ...profile, ...response.data.user }
+      setProfile(updated)
+      setDraft(updated)
+      localStorage.setItem('user', JSON.stringify(updated))
+      setIsEditing(false)
+      toast.success(response.message || 'Đã cập nhật hồ sơ')
+    } catch (error) {
+      toast.error(error.message || 'Không thể cập nhật hồ sơ.')
+    } finally {
+      setIsSaving(false)
+    }
   }
   const cancelEdit = () => { setDraft(profile); setIsEditing(false) }
   const openAvatarPicker = () => {
@@ -163,10 +179,10 @@ export default function UserProfile() {
             <p>Quản lý thông tin và tiếp tục hành trình khám phá di sản.</p>
           </div>
           <div className="profile-page__header-actions">
-            {isEditing && <Button type="submit" form="profile-details-form" icon={<Save size={17} />}>Lưu thay đổi</Button>}
-            <Button variant="secondary" icon={isEditing ? <X size={17} /> : <Edit3 size={17} />} onClick={isEditing ? cancelEdit : () => setIsEditing(true)}>
+            {profile.role !== 'admin' && isEditing && <Button type="submit" form="profile-details-form" loading={isSaving} icon={<Save size={17} />}>Lưu thay đổi</Button>}
+            {profile.role !== 'admin' && <Button variant="secondary" icon={isEditing ? <X size={17} /> : <Edit3 size={17} />} onClick={isEditing ? cancelEdit : () => setIsEditing(true)}>
               {isEditing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa hồ sơ'}
-            </Button>
+            </Button>}
           </div>
         </header>
 
@@ -196,7 +212,7 @@ export default function UserProfile() {
               <span className={`profile-page__role-badge profile-page__role-badge--${profile.role}`}>{roleLabel(profile.role)}</span>
             </div>
             <div className="profile-page__summary-info">
-              <div><span>Số điện thoại</span><strong>{profile.phone}</strong></div>
+            <div><span>Số điện thoại</span><strong>{profile.phone || 'Chưa cập nhật'}</strong></div>
               <div><span>Email</span><strong>{profile.email}</strong></div>
             </div>
           </Card>
@@ -206,7 +222,7 @@ export default function UserProfile() {
               <div className="profile-page__fields">
                 <label>Họ và tên{isEditing ? <Input name="fullName" value={draft.fullName} onChange={handleChange} required /> : <strong>{profile.fullName}</strong>}</label>
                 <label>Email<strong>{profile.email}</strong></label>
-                <label>Số điện thoại{isEditing ? <Input name="phone" value={draft.phone} onChange={handleChange} placeholder="Nhập số điện thoại" /> : <strong>{profile.phone}</strong>}</label>
+                <label>Số điện thoại{isEditing ? <Input name="phone" value={draft.phone || ''} onChange={handleChange} placeholder="Ví dụ: 0398826650" /> : <strong>{profile.phone || 'Chưa cập nhật'}</strong>}</label>
                 <label>Vai trò<strong>{roleLabel(profile.role)}</strong></label>
                 <label>Phương thức đăng nhập<strong>{authProviderLabel(profile.authProvider)}</strong></label>
                 <label>Ngày tham gia<strong>{formatDate(profile.createdAt)}</strong></label>

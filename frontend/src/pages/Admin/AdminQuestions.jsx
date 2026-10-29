@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertCircle, Edit3, Landmark, MessageCircleQuestion, Plus, Trash2 } from 'lucide-react'
+import { AlertCircle, Edit3, Landmark, LoaderCircle, MessageCircleQuestion, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Button from '../../components/ui/Button.jsx'
 import Card from '../../components/ui/Card.jsx'
 import Input from '../../components/ui/Input.jsx'
+import Modal from '../../components/ui/Modal.jsx'
 import {
   createAdminPublicQuestion,
   deleteAdminPublicQuestion,
@@ -20,6 +21,8 @@ export default function AdminQuestions() {
   const [selectedSiteId, setSelectedSiteId] = useState('')
   const [group, setGroup] = useState(null)
   const [content, setContent] = useState('')
+  const [editingQuestion, setEditingQuestion] = useState(null)
+  const [editingContent, setEditingContent] = useState('')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -45,6 +48,7 @@ export default function AdminQuestions() {
       await loadQuestions(nextSiteId)
     } catch (requestError) {
       setError(requestError.message || 'Không thể tải dữ liệu địa danh.')
+      toast.error(requestError.message || 'Không thể tải dữ liệu địa danh.')
     } finally {
       setLoading(false)
     }
@@ -63,6 +67,7 @@ export default function AdminQuestions() {
       await loadQuestions(heritageSiteId)
     } catch (requestError) {
       setError(requestError.message || 'Không thể tải câu hỏi của địa danh.')
+      toast.error(requestError.message || 'Không thể tải câu hỏi của địa danh.')
     } finally {
       setLoading(false)
     }
@@ -95,9 +100,24 @@ export default function AdminQuestions() {
     setContent('')
   }
 
-  const handleEdit = async (question) => {
-    const nextContent = window.prompt('Chỉnh sửa câu hỏi public', question.content)
-    if (nextContent === null || nextContent.trim() === question.content) return
+  const handleEdit = (question) => {
+    setEditingQuestion(question)
+    setEditingContent(question.content)
+  }
+
+  const closeEditModal = () => {
+    if (busy) return
+    setEditingQuestion(null)
+    setEditingContent('')
+  }
+
+  const handleEditSubmit = async (event) => {
+    event.preventDefault()
+    const nextContent = editingContent.trim()
+    if (nextContent === editingQuestion?.content) {
+      closeEditModal()
+      return
+    }
     if (!validQuestion(nextContent)) {
       toast.error('Câu hỏi phải có từ 3 đến 500 ký tự.')
       return
@@ -105,12 +125,14 @@ export default function AdminQuestions() {
     await runMutation(
       () => updateAdminPublicQuestion(
         selectedSiteId,
-        question.id,
-        nextContent.trim(),
+        editingQuestion.id,
+        nextContent,
         group.updatedAt,
       ),
       'Đã cập nhật câu hỏi public.',
     )
+    setEditingQuestion(null)
+    setEditingContent('')
   }
 
   const handleDelete = async (question) => {
@@ -127,21 +149,23 @@ export default function AdminQuestions() {
         <div>
           <p><MessageCircleQuestion size={17} aria-hidden="true" /> NỘI DUNG DI SẢN</p>
           <h1>Câu hỏi public</h1>
-          <span>Tạo và quản lý bộ câu hỏi công khai cho từng địa danh.</span>
+          <span className="admin-questions-page__hero-lead">Tạo và quản lý bộ câu hỏi công khai cho từng địa danh.</span>
         </div>
+        <Button variant="secondary" icon={<RefreshCw size={17} aria-hidden="true" />} onClick={() => { void loadPage() }} loading={loading}>
+          Làm mới
+        </Button>
       </header>
 
       <div className="admin-questions-page__layout">
-        <Card className="admin-questions-page__sites">
-          <h2>Địa danh</h2>
+        <Card className="admin-questions-page__sites" title="Địa danh" description="Chọn địa danh để quản lý câu hỏi public.">
           {heritageSites.length === 0 ? <p>Chưa có địa danh.</p> : (
             <nav aria-label="Chọn địa danh">
               {heritageSites.map((site) => {
                 const siteId = site.id || site._id
                 return (
-                  <button className={siteId === selectedSiteId ? 'is-active' : ''} key={siteId} type="button" onClick={() => selectSite(siteId)}>
-                    <Landmark size={17} aria-hidden="true" /><span>{site.name}</span>
-                  </button>
+                  <Button className={siteId === selectedSiteId ? 'is-active' : ''} variant={siteId === selectedSiteId ? 'primary' : 'secondary'} size="sm" key={siteId} type="button" icon={<Landmark size={17} aria-hidden="true" />} onClick={() => selectSite(siteId)}>
+                    {site.name}
+                  </Button>
                 )
               })}
             </nav>
@@ -150,7 +174,7 @@ export default function AdminQuestions() {
 
         <section className="admin-questions-page__workspace">
           {loading ? (
-            <div className="admin-questions-page__state" role="status">Đang tải câu hỏi...</div>
+            <div className="admin-questions-page__state" role="status"><LoaderCircle className="admin-questions-page__spinner" size={27} aria-hidden="true" /><strong>Đang tải câu hỏi...</strong></div>
           ) : error ? (
             <div className="admin-questions-page__state" role="alert"><AlertCircle size={26} /><strong>Không thể tải dữ liệu</strong><p>{error}</p><Button size="sm" onClick={loadPage}>Thử lại</Button></div>
           ) : !group ? (
@@ -187,6 +211,31 @@ export default function AdminQuestions() {
           )}
         </section>
       </div>
+
+      <Modal
+        open={Boolean(editingQuestion)}
+        onClose={closeEditModal}
+        title="Chỉnh sửa câu hỏi"
+        description="Cập nhật nội dung câu hỏi public cho địa danh đang chọn."
+        actions={(
+          <>
+            <Button type="button" variant="secondary" onClick={closeEditModal} disabled={busy}>Hủy</Button>
+            <Button type="submit" form="admin-question-edit-form" loading={busy} icon={<Edit3 size={16} aria-hidden="true" />}>Lưu thay đổi</Button>
+          </>
+        )}
+      >
+        <form id="admin-question-edit-form" className="admin-questions-page__edit-form" onSubmit={handleEditSubmit}>
+          <label htmlFor="admin-question-edit-content">Nội dung câu hỏi</label>
+          <Input
+            id="admin-question-edit-content"
+            value={editingContent}
+            onChange={(event) => setEditingContent(event.target.value)}
+            maxLength={500}
+            autoFocus
+          />
+          <small>{editingContent.length}/500 ký tự</small>
+        </form>
+      </Modal>
     </div>
   )
 }

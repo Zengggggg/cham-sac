@@ -4,7 +4,12 @@ export const getDashboard = () => apiRequest('/admin/dashboard')
 export const listUsers = ({ page = 1, limit = 20, search = '', status = '' } = {}) => apiRequest(`/admin/users${buildQuery({ page, limit, search, status })}`)
 export const updateUserStatus = (userId, status, expectedUpdatedAt) => apiRequest(`/admin/users/${userId}/status`, { method: 'PATCH', body: { status, expectedUpdatedAt } })
 export const listAdminProducts = ({ page = 1, limit = 20, search = '', status = '' } = {}) => apiRequest(`/admin/products${buildQuery({ page, limit, search, status })}`)
+export const getAdminProduct = (productId) => apiRequest(`/admin/products/${productId}`)
 export const createAdminProduct = (product) => apiRequest('/admin/products', { method: 'POST', body: product })
+export const updateAdminProduct = (productId, updates, expectedUpdatedAt) => apiRequest(`/admin/products/${productId}`, {
+  method: 'PATCH',
+  body: { ...updates, expectedUpdatedAt },
+})
 export const createProductImageUpload = (file) => apiRequest('/admin/uploads/product-images/presign', {
   method: 'POST',
   body: { fileName: file.name, contentType: file.type, size: file.size },

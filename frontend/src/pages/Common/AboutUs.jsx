@@ -21,6 +21,7 @@ import elementMaskBlue from "../../assets/elements/IMG_4819.PNG";
 import elementFlowerOne from "../../assets/elements/IMG_4825.PNG";
 import elementFlowerTwo from "../../assets/elements/IMG_4826.PNG";
 import productImage from "../../assets/product.png";
+import aboutUsVideo from "../../assets/aboutUs_video.mp4";
 import statementBackground from "../../assets/aboutus_1.png";
 import "./AboutUs.scss";
 
@@ -174,10 +175,15 @@ function AboutUs() {
           >
             <FloatingCharacter variant={2} className="about-page__character" />
             <div className="about-page__visual-frame">
-              <img
+              <video
                 className="about-page__product-image"
-                src={productImage}
-                alt="Sản phẩm Chạm Sắc Việt"
+                src={aboutUsVideo}
+                poster={productImage}
+                autoPlay
+                muted
+                loop
+                playsInline
+                aria-label="Video giới thiệu sản phẩm Chạm Sắc Việt"
               />
             </div>
             <span className="about-page__visual-stamp">

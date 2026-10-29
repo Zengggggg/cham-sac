@@ -69,6 +69,13 @@ export function getCurrentUser() {
   return apiRequest('/auth/me')
 }
 
+export function updateCurrentUser({ fullName, phone }) {
+  return apiRequest('/auth/me', {
+    body: { fullName, phone },
+    method: 'PATCH',
+  })
+}
+
 export async function logoutUser() {
   const refreshToken = getRefreshToken()
   try {

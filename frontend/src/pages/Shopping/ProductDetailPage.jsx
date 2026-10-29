@@ -12,6 +12,8 @@ import {
   Star,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
@@ -50,6 +52,66 @@ const getCartOwner = () => {
   const user = getStoredUser();
   return user?.id || user?._id || null;
 };
+
+const isVideoSource = (source) => /\.mp4(?:$|[?#])/i.test(source || "");
+
+function ProductDetailSkeleton() {
+  return (
+    <main className="product-detail-page product-detail-page--loading" role="status" aria-label="Đang tải sản phẩm">
+      <div className="product-detail-shell">
+        <Skeleton width={150} height={18} />
+        <div className="product-detail-layout" aria-hidden="true">
+          <section className="product-detail-main">
+            <Skeleton width="28%" height={13} />
+            <Skeleton className="product-detail-skeleton-title" width="76%" height={76} />
+            <Skeleton className="product-detail-skeleton-lede" count={2} height={16} />
+            <Skeleton className="product-detail-skeleton-rating" width="58%" height={16} />
+            <div className="product-detail-gallery product-detail-gallery--skeleton">
+              <div className="product-detail-thumbnails">
+                {Array.from({ length: 5 }, (_, index) => <Skeleton key={index} />)}
+              </div>
+              <Skeleton className="product-detail-skeleton-visual" />
+            </div>
+          </section>
+          <aside className="product-detail-purchase-column">
+            <Card className="product-detail-purchase product-detail-purchase--skeleton">
+              <Skeleton width="34%" height={14} />
+              <Skeleton className="product-detail-skeleton-price" width="58%" height={42} />
+              <Skeleton className="product-detail-skeleton-row" count={3} height={20} />
+              <Skeleton className="product-detail-skeleton-button" height={52} />
+              <Skeleton width="80%" height={12} />
+            </Card>
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function ProductDescription({ description }) {
+  const lines = (description || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const detailLines = lines.filter((line) => line.startsWith("•"));
+  const introLines = lines.filter((line) => !line.startsWith("•"));
+
+  return (
+    <div className="product-detail-description">
+      {introLines.map((line, index) => <p key={`intro-${index}`}>{line}</p>)}
+      {detailLines.length > 0 && (
+        <div className="product-detail-description__table" role="list" aria-label="Thông tin chi tiết sản phẩm">
+          {detailLines.map((line, index) => {
+            const [label, ...valueParts] = line.slice(1).trim().split(":");
+            return (
+              <div className="product-detail-description__row" role="listitem" key={`detail-${index}`}>
+                <strong>{label.trim()}</strong>
+                <span>{valueParts.join(":").trim()}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ProductDetailPage() {
   const { productId } = useParams();
@@ -165,7 +227,7 @@ function ProductDetailPage() {
   };
 
   if (isLoading || loadedProductId !== productId) {
-    return <main className="product-detail-page"><div className="product-detail-state" role="status"><Sparkles size={30} aria-hidden="true" /><h1>Đang tải sản phẩm</h1></div></main>;
+    return <ProductDetailSkeleton />;
   }
 
   if (!product || loadError) {
@@ -207,7 +269,6 @@ function ProductDetailPage() {
               <Sparkles size={15} aria-hidden="true" /> Khám phá sản phẩm
             </p>
             <h1 id="product-detail-title">{product.name}</h1>
-            <p className="product-detail-lede">{product.description}</p>
             <div className="product-detail-rating" aria-label="Được đánh giá 4.9 trên 5">
               <Star size={17} fill="currentColor" aria-hidden="true" />
               <strong>4.9</strong>
@@ -215,7 +276,8 @@ function ProductDetailPage() {
             </div>
             <div className="product-detail-gallery">
               <div className="product-detail-thumbnails" aria-label="Ảnh sản phẩm">
-                {[...(product.images || []), product.image, diceElement, diceLightElement, starElement, elementFour, elementFive]
+                {(product.images?.length ? product.images : [product.image])
+                  .filter(Boolean)
                   .filter((image, index, images) => images.indexOf(image) === index)
                   .slice(0, 5)
                   .map((image, index) => (
@@ -232,13 +294,29 @@ function ProductDetailPage() {
                         }))
                       }
                     >
-                      <img src={image} alt="" aria-hidden="true" />
+                      {isVideoSource(image) ? (
+                        <video src={image} autoPlay muted loop playsInline aria-hidden="true" />
+                      ) : (
+                        <img src={image} alt="" aria-hidden="true" />
+                      )}
                     </button>
                   ))}
               </div>
               <div className={`product-detail-visual product-detail-visual--${product.tone}`}>
                 <span className="product-detail-tag">{product.tag}</span>
-                <img src={selectedImage || product.image} alt={`Hình minh họa ${product.name}`} />
+                {isVideoSource(selectedImage || product.image) ? (
+                  <video
+                    src={selectedImage || product.image}
+                    controls
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    aria-label={`Video minh họa ${product.name}`}
+                  />
+                ) : (
+                  <img src={selectedImage || product.image} alt={`Hình minh họa ${product.name}`} />
+                )}
                 <span className="product-detail-visual__label">CHẠM SẮC VIỆT</span>
               </div>
             </div>
@@ -308,9 +386,9 @@ function ProductDetailPage() {
 
         <section className="product-detail-story" aria-labelledby="product-detail-story-title">
           <div className="product-detail-story__intro">
-            <p className="product-detail-eyebrow">Một điểm chạm đáng nhớ</p>
-            <h2 id="product-detail-story-title">Mang câu chuyện Việt về gần hơn.</h2>
-            <p>{product.detail}</p>
+            <p className="product-detail-eyebrow">Thông tin sản phẩm</p>
+            <h2 id="product-detail-story-title">Thông tin chi tiết</h2>
+            <ProductDescription description={product.detail} />
           </div>
           <div className="product-detail-feature-grid">
             {features.map(({ icon: Icon, title, text }) => (

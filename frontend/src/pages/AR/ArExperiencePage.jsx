@@ -59,13 +59,7 @@ const statusCopy = {
   scanning: "Căn thẻ địa danh để nhận diện",
 };
 
-function CameraFallback({
-  status,
-  error,
-  experienceCount,
-  onBrowse,
-  onRetry,
-}) {
+function CameraFallback({ status, error, experienceCount, onBrowse, onRetry }) {
   const isInsecure = status === "insecure";
   const isUnsupported = status === "unsupported";
   const title = isInsecure

@@ -9,6 +9,8 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import { useNavigate } from "react-router-dom";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
@@ -16,6 +18,7 @@ import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import Input from "../../components/ui/Input.jsx";
 import ConfirmModal from "../../components/layout/ConfirmModal.jsx";
+import productFallback from "../../assets/product.png";
 import { createOrder, createPayment, getCart } from "../../services/shopService.js";
 import { normalizeCartItems } from "../../utils/cart.js";
 import "./CheckOutPage.scss";
@@ -44,6 +47,47 @@ const getInitialCustomer = () => {
     phone: user.phone || "",
   };
 };
+
+function CheckoutSkeleton() {
+  return (
+    <main className="checkout-page">
+      <div className="checkout-shell">
+        <Skeleton width={150} height={16} />
+        <header className="checkout-heading checkout-heading--skeleton">
+          <div>
+            <Skeleton width={150} height={13} />
+            <Skeleton width={330} height={58} />
+          </div>
+          <Skeleton width={72} height={18} />
+        </header>
+        <div className="checkout-layout checkout-layout--skeleton" aria-label="Đang tải thông tin thanh toán" role="status">
+          <Card className="checkout-form-card checkout-form-card--skeleton">
+            <Skeleton width="48%" height={28} />
+            <Skeleton width="78%" height={15} />
+            <Skeleton count={5} height={48} borderRadius={8} />
+            <Skeleton height={48} borderRadius={8} />
+          </Card>
+          <Card className="checkout-summary checkout-summary--skeleton">
+            <Skeleton width="56%" height={28} />
+            {Array.from({ length: 2 }, (_, index) => (
+              <div className="checkout-summary-skeleton-item" key={index}>
+                <Skeleton width={58} height={58} borderRadius={10} />
+                <div>
+                  <Skeleton width="72%" height={11} />
+                  <Skeleton width="92%" height={20} />
+                  <Skeleton width="44%" height={13} />
+                </div>
+                <Skeleton width={72} height={18} />
+              </div>
+            ))}
+            <Skeleton count={3} height={18} />
+            <Skeleton height={28} />
+          </Card>
+        </div>
+      </div>
+    </main>
+  );
+}
 
 function CheckOutPage() {
   const navigate = useNavigate();
@@ -279,7 +323,7 @@ function CheckOutPage() {
   };
 
   if (isLoadingCart) {
-    return <main className="checkout-page"><div className="checkout-state" role="status"><ShieldCheck size={34} aria-hidden="true" /><h1>Đang tải giỏ hàng</h1></div></main>;
+    return <CheckoutSkeleton />;
   }
 
   if (checkoutItems.length === 0) {
@@ -640,7 +684,16 @@ function CheckOutPage() {
                     <div
                       className="checkout-summary__visual checkout-summary__visual--yellow"
                     >
-                      {item.image ? <img src={item.image} alt={item.productName} /> : <ShoppingBag size={28} aria-hidden="true" />}
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.productName}
+                          onError={(event) => {
+                            event.currentTarget.onerror = null;
+                            event.currentTarget.src = productFallback;
+                          }}
+                        />
+                      ) : <ShoppingBag size={28} aria-hidden="true" />}
                     </div>
                     <div className="checkout-summary__item-copy">
                       <p>{item.category}</p>

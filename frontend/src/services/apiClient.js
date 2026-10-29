@@ -34,9 +34,14 @@ export function clearAuthSession() {
 }
 
 function createApiError(payload, response) {
-  const error = new Error(payload?.message || 'Không thể kết nối đến hệ thống.')
+  const errors = Array.isArray(payload?.errors) ? payload.errors : null
+  const detailMessage = errors
+    ?.map((item) => (typeof item === 'string' ? item : item?.message))
+    .filter(Boolean)
+    .join(' ')
+  const error = new Error(detailMessage || payload?.message || 'Không thể kết nối đến hệ thống.')
   error.statusCode = payload?.statusCode || response.status
-  error.errors = Array.isArray(payload?.errors) ? payload.errors : null
+  error.errors = errors
   return error
 }
 

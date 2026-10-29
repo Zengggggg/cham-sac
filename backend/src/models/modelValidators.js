@@ -1,6 +1,7 @@
 export const HTTPS_URL_PATTERN = /^https:\/\/[^\s]+$/i;
 export const GLB_URL_PATTERN = /^https:\/\/[^\s?#]+\.glb(?:[?#][^\s]*)?$/i;
 export const E164_PHONE_PATTERN = /^\+[1-9]\d{7,14}$/;
+export const VIETNAMESE_PHONE_PATTERN = /^(?:0[35789]\d{8}|\+84[35789]\d{8})$/;
 
 export const isNonNegativeSafeInteger = (value) => (
     Number.isSafeInteger(value) && value >= 0

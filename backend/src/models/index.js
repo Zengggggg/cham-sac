@@ -5,3 +5,4 @@ export { default as Order } from './orderModel.js';
 export { default as Payment } from './paymentModel.js';
 export { default as Product } from './productModel.js';
 export { default as User } from './userModel.js';
+export { default as Contact } from './contactModel.js';

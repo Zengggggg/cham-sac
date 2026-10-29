@@ -1,3 +1,4 @@
+import { VIETNAMESE_PHONE_PATTERN } from '../models/modelValidators.js';
 import { sendError } from '../utils/apiResponse.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -156,5 +157,23 @@ export const validateGoogleIdToken = (req, res, next) => {
     }
 
     req.body = { idToken };
+    return next();
+};
+
+export const validateProfileUpdate = (req, res, next) => {
+    const body = req.body || {};
+    const fullName = typeof body.fullName === 'string' ? body.fullName.trim() : '';
+    const phone = typeof body.phone === 'string' ? body.phone.trim() : '';
+    const errors = [];
+
+    if (fullName.length < 2 || fullName.length > 100) {
+        errors.push({ field: 'fullName', message: 'Họ và tên phải có từ 2 đến 100 ký tự.' });
+    }
+    if (phone && !VIETNAMESE_PHONE_PATTERN.test(phone)) {
+        errors.push({ field: 'phone', message: 'Số điện thoại Việt Nam phải có 10 số, ví dụ 0398826650.' });
+    }
+    if (errors.length) return sendValidationError(res, errors);
+
+    req.body = { fullName, phone: phone || undefined };
     return next();
 };

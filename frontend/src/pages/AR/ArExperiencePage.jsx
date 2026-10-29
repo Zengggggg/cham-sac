@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   BookOpen,
+  Box,
   CircleHelp,
   Camera,
   CameraOff,
@@ -22,6 +23,7 @@ import brandMark from "../../assets/elements/wtm_withstroke.png";
 import { listPublicQuestionGroups } from "../../services/questionService.js";
 import useMindARSession from "../../hooks/useMindARSession.js";
 import useArExperiences from "../../hooks/useArExperiences.js";
+import HeritageModelViewer from "./HeritageModelViewer.jsx";
 import "./ArExperiencePage.scss";
 
 const normalizePlaceName = (name) =>
@@ -124,10 +126,11 @@ function CameraFallback({ status, error, experienceCount, onBrowse, onRetry }) {
 function HeritageCatalog({
   open,
   experiences,
+  modelPreviewOpen,
   selectedExperience,
   onClose,
-  onScan,
   onSelect,
+  onToggleModelPreview,
 }) {
   const title = selectedExperience
     ? selectedExperience.name
@@ -162,10 +165,18 @@ function HeritageCatalog({
         {selectedExperience ? (
           <article className="ar-place-detail">
             <div className="ar-place-detail__layout">
-              <img
-                src={selectedExperience.targetImage}
-                alt={`Thẻ địa danh ${selectedExperience.name}`}
-              />
+              {modelPreviewOpen ? (
+                <HeritageModelViewer
+                  key={selectedExperience.id}
+                  model={selectedExperience.model}
+                  name={selectedExperience.name}
+                />
+              ) : (
+                <img
+                  src={selectedExperience.targetImage}
+                  alt={`Thẻ địa danh ${selectedExperience.name}`}
+                />
+              )}
               <div className="ar-place-detail__content">
                 <span className="ar-place-detail__location">
                   <MapPin size={16} aria-hidden="true" />{" "}
@@ -183,10 +194,11 @@ function HeritageCatalog({
                 {selectedExperience.model?.url && (
                   <Button
                     className="ar-place-detail__preview"
-                    onClick={onScan}
-                    icon={<Camera size={18} aria-hidden="true" />}
+                    onClick={onToggleModelPreview}
+                    variant={modelPreviewOpen ? "secondary" : "primary"}
+                    icon={<Box size={18} aria-hidden="true" />}
                   >
-                    Xem bằng camera AR
+                    {modelPreviewOpen ? "Ẩn mô hình 3D" : "Xem mô hình 3D"}
                   </Button>
                 )}
               </div>
@@ -237,6 +249,7 @@ function ArExperiencePage() {
   } = useMindARSession(experiences);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [selectedExperience, setSelectedExperience] = useState(null);
+  const [modelPreviewOpen, setModelPreviewOpen] = useState(false);
   const [infoType, setInfoType] = useState(null);
   const [infoExperience, setInfoExperience] = useState(null);
   const [questionState, setQuestionState] = useState({
@@ -282,7 +295,10 @@ function ArExperiencePage() {
     };
   }, [infoType, infoExperience, questionRetry]);
 
-  const openCatalog = () => setCatalogOpen(true);
+  const openCatalog = () => {
+    setModelPreviewOpen(false);
+    setCatalogOpen(true);
+  };
   const openInfo = (type) => {
     setInfoExperience(recognizedExperience);
     setInfoType(type);
@@ -299,11 +315,11 @@ function ArExperiencePage() {
   const closeCatalog = () => {
     setCatalogOpen(false);
     setSelectedExperience(null);
+    setModelPreviewOpen(false);
   };
-  const scanFromCatalog = () => {
-    setCatalogOpen(false);
-    setSelectedExperience(null);
-    startAR();
+  const selectCatalogExperience = (experience) => {
+    setSelectedExperience(experience);
+    setModelPreviewOpen(false);
   };
 
   return (
@@ -540,10 +556,11 @@ function ArExperiencePage() {
       <HeritageCatalog
         open={catalogOpen}
         experiences={experiences}
+        modelPreviewOpen={modelPreviewOpen}
         selectedExperience={selectedExperience}
         onClose={closeCatalog}
-        onScan={scanFromCatalog}
-        onSelect={setSelectedExperience}
+        onSelect={selectCatalogExperience}
+        onToggleModelPreview={() => setModelPreviewOpen((current) => !current)}
       />
 
       <Modal

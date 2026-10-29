@@ -810,6 +810,133 @@ body:has(.ar-catalog) .ui-modal__header p {
   box-shadow: 7px 7px 0 rgba(114, 50, 126, 0.14);
 }
 
+.ar-model-viewer {
+  position: relative;
+  width: 100%;
+  height: min(42svh, 420px);
+  min-height: 300px;
+  overflow: hidden;
+  border: 2px solid var(--catalog-purple);
+  border-radius: 12px;
+  background: #f8f4ec;
+  box-shadow: 7px 7px 0 rgba(114, 50, 126, 0.14);
+}
+
+.ar-model-viewer__canvas {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+
+.ar-model-viewer__canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.ar-model-viewer__canvas canvas:active { cursor: grabbing; }
+
+.ar-model-viewer__state {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--catalog-ink);
+  background: rgba(248, 244, 236, 0.92);
+  text-align: center;
+}
+
+.ar-model-viewer__state > span {
+  color: var(--catalog-muted);
+  font-size: 0.78rem;
+}
+
+.ar-model-viewer__state > button {
+  margin-top: 6px;
+  padding: 8px 13px;
+  color: var(--ar-white);
+  border: 0;
+  border-radius: 8px;
+  background: var(--catalog-pink-dark);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ar-model-viewer__spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(210, 43, 122, 0.2);
+  border-top-color: var(--catalog-pink);
+  border-radius: 50%;
+  animation: ar-model-viewer-spin 800ms linear infinite;
+}
+
+.ar-model-viewer__hint {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  left: 10px;
+  z-index: 1;
+  width: fit-content;
+  max-width: calc(100% - 20px);
+  margin: 0 auto;
+  padding: 6px 10px;
+  color: var(--catalog-ink);
+  border: 1px solid rgba(114, 50, 126, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.9);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+}
+
+.ar-model-viewer__controls {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 1;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid rgba(114, 50, 126, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 253, 248, 0.92);
+  box-shadow: 0 4px 14px rgba(35, 24, 48, 0.12);
+}
+
+.ar-model-viewer__controls button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  color: var(--catalog-purple);
+  border: 1px solid var(--catalog-line);
+  border-radius: 8px;
+  background: var(--ar-white);
+  cursor: pointer;
+}
+
+.ar-model-viewer__controls button:hover {
+  color: var(--ar-white);
+  border-color: var(--catalog-pink-dark);
+  background: var(--catalog-pink-dark);
+}
+
+.ar-model-viewer__controls button:focus-visible,
+.ar-model-viewer__state > button:focus-visible {
+  outline: 3px solid var(--ar-gold);
+  outline-offset: 2px;
+}
+
 .ar-place-detail__location {
   display: inline-flex;
   align-items: center;
@@ -1123,6 +1250,8 @@ body:has(.ar-catalog) .ui-modal__header p {
   .ar-catalog__grid { gap: 18px; }
   .ar-place-card { grid-template-columns: 68px minmax(0, 1fr) auto; min-height: 92px; }
   .ar-place-card > img { width: 68px; height: 68px; }
+  .ar-model-viewer { height: 300px; min-height: 260px; }
+  .ar-model-viewer__hint { font-size: 0.6rem; }
 }
 
 @media (min-width: 561px) and (min-height: 561px) {
@@ -1157,6 +1286,10 @@ body:has(.ar-catalog) .ui-modal__header p {
   .ar-capture-build__tower { animation: ar-build-tower 1.8s ease-in-out infinite; }
   .ar-capture-build__scan { animation: ar-build-scan 1.5s ease-in-out infinite; }
   .ar-capture-build--revealing { animation: ar-reveal-model 700ms ease forwards; }
+}
+
+@keyframes ar-model-viewer-spin {
+  to { transform: rotate(360deg); }
 }
 
 @keyframes ar-scan {

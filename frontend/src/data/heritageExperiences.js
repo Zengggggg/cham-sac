@@ -33,6 +33,7 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Thành phố Hồ Chí Minh',
     tagline: 'Kỳ tích dưới lòng đất',
     targetImage: cuChiTarget,
+    audioUrl: '/audio/heritage/dia-dao-cu-chi.mp3',
     model: {
       url: CU_CHI_MODEL_URL,
       scale: 1,
@@ -53,6 +54,7 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Đà Nẵng',
     tagline: 'Rồng vàng vươn ra biển lớn',
     targetImage: dragonBridgeTarget,
+    audioUrl: '/audio/heritage/cau-rong-da-nang.mp3',
     model: {
       url: CAU_RONG_MODEL_URL,
       scale: 2,
@@ -73,6 +75,7 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Ninh Bình',
     tagline: 'Nơi khởi đầu một triều đại độc lập',
     targetImage: hoaLuTarget,
+    audioUrl: '/audio/heritage/co-do-hoa-lu.mp3',
     model: {
       url: HOA_LU_MODEL_URL,
       scale: 1,
@@ -93,6 +96,7 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Thành phố Hồ Chí Minh',
     tagline: 'Dấu ấn lịch sử thống nhất đất nước',
     targetImage: independencePalaceTarget,
+    audioUrl: '/audio/heritage/dinh-doc-lap.mp3',
     model: {
       url: DINH_DOC_LAP_MODEL_URL,
       scale: 1,
@@ -113,6 +117,7 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Hà Nội',
     tagline: 'Nơi lưu giữ truyền thống hiếu học',
     targetImage: templeOfLiteratureTarget,
+    audioUrl: '/audio/heritage/van-mieu-quoc-tu-giam.mp3',
     model: {
       url: QUOC_TU_GIAM_MODEL_URL,
       scale: 1,
@@ -133,6 +138,7 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Hà Nội',
     tagline: 'Biểu tượng ngàn năm của Thủ đô',
     targetImage: swordLakeTarget,
+    audioUrl: '/audio/heritage/ho-guom.mp3',
     model: {
       url: THAP_RUA_MODEL_URL,
       scale: 1,
@@ -153,6 +159,7 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Huế',
     tagline: 'Dấu ấn vàng son của triều Nguyễn',
     targetImage: hueTarget,
+    audioUrl: '/audio/heritage/co-do-hue.mp3',
     model: {
       url: NGO_MON_HUE_MODEL_URL,
       scale: 1,
@@ -173,6 +180,7 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Sa Pa, Lào Cai',
     tagline: 'Nóc nhà Đông Dương giữa đại ngàn Hoàng Liên Sơn',
     targetImage: fansipanTarget,
+    audioUrl: '/audio/heritage/fansipan.mp3',
     model: {
       url: FANSIPAN_MODEL_URL,
       scale: 1,
@@ -193,6 +201,7 @@ export const HERITAGE_EXPERIENCES = [
     location: 'Ngọc Hiển, Cà Mau',
     tagline: 'Cực Nam đất liền, nơi rừng gặp biển',
     targetImage: muiCaMauTarget,
+    audioUrl: '/audio/heritage/mui-ca-mau.mp3',
     model: {
       url: MUI_CA_MAU_MODEL_URL,
       scale: 1,

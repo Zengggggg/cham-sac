@@ -566,6 +566,18 @@ function ArExperiencePage() {
       >
         {infoType === "place" && infoExperience && (
           <article className="ar-info-place">
+            {infoExperience.audioUrl && (
+              <audio
+                className="ar-info-place__audio"
+                src={infoExperience.audioUrl}
+                controls
+                autoPlay
+                preload="auto"
+                aria-label={`Nghe giới thiệu về ${infoExperience.name}`}
+              >
+                Trình duyệt của bạn không hỗ trợ phát audio.
+              </audio>
+            )}
             <p className="ar-info-place__summary">
               {infoExperience.shortDescription}
             </p>

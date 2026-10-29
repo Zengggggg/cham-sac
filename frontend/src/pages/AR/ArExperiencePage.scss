@@ -865,6 +865,12 @@ body:has(.ar-catalog) .ui-modal__header p {
   color: var(--ar-ink);
 }
 
+.ar-info-place__audio {
+  display: block;
+  width: 100%;
+  margin-bottom: 18px;
+}
+
 .ar-info-place > p {
   margin: 0;
   color: var(--ar-muted);

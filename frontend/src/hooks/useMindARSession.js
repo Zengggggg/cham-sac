@@ -3,6 +3,8 @@ import * as THREE from 'three'
 import targetBundleUrl from '../assets/ar-targets/heritage-targets.mind?url'
 import { HERITAGE_EXPERIENCES } from '../data/heritageExperiences.js'
 
+const MODEL_TARGET_ROTATION_X = Math.PI / 2
+
 const createIdleModelState = () => ({ status: 'idle', progress: null, message: null })
 
 const disposeObject3D = (root) => {
@@ -18,7 +20,7 @@ const disposeObject3D = (root) => {
   })
 }
 
-const normalizeModelForScreen = (model, config = {}) => {
+const normalizeModelForTarget = (model, config = {}) => {
   const rotation = config.rotation || {}
   model.rotation.set(rotation.x || 0, rotation.y || 0, rotation.z || 0)
   model.updateMatrixWorld(true)
@@ -38,6 +40,12 @@ const normalizeModelForScreen = (model, config = {}) => {
     -normalizedBox.min.y,
     -center.z,
   )
+}
+
+const stopAudio = (audio) => {
+  if (!audio) return
+  audio.pause()
+  audio.currentTime = 0
 }
 
 const getSupportStatus = () => {
@@ -73,9 +81,9 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const mountedRef = useRef(true)
   const recognizedTargetRef = useRef(null)
   const modelRootsRef = useRef([])
-  const screenLockedModelsRef = useRef([])
   const mixersRef = useRef([])
   const dracoLoaderRef = useRef(null)
+  const audioRef = useRef(null)
   const [status, setStatus] = useState(getSupportStatus)
   const [error, setError] = useState(null)
   const [recognizedExperience, setRecognizedExperience] = useState(null)
@@ -85,11 +93,13 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     sessionIdRef.current += 1
     recognizedTargetRef.current = null
 
+    stopAudio(audioRef.current)
+    audioRef.current = null
+
     mixersRef.current.forEach((mixer) => mixer.stopAllAction())
     mixersRef.current = []
     modelRootsRef.current.forEach(disposeObject3D)
     modelRootsRef.current = []
-    screenLockedModelsRef.current = []
     dracoLoaderRef.current?.dispose()
     dracoLoaderRef.current = null
 
@@ -175,6 +185,18 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
           if (!mountedRef.current || sessionId !== sessionIdRef.current) return
 
           recognizedTargetRef.current = experience.targetIndex
+          stopAudio(audioRef.current)
+          audioRef.current = null
+          if (experience.audioUrl) {
+            const audio = new Audio(experience.audioUrl)
+            audio.preload = 'auto'
+            audioRef.current = audio
+            audio.play().catch((audioError) => {
+              if (audioRef.current === audio) {
+                console.warn('Trình duyệt chưa cho phép tự động phát audio địa danh.', audioError)
+              }
+            })
+          }
           setRecognizedExperience(experience)
           setModelState(experience.model?.url
             ? modelStates.get(experience.targetIndex) || { status: 'loading', progress: null, message: null }
@@ -186,6 +208,8 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
           if (!mountedRef.current || sessionId !== sessionIdRef.current || recognizedTargetRef.current !== experience.targetIndex) return
 
           recognizedTargetRef.current = null
+          stopAudio(audioRef.current)
+          audioRef.current = null
           setRecognizedExperience(null)
           setModelState(createIdleModelState())
           setStatus('scanning')
@@ -210,16 +234,18 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
             }
 
             try {
-              normalizeModelForScreen(gltf.scene, experience.model)
+              normalizeModelForTarget(gltf.scene, experience.model)
 
-              const screenLockedRoot = new THREE.Group()
+              const targetOrientedRoot = new THREE.Group()
               const position = experience.model.position || {}
-              screenLockedRoot.position.set(position.x || 0, position.y || 0, position.z || 0)
-              screenLockedRoot.add(gltf.scene)
-              anchor.group.add(screenLockedRoot)
+              targetOrientedRoot.position.set(position.x || 0, position.y || 0, position.z || 0)
+              // MindAR targets lie on XY while glTF models are Y-up, so this makes
+              // the model stand along the target normal instead of facing the camera.
+              targetOrientedRoot.rotation.x = MODEL_TARGET_ROTATION_X
+              targetOrientedRoot.add(gltf.scene)
+              anchor.group.add(targetOrientedRoot)
 
               modelRootsRef.current.push(gltf.scene)
-              screenLockedModelsRef.current.push({ anchorGroup: anchor.group, root: screenLockedRoot })
 
               if (gltf.animations?.length) {
                 const mixer = new THREE.AnimationMixer(gltf.scene)
@@ -249,18 +275,9 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       if (!mountedRef.current || sessionId !== sessionIdRef.current) return
 
       const clock = new THREE.Clock()
-      const anchorWorldQuaternion = new THREE.Quaternion()
-      const cameraWorldQuaternion = new THREE.Quaternion()
       mindAR.renderer.setAnimationLoop(() => {
         const delta = clock.getDelta()
         mixersRef.current.forEach((mixer) => mixer.update(delta))
-
-        mindAR.scene.updateMatrixWorld(true)
-        mindAR.camera.getWorldQuaternion(cameraWorldQuaternion)
-        screenLockedModelsRef.current.forEach(({ anchorGroup, root }) => {
-          anchorGroup.getWorldQuaternion(anchorWorldQuaternion)
-          root.quaternion.copy(anchorWorldQuaternion).invert().multiply(cameraWorldQuaternion)
-        })
 
         mindAR.renderer.render(mindAR.scene, mindAR.camera)
       })

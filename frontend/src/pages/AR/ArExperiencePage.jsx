@@ -571,7 +571,6 @@ function ArExperiencePage() {
                 className="ar-info-place__audio"
                 src={infoExperience.audioUrl}
                 controls
-                autoPlay
                 preload="auto"
                 aria-label={`Nghe giới thiệu về ${infoExperience.name}`}
               >

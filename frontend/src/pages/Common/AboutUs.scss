@@ -638,83 +638,17 @@
 }
 
 .about-page__team-portrait {
-  align-items: center;
   aspect-ratio: 1.15;
   border-bottom: 1px solid rgba(33, 24, 50, .12);
-  color: #211832;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   overflow: hidden;
   position: relative;
 }
 
-.about-page__team-portrait::before,
-.about-page__team-portrait::after {
-  border: 1px solid rgba(33, 24, 50, .16);
-  border-radius: 50%;
-  content: '';
-  height: 170px;
-  position: absolute;
-  width: 170px;
-}
-
-.about-page__team-portrait::before {
-  left: -52px;
-  top: -62px;
-}
-
-.about-page__team-portrait::after {
-  bottom: -82px;
-  right: -46px;
-}
-
-.about-page__team-portrait svg,
-.about-page__team-portrait strong,
-.about-page__team-portrait span {
-  position: relative;
-  z-index: 1;
-}
-
-.about-page__team-portrait svg {
-  margin-bottom: 7px;
-  opacity: .8;
-}
-
-.about-page__team-portrait strong {
-  font-family: 'Baloo 2', sans-serif;
-  font-size: 58px;
-  line-height: .9;
-}
-
-.about-page__team-portrait span {
-  font-size: 11px;
-  margin-top: 10px;
-  opacity: .72;
-}
-
-.about-page__team-portrait--gold {
-  background: #f6d894;
-}
-
-.about-page__team-portrait--pink {
-  background: #f2b8cf;
-}
-
-.about-page__team-portrait--teal {
-  background: #9ad9d6;
-}
-
-.about-page__team-portrait--purple {
-  background: #c7b1d2;
-}
-
-.about-page__team-portrait--orange {
-  background: #f2bf82;
-}
-
-.about-page__team-portrait--blue {
-  background: #9ebce2;
+.about-page__team-portrait img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
 }
 
 .about-page__team-card-copy {

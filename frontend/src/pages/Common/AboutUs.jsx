@@ -3,7 +3,6 @@ import {
   BookOpen,
   Camera,
   HeartHandshake,
-  Image,
   Landmark,
   Map,
   Sparkles,
@@ -21,7 +20,9 @@ import elementMaskBlue from "../../assets/elements/IMG_4819.PNG";
 import elementFlowerOne from "../../assets/elements/IMG_4825.PNG";
 import elementFlowerTwo from "../../assets/elements/IMG_4826.PNG";
 import productImage from "../../assets/product.png";
+import aboutUsVideo from "../../assets/aboutUs_video.mp4";
 import statementBackground from "../../assets/aboutus_1.png";
+import { TEAM_MEMBERS } from "../../data/teamMembers.js";
 import "./AboutUs.scss";
 
 const values = [
@@ -92,34 +93,6 @@ const milestones = [
   },
 ];
 
-const teamMembers = [
-  { name: "Tạ Hoàng", role: "Điều phối dự án", initials: "MĐ", tone: "gold" },
-  { name: "Giang Hoàng", role: "Nhà phát triển", initials: "GH", tone: "pink" },
-  { name: "Nhật Hoàng", role: "Nhà phát triển", initials: "ĐN", tone: "teal" },
-];
-
-const carouselMembers = [
-  ...teamMembers,
-  {
-    name: "\u004e\u1ed9i dung di s\u1ea3n",
-    role: "\u0110ang c\u1eadp nh\u1eadt",
-    initials: "ND",
-    tone: "purple",
-  },
-  {
-    name: "Thi\u1ebft k\u1ebf tr\u1ea3i nghi\u1ec7m",
-    role: "\u0110ang c\u1eadp nh\u1eadt",
-    initials: "TK",
-    tone: "orange",
-  },
-  {
-    name: "K\u1ebft n\u1ed1i c\u1ed9ng \u0111\u1ed3ng",
-    role: "\u0110ang c\u1eadp nh\u1eadt",
-    initials: "KC",
-    tone: "blue",
-  },
-];
-
 function AboutUs() {
   return (
     <main className="about-page">
@@ -174,10 +147,15 @@ function AboutUs() {
           >
             <FloatingCharacter variant={2} className="about-page__character" />
             <div className="about-page__visual-frame">
-              <img
+              <video
                 className="about-page__product-image"
-                src={productImage}
-                alt="Sản phẩm Chạm Sắc Việt"
+                src={aboutUsVideo}
+                poster={productImage}
+                autoPlay
+                muted
+                loop
+                playsInline
+                aria-label="Video giới thiệu sản phẩm Chạm Sắc Việt"
               />
             </div>
             <span className="about-page__visual-stamp">
@@ -303,19 +281,13 @@ function AboutUs() {
                   key={group}
                   aria-hidden={group === 1}
                 >
-                  {carouselMembers.map(({ name, role, initials, tone }) => (
+                  {TEAM_MEMBERS.map(({ id, name, role, image }) => (
                     <Card
                       className="about-page__team-card"
-                      key={`${group}-${name}`}
+                      key={`${group}-${id}`}
                     >
-                      <div
-                        className={`about-page__team-portrait about-page__team-portrait--${tone}`}
-                        role="img"
-                        aria-label={`Ảnh placeholder của ${name}`}
-                      >
-                        <Image size={30} aria-hidden="true" />
-                        <strong>{initials}</strong>
-                        <span>Ảnh đội ngũ</span>
+                      <div className="about-page__team-portrait">
+                        <img src={image} alt={`${name} - ${role}`} />
                       </div>
                       <div className="about-page__team-card-copy">
                         <h3>{name}</h3>

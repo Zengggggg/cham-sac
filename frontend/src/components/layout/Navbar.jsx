@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import PermIdentityIcon from "@mui/icons-material/PermIdentity";
 import { logoutUser } from "../../services/authService.js";
+import { getAccessToken } from "../../services/apiClient.js";
+import { getCart } from "../../services/shopService.js";
 import { APP_VERSION } from "../../data/appVersion.js";
 
 // Các nghiệp vụ cũ được giữ lại dưới dạng comment để có thể bật lại:
@@ -43,7 +45,6 @@ const authenticatedAccountItems = [
   { label: "Tài khoản", href: "/user-profile", icon: UserRound },
   { label: "Đổi mật khẩu", href: "/enter-old-password", icon: KeyRound },
   { label: "Đơn hàng", href: "/my-orders", icon: Package },
-  { label: "Trải nghiệm AR", href: "/ar", icon: Sparkles },
   { label: "Câu hỏi của bạn", href: "/questions", icon: MessageCircleQuestion },
 ];
 
@@ -63,6 +64,10 @@ function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(readStoredUser);
+  const [cartCount, setCartCount] = useState(0);
+  const [cartBump, setCartBump] = useState(false);
+  const previousCartCount = useRef(null);
+  const cartAnimationTimeout = useRef(null);
   const isAuthenticated = Boolean(currentUser);
   const visibleNavigationItems = navigationItems.filter((item) => item.href !== "/admin/dashboard" || currentUser?.role === "admin");
 
@@ -79,6 +84,64 @@ function Navbar() {
       window.removeEventListener("storage", syncAuthenticationState);
       window.removeEventListener("auth:login", syncAuthenticationState);
       window.removeEventListener("auth:logout", syncAuthenticationState);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const syncCartCount = async (shouldAnimate = false) => {
+      if (!getAccessToken()) {
+        previousCartCount.current = 0;
+        if (isActive) setCartCount(0);
+        return;
+      }
+
+      try {
+        const response = await getCart();
+        const items = response?.data?.cart?.items || [];
+        const nextCount = items.reduce(
+          (total, item) => total + (Number(item.quantity) || 0),
+          0,
+        );
+        const countChanged = previousCartCount.current !== null
+          && nextCount !== previousCartCount.current;
+
+        if (!isActive) return;
+        setCartCount(nextCount);
+        previousCartCount.current = nextCount;
+
+        if (shouldAnimate && countChanged) {
+          setCartBump(false);
+          window.requestAnimationFrame(() => setCartBump(true));
+          window.clearTimeout(cartAnimationTimeout.current);
+          cartAnimationTimeout.current = window.setTimeout(
+            () => setCartBump(false),
+            520,
+          );
+        }
+      } catch {
+        if (isActive) {
+          previousCartCount.current = 0;
+          setCartCount(0);
+        }
+      }
+    };
+
+    const handleCartUpdated = () => { void syncCartCount(true); };
+    const handleAuthChanged = () => { void syncCartCount(false); };
+
+    void syncCartCount(false);
+    window.addEventListener("cart:updated", handleCartUpdated);
+    window.addEventListener("auth:login", handleAuthChanged);
+    window.addEventListener("auth:logout", handleAuthChanged);
+
+    return () => {
+      isActive = false;
+      window.removeEventListener("cart:updated", handleCartUpdated);
+      window.removeEventListener("auth:login", handleAuthChanged);
+      window.removeEventListener("auth:logout", handleAuthChanged);
+      window.clearTimeout(cartAnimationTimeout.current);
     };
   }, []);
 
@@ -144,7 +207,14 @@ function Navbar() {
               aria-label="Giỏ hàng"
               title="Giỏ hàng"
             >
-              <ShoppingBag size={22} />
+              <span className={`fpt-navbar__cart-icon${cartBump ? " is-bumping" : ""}`}>
+                <ShoppingBag size={22} />
+                {cartCount > 0 && (
+                  <span className="fpt-navbar__cart-badge" aria-hidden="true">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
+              </span>
             </Link>
             <div className="fpt-navbar__account" ref={accountRef}>
               {isAuthenticated ? (
@@ -298,7 +368,15 @@ function Navbar() {
                   className="fpt-navbar__mobile-link"
                   onClick={() => setMobileOpen(false)}
                 >
-                  <ShoppingBag size={18} /> Giỏ hàng
+                  <span className={`fpt-navbar__cart-icon${cartBump ? " is-bumping" : ""}`}>
+                    <ShoppingBag size={18} />
+                    {cartCount > 0 && (
+                      <span className="fpt-navbar__cart-badge" aria-hidden="true">
+                        {cartCount > 99 ? "99+" : cartCount}
+                      </span>
+                    )}
+                  </span>
+                  Giỏ hàng
                 </Link>
                 {isAuthenticated ? (
                   <>

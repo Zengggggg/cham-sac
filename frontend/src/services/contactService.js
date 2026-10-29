@@ -34,12 +34,19 @@ export function getContacts({ page = 1, pageSize = 6, search = '', status = '', 
     sort,
   })
 
-  return request(`/contacts?${params.toString()}`)
+  return request(`/admin/contacts?${params.toString()}`)
 }
 
 export function updateContactStatus(contactId, isContactted) {
-  return request(`/contacts/${contactId}/status`, {
+  return request(`/admin/contacts/${contactId}/status`, {
     body: JSON.stringify({ isContactted }),
     method: 'PATCH',
+  })
+}
+
+export function createContact(payload) {
+  return request('/contacts', {
+    body: JSON.stringify(payload),
+    method: 'POST',
   })
 }

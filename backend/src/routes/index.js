@@ -9,6 +9,7 @@ import authRouter from './authRoutes.js';
 import adminRouter from './adminRoutes.js';
 import arRouter from './arRoutes.js';
 import cartRouter from './cartRoutes.js';
+import contactRouter from './contactRoutes.js';
 import orderRouter from './orderRoutes.js';
 import paymentRouter from './paymentRoutes.js';
 import questionRouter from './questionRoutes.js';
@@ -29,6 +30,7 @@ router.get('/status', (req, res) => {
 router.use('/auth', authRouter);
 router.use('/shop', shopRouter);
 router.use('/cart', cartRouter);
+router.use('/contacts', contactRouter);
 router.use('/orders', orderRouter);
 router.use('/payments', paymentRouter);
 router.use('/ar', arRouter);

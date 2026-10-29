@@ -40,6 +40,7 @@ import MyOrderPage from './pages/Shopping/MyOrderPage.jsx'
 import ArExperiencePage from './pages/AR/ArExperiencePage.jsx'
 import QuestionsPage from './pages/Questions/QuestionsPage.jsx'
 import AdminQuestions from './pages/Admin/AdminQuestions.jsx'
+import { getAccessToken } from './services/apiClient.js'
 import './App.css'
 
 function ScrollToTop() {
@@ -65,6 +66,16 @@ function Layout({ children }) {
   )
 }
 
+function ProtectedRoute({ children }) {
+  const location = useLocation()
+
+  if (!getAccessToken()) {
+    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />
+  }
+
+  return children
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -75,9 +86,9 @@ function App() {
         <Route path="/confirm-email" element={<ConfirmEmail />} />
         <Route path="/complete-register" element={<CompleteRegister />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/enter-old-password" element={<EnterOldPassword />} />
+        <Route path="/enter-old-password" element={<ProtectedRoute><EnterOldPassword /></ProtectedRoute>} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/user-profile" element={<Layout><UserProfile /></Layout>} />
+        <Route path="/user-profile" element={<ProtectedRoute><Layout><UserProfile /></Layout></ProtectedRoute>} />
         <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
         <Route path="/admin/users" element={<AdminLayout><AdminListUser /></AdminLayout>} />
         <Route path="/admin/contacts" element={<AdminLayout><AdminListContact /></AdminLayout>} />
@@ -86,14 +97,14 @@ function App() {
         <Route path="/admin/questions" element={<AdminLayout><AdminQuestions /></AdminLayout>} />
         <Route path="/products" element={<Layout><ListProductPage /></Layout>} />
         <Route path="/products/:productId" element={<Layout><ProductDetailPage /></Layout>} />
-        <Route path="/cart" element={<Layout><MyCartPage /></Layout>} />
-        <Route path="/checkout" element={<Layout><CheckOutPage /></Layout>} />
-        <Route path="/payment" element={<Layout><PaymentPage /></Layout>} />
-        <Route path="/payment/success" element={<Layout><PaymentPage /></Layout>} />
-        <Route path="/payment/cancel" element={<Layout><PaymentPage /></Layout>} />
-        <Route path="/my-orders" element={<Layout><MyOrderPage /></Layout>} />
+        <Route path="/cart" element={<ProtectedRoute><Layout><MyCartPage /></Layout></ProtectedRoute>} />
+        <Route path="/checkout" element={<ProtectedRoute><Layout><CheckOutPage /></Layout></ProtectedRoute>} />
+        <Route path="/payment" element={<ProtectedRoute><Layout><PaymentPage /></Layout></ProtectedRoute>} />
+        <Route path="/payment/success" element={<ProtectedRoute><Layout><PaymentPage /></Layout></ProtectedRoute>} />
+        <Route path="/payment/cancel" element={<ProtectedRoute><Layout><PaymentPage /></Layout></ProtectedRoute>} />
+        <Route path="/my-orders" element={<ProtectedRoute><Layout><MyOrderPage /></Layout></ProtectedRoute>} />
         <Route path="/ar" element={<Layout><ArExperiencePage /></Layout>} />
-        <Route path="/questions" element={<Layout><QuestionsPage /></Layout>} />
+        <Route path="/questions" element={<ProtectedRoute><Layout><QuestionsPage /></Layout></ProtectedRoute>} />
         <Route path="/haunted-ghost" element={<Navigate to="/ar" replace />} />
         <Route path="/introduce-hlw26" element={<Layout><ListProductPage /></Layout>} />
         <Route path="/data-policy" element={<Layout><DataPolicy /></Layout>} />

@@ -12,6 +12,7 @@ export function getOrders({ page = 1, pageSize = 8, search = '', status = '' } =
           total: payload.meta?.totalItems || 0,
           totalPages: payload.meta?.totalPages || 1,
         },
+        summary: payload.meta?.summary || null,
       },
     }))
 }

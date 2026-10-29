@@ -73,11 +73,14 @@
 
 .admin-order-page__stat {
   align-items: center;
-  border-color: #eadfe6;
+  background: #fffefa;
+  border: 0;
   display: flex;
   gap: 12px;
+  min-height: 94px;
   min-width: 0;
-  padding: 18px;
+  padding: 16px 20px;
+  box-shadow: 6px 6px 0 rgba(114, 50, 126, .1);
 }
 
 .admin-order-page__stat:hover,
@@ -110,19 +113,33 @@
   min-width: 0;
 }
 
+.admin-order-page__stat > .ui-card__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+
+.admin-order-page__stat > .ui-card__body > span {
+  gap: 3px;
+}
+
 .admin-order-page__stat small {
   color: #6b6375;
   font-size: 11px;
 }
 
 .admin-order-page__stat strong {
+  display: block;
   color: #211832;
   font-family: 'Baloo 2', sans-serif;
-  font-size: 23px;
-  line-height: 1.1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 32px;
+  line-height: .95;
+  text-align: right;
 }
 
 .admin-order-page__card {
@@ -305,6 +322,11 @@
   vertical-align: middle;
 }
 
+.admin-order-page__table td:last-child .ui-button {
+  min-width: 96px;
+  white-space: nowrap;
+}
+
 .admin-order-page__table td small,
 .admin-order-page__code + small {
   color: #8b8190;
@@ -332,7 +354,15 @@
 
 .admin-order-page__customer > span {
   display: grid;
-  gap: 4px;
+  align-content: center;
+  gap: 2px;
+  height: fit-content;
+  line-height: 1.25;
+}
+
+.admin-order-page__customer > span strong,
+.admin-order-page__customer > span small {
+  line-height: 1.25;
 }
 
 .admin-order-page__customer small {

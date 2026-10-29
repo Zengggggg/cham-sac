@@ -387,6 +387,22 @@ export const linkGoogleAccount = async (userId, idToken) => {
     return user.toJSON();
 };
 
+export const updateUserProfile = async (userId, { fullName, phone }) => {
+    const user = await User.findById(userId);
+    if (!user) throw new AppError('Tài khoản không tồn tại.', 404);
+
+    user.fullName = fullName;
+    user.name = fullName;
+    user.phone = phone;
+    try {
+        await user.save();
+    } catch (error) {
+        if (error?.code === 11000) throw new AppError('Số điện thoại đã được sử dụng.', 409);
+        throw error;
+    }
+    return user.toJSON();
+};
+
 export const refreshUserToken = async (refreshToken) => {
     const payload = verifyRefreshToken(refreshToken);
     const user = await getUserWithSecrets({ _id: payload.sub });

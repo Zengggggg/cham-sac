@@ -51,7 +51,7 @@ export const listProducts = async (req, res, next) => {
             statusCode: 200,
             message: 'Lấy danh sách sản phẩm quản trị thành công.',
             data: result.products,
-            meta: result.meta
+            meta: { ...result.meta, summary: result.summary }
         });
     } catch (error) {
         return next(error);

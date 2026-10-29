@@ -61,6 +61,14 @@
 .product-list-filters button { min-height: 38px; padding: 0 13px; color: var(--product-muted); background: transparent; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; }
 .product-list-filters button:hover, .product-list-filters button.is-active { color: #fff; background: var(--product-pink); }
 .product-list-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.product-list-grid--loading { align-items: stretch; }
+.product-card--skeleton { pointer-events: none; }
+.product-card--skeleton .react-loading-skeleton { --base-color: #eadfe6; --highlight-color: #fff8fb; }
+.product-card--skeleton .product-card__visual { background: #f8edf2; }
+.product-card__skeleton-art { width: 145px; height: 145px; border-radius: 50%; }
+.product-card__skeleton-title { display: block; margin: 8px 0 4px; }
+.product-card__skeleton-description { display: block; margin-top: 12px; }
+.product-card--skeleton .product-card__actions { margin-top: auto; }
 .product-card.ui-card { display: flex; flex-direction: column; min-width: 0; padding: 0; overflow: hidden; }
 .product-card.ui-card:hover { transform: translateY(-4px); }
 .product-card .ui-card__body { display: flex; flex: 1; flex-direction: column; margin: 0; padding: 0; border-top: 0; }
@@ -71,7 +79,7 @@
 .product-card__visual::before, .product-card__visual::after { position: absolute; width: 120px; height: 120px; border: 1px solid rgba(33, 24, 50, .14); border-radius: 50%; content: ''; }
 .product-card__visual::before { top: -70px; left: -56px; }
 .product-card__visual::after { right: -60px; bottom: -74px; }
-.product-card__visual img { position: relative; z-index: 1; width: 145px; height: 145px; object-fit: contain; filter: drop-shadow(0 10px 5px rgba(33, 24, 50, .16)); }
+.product-card__media { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: none; }
 .product-card__tag { position: absolute; z-index: 2; top: 13px; left: 13px; padding: 6px 9px; color: var(--product-ink); background: rgba(255, 253, 248, .75); border-radius: 999px; font-size: 10px; font-weight: 800; }
 .product-card__visual-label { position: absolute; right: 13px; bottom: 12px; left: 13px; color: rgba(33, 24, 50, .62); font-size: 10px; font-weight: 900; letter-spacing: .14em; text-align: center; }
 .product-card__content { display: flex; flex: 1; flex-direction: column; padding: 18px; }

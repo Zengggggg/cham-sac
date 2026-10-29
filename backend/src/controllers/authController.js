@@ -8,6 +8,7 @@ import {
     requestPasswordResetOtp,
     resetUserPassword,
     resendUserEmailVerificationOtp,
+    updateUserProfile,
     verifyUserEmail
 } from '../services/authService.js';
 import { sendSuccess } from '../utils/apiResponse.js';
@@ -145,3 +146,16 @@ export const getCurrentUser = (req, res) => sendSuccess(res, {
     message: 'Lấy thông tin người dùng thành công.',
     data: { user: req.user.toJSON() }
 });
+
+export const updateCurrentUser = async (req, res, next) => {
+    try {
+        const user = await updateUserProfile(req.user.id, req.body);
+        return sendSuccess(res, {
+            statusCode: 200,
+            message: 'Cập nhật hồ sơ thành công.',
+            data: { user }
+        });
+    } catch (error) {
+        return next(error);
+    }
+};

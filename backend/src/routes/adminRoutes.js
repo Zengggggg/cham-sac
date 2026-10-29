@@ -34,6 +34,7 @@ import {
     getAdminQuestions,
     updateAdminQuestion
 } from '../controllers/questionController.js';
+import { changeContactStatus, listAdminContacts } from '../controllers/contactController.js';
 import { authenticate, authorizeRoles } from '../middlewares/authMiddleware.js';
 import {
     validateObjectIdParam,
@@ -52,6 +53,7 @@ import {
     validateAdminQuestionDelete,
     validateAdminQuestionWrite
 } from '../validations/questionValidation.js';
+import { validateContactStatus } from '../validations/contactValidation.js';
 
 const adminRouter = express.Router();
 adminRouter.use(authenticate, authorizeRoles('admin'));
@@ -62,6 +64,8 @@ adminRouter.post('/products', validateProductWrite, createProduct);
 adminRouter.get('/products/:id', validateObjectIdParam('id'), getProduct);
 adminRouter.patch('/products/:id', validateObjectIdParam('id'), validateProductWrite, updateProduct);
 adminRouter.get('/orders', listOrders);
+adminRouter.get('/contacts', listAdminContacts);
+adminRouter.patch('/contacts/:id/status', validateContactStatus, changeContactStatus);
 adminRouter.get('/orders/:id', validateObjectIdParam('id'), getOrder);
 adminRouter.patch(
     '/orders/:id/status',

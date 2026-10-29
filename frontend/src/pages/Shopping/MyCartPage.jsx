@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import { useNavigate } from "react-router-dom";
+import productFallback from "../../assets/product.png";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import { getAccessToken, getStoredUser } from "../../services/apiClient.js";
@@ -16,6 +19,47 @@ const getCartOwner = () => {
   const user = getStoredUser();
   return user?.id || user?._id || null;
 };
+
+function CartSkeleton() {
+  return (
+    <div className="shopping-cart-layout shopping-cart-layout--skeleton" aria-label="Đang tải giỏ hàng" role="status">
+      <Card className="shopping-cart-items shopping-cart-items--skeleton">
+        <div className="shopping-cart-items__top">
+          <Skeleton width={150} height={16} />
+          <Skeleton width={82} height={16} />
+        </div>
+        <div className="shopping-cart-items__list">
+          {Array.from({ length: 2 }, (_, index) => (
+            <article className="shopping-cart-item" key={index}>
+              <Skeleton className="shopping-cart-skeleton-checkbox" width={17} height={17} />
+              <Skeleton className="shopping-cart-skeleton-image" width={112} height={112} />
+              <div className="shopping-cart-item__content">
+                <div className="shopping-cart-item__heading">
+                  <div className="shopping-cart-skeleton-copy">
+                    <Skeleton width="34%" height={12} />
+                    <Skeleton width="72%" height={27} />
+                  </div>
+                  <Skeleton width={34} height={34} borderRadius={8} />
+                </div>
+                <Skeleton width="46%" height={13} />
+                <div className="shopping-cart-item__footer">
+                  <Skeleton width={108} height={36} borderRadius={8} />
+                  <Skeleton width={92} height={24} />
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </Card>
+      <Card className="shopping-cart-summary shopping-cart-summary--skeleton">
+        <Skeleton width="48%" height={28} />
+        <Skeleton className="shopping-cart-skeleton-summary-line" count={3} height={18} />
+        <Skeleton className="shopping-cart-skeleton-summary-total" height={30} />
+        <Skeleton height={48} borderRadius={8} />
+      </Card>
+    </div>
+  );
+}
 
 function MyCartPage() {
   const navigate = useNavigate();
@@ -166,7 +210,7 @@ function MyCartPage() {
         </header>
 
         {isLoading ? (
-          <Card className="shopping-cart-empty" role="status"><h2>Đang tải giỏ hàng</h2></Card>
+          <CartSkeleton />
         ) : error ? (
           <Card className="shopping-cart-empty" role="alert"><h2>Không thể mở giỏ hàng</h2><p>{error}</p><Button variant="primary" onClick={() => getAccessToken() ? loadCart() : navigate("/login")}>{getAccessToken() ? "Thử lại" : "Đăng nhập"}</Button></Card>
         ) : cartItems.length === 0 ? (
@@ -197,7 +241,16 @@ function MyCartPage() {
                         <input type="checkbox" checked={item.selected} disabled={isUpdating} onChange={() => toggleItem(item.productId)} aria-label={`Chọn ${item.productName}`} />
                       </label>
                       <div className="shopping-cart-item__visual shopping-cart-item__visual--yellow">
-                        {item.image ? <img src={item.image} alt={item.productName} /> : <ShoppingBag size={32} aria-hidden="true" />}
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.productName}
+                            onError={(event) => {
+                              event.currentTarget.onerror = null;
+                              event.currentTarget.src = productFallback;
+                            }}
+                          />
+                        ) : <ShoppingBag size={32} aria-hidden="true" />}
                       </div>
                       <div className="shopping-cart-item__content">
                         <div className="shopping-cart-item__heading">

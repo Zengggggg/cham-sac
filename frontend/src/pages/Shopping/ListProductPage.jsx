@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   AlertCircle,
-  LoaderCircle,
   Search,
   ShoppingBag,
   Sparkles,
   Star,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
@@ -25,6 +26,7 @@ const categories = ["Tất cả", "Boardgame", "Thẻ trải nghiệm", "Quà l�
 
 const productFallbackImages = [diceElement, diceLightElement, starElement];
 const productTones = ["purple", "teal", "yellow", "red"];
+const isVideoSource = (source) => /\.mp4(?:$|[?#])/i.test(source || "");
 
 const presentProduct = (product, index, cart) => ({
   ...product,
@@ -92,7 +94,11 @@ function ProductCard({ product, onAdd, addingProductId }) {
     <Card className={`product-card product-card--${product.tone}`}>
       <div className="product-card__visual">
         <span className="product-card__tag">{product.tag}</span>
-        <img src={product.image} alt="" aria-hidden="true" />
+        {isVideoSource(product.image) ? (
+          <video className="product-card__media" src={product.image} autoPlay muted loop playsInline aria-hidden="true" />
+        ) : (
+          <img className="product-card__media" src={product.image} alt="" aria-hidden="true" />
+        )}
         <span className="product-card__visual-label">CHẠM SẮC VIỆT</span>
       </div>
       <div className="product-card__content">
@@ -121,6 +127,26 @@ function ProductCard({ product, onAdd, addingProductId }) {
           >
             Thêm vào giỏ
           </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function ProductCardSkeleton() {
+  return (
+    <Card className="product-card product-card--skeleton" aria-hidden="true">
+      <div className="product-card__visual">
+        <Skeleton className="product-card__skeleton-art" />
+      </div>
+      <div className="product-card__content">
+        <Skeleton width="38%" height={11} />
+        <Skeleton className="product-card__skeleton-title" width="78%" height={25} />
+        <Skeleton width="48%" height={27} />
+        <Skeleton className="product-card__skeleton-description" count={2} height={13} />
+        <div className="product-card__actions">
+          <Skeleton height={38} borderRadius={7} />
+          <Skeleton height={38} borderRadius={7} />
         </div>
       </div>
     </Card>
@@ -345,7 +371,9 @@ function ListProductPage() {
           </div>
         </div>
         {isLoading ? (
-          <div className="product-list-empty" role="status"><LoaderCircle size={30} aria-hidden="true" /><h3>Đang tải sản phẩm</h3></div>
+          <div className="product-list-grid product-list-grid--loading" role="status" aria-label="Đang tải sản phẩm">
+            {Array.from({ length: 4 }, (_, index) => <ProductCardSkeleton key={index} />)}
+          </div>
         ) : loadError ? (
           <div className="product-list-empty" role="alert"><AlertCircle size={30} aria-hidden="true" /><h3>Không thể tải sản phẩm</h3><p>{loadError}</p><Button variant="secondary" onClick={loadProducts}>Thử lại</Button></div>
         ) : visibleProducts.length ? (

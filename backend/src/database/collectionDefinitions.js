@@ -74,7 +74,7 @@ export const collectionDefinitions = [
         name: { bsonType: 'string', minLength: 2, maxLength: 100 },
         fullName: { bsonType: 'string', minLength: 2, maxLength: 100 },
         email: { bsonType: 'string', maxLength: 254 },
-        phone: { bsonType: 'string', pattern: '^\\+[1-9][0-9]{7,14}$' },
+        phone: { bsonType: 'string', pattern: '^(0[35789][0-9]{8}|\\+84[35789][0-9]{8})$' },
         passwordHash: { bsonType: ['string', 'null'] },
         googleId: { bsonType: ['string', 'null'] },
         role: { enum: ['user', 'admin'] },

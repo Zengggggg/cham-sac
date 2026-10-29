@@ -85,7 +85,13 @@ const orderFilter = (query) => {
         filter.paymentStatus = query.paymentStatus;
     }
     if (typeof query.orderCode === 'string' && query.orderCode.trim()) {
-        filter.orderCode = { $regex: escapeRegex(query.orderCode.trim()), $options: 'i' };
+        const searchExpression = { $regex: escapeRegex(query.orderCode.trim()), $options: 'i' };
+        filter.$or = [
+            { orderCode: searchExpression },
+            { 'customer.fullName': searchExpression },
+            { 'customer.email': searchExpression },
+            { 'customer.phone': searchExpression }
+        ];
     }
     if (query.from || query.to) {
         filter.createdAt = {};
@@ -101,13 +107,24 @@ const orderFilter = (query) => {
 export const listAdminOrders = async (query = {}) => {
     const { currentPage, limit } = normalizePagination(query);
     const filter = orderFilter(query);
-    const [orders, totalItems] = await Promise.all([
+    const [orders, totalItems, summaryRows] = await Promise.all([
         Order.find(filter).sort({ createdAt: -1 }).skip((currentPage - 1) * limit).limit(limit),
-        Order.countDocuments(filter)
+        Order.countDocuments(filter),
+        Order.aggregate([
+            { $match: filter },
+            { $group: {
+                _id: null,
+                totalOrders: { $sum: 1 },
+                totalValue: { $sum: '$totalAmount' },
+                paidCount: { $sum: { $cond: [{ $eq: ['$paymentStatus', 'paid'] }, 1, 0] } }
+            } },
+            { $project: { _id: 0, totalOrders: 1, totalValue: 1, paidCount: 1 } }
+        ])
     ]);
     return {
         orders,
-        meta: { currentPage, limit, totalItems, totalPages: Math.ceil(totalItems / limit) }
+        meta: { currentPage, limit, totalItems, totalPages: Math.ceil(totalItems / limit) },
+        summary: summaryRows[0] || { totalOrders: 0, totalValue: 0, paidCount: 0 }
     };
 };
 

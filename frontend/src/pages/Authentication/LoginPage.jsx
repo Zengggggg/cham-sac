@@ -1,6 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Eye, EyeOff, House } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
@@ -12,17 +12,25 @@ import "./LoginPage.scss";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectedFrom = location.state?.from;
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    if (redirectedFrom) {
+      toast("Bạn cần đăng nhập để tiếp tục.", { id: "auth-required" });
+    }
+  }, [redirectedFrom]);
 
   const completeLogin = useCallback(
     (response) => {
       const user = response.data.user;
       toast.success(response.message || "Đăng nhập thành công.");
-      navigate(user.role === "admin" ? "/admin/dashboard" : "/");
+      navigate(user.role === "admin" ? "/admin/dashboard" : location.state?.from || "/");
     },
-    [navigate],
+    [location.state?.from, navigate],
   );
 
   const handleSubmit = async (event) => {

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { E164_PHONE_PATTERN } from './modelValidators.js';
+import { VIETNAMESE_PHONE_PATTERN } from './modelValidators.js';
 
 const shippingAddressSchema = new mongoose.Schema({
     addressLine: { type: String, trim: true, maxlength: 500 },
@@ -79,7 +79,7 @@ const userSchema = new mongoose.Schema({
     phone: {
         type: String,
         trim: true,
-        match: E164_PHONE_PATTERN
+        match: VIETNAMESE_PHONE_PATTERN
     },
     fullName: {
         type: String,

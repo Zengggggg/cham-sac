@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import { FaFacebookMessenger } from "react-icons/fa";
 import { SiZalo } from "react-icons/si";
+import { createContact } from "../../services/contactService.js";
 import Button from "../../components/ui/Button.jsx";
 import Card from "../../components/ui/Card.jsx";
 import Input from "../../components/ui/Input.jsx";
@@ -77,6 +78,7 @@ const phoneLinks = [
 export default function ContactUsPage() {
   const [formData, setFormData] = useState(getInitialForm);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateField = ({ target }) => {
     setFormData((current) => ({ ...current, [target.name]: target.value }));
@@ -102,11 +104,19 @@ export default function ContactUsPage() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validate()) return;
-    toast.success("Thông tin đã được ghi nhận");
-    setFormData((current) => ({ ...current, topic: "", message: "" }));
+    setIsSubmitting(true);
+    try {
+      await createContact(formData);
+      toast.success("Thông tin đã được ghi nhận");
+      setFormData((current) => ({ ...current, topic: "", message: "" }));
+    } catch (error) {
+      toast.error(error.message || "Không thể gửi liên hệ.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const copyPhone = async (phone) => {
@@ -224,6 +234,8 @@ export default function ContactUsPage() {
               </div>
               <Button
                 type="submit"
+                loading={isSubmitting}
+                disabled={isSubmitting}
                 icon={<Send size={17} aria-hidden="true" />}
               >
                 Gửi liên hệ

@@ -10,6 +10,7 @@ import {
     register,
     resetPassword,
     resendEmailVerificationOtp,
+    updateCurrentUser,
     verifyEmail
 } from '../controllers/authController.js';
 import { authenticate } from '../middlewares/authMiddleware.js';
@@ -24,6 +25,7 @@ import {
     validateLogin,
     validatePasswordReset,
     validatePasswordResetRequest,
+    validateProfileUpdate,
     validateRefreshToken,
     validateRegistration,
     validateVerificationEmail
@@ -57,5 +59,6 @@ authRouter.post('/google/link', authRateLimit, authenticate, validateGoogleIdTok
 authRouter.post('/refresh-token', authRateLimit, validateRefreshToken, refreshToken);
 authRouter.post('/logout', validateRefreshToken, logout);
 authRouter.get('/me', authenticate, getCurrentUser);
+authRouter.patch('/me', authenticate, validateProfileUpdate, updateCurrentUser);
 
 export default authRouter;

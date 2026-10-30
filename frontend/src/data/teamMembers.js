@@ -8,31 +8,31 @@ export const TEAM_MEMBERS = [
   {
     id: 'le-thi-tu',
     name: 'Lê Thị Tú',
-    role: 'Trưởng nhóm quản lý dự án',
+    role: 'Tổng giám đốc',
     image: projectLeadImage,
   },
   {
     id: 'lai-quoc-son',
     name: 'Lại Quốc Sơn',
-    role: 'Thiết kế và sáng tạo',
+    role: 'Trưởng ban Marketing & Kinh doanh',
     image: creativeLeadImage,
   },
   {
     id: 'nguyen-hoang-bach',
     name: 'Nguyễn Hoàng Bách',
-    role: 'Nội dung và truyền thông',
+    role: 'Trưởng ban Vận hành',
     image: contentLeadImage,
   },
   {
     id: 'nguyen-tuyet-nga',
     name: 'Nguyễn Tuyết Nga',
-    role: 'Tài chính',
+    role: 'Trưởng ban Tài chính',
     image: financeLeadImage,
   },
   {
     id: 'tran-thu-thuy',
     name: 'Trần Thu Thủy',
-    role: 'Nghiên cứu và chiến lược',
+    role: 'Trưởng ban Nội dung',
     image: researchLeadImage,
   },
 ]

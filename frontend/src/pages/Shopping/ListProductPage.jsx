@@ -211,6 +211,8 @@ function ListProductPage() {
     });
   }, [activeCategory, products, searchTerm]);
 
+  const featuredProductHref = "/products/6ae29132202af087ffc22f2f";
+
   const handleAddToCart = async (product) => {
     if (addPending.current) return;
     if (!getAccessToken()) {
@@ -261,9 +263,13 @@ function ListProductPage() {
             </div>
             <p>Boardgame di sản</p>
             <strong>{formatMoney(299000)}</strong>
-            <span className="product-list-hero__side-arrow" aria-hidden="true">
+            <a
+              className="product-list-hero__side-arrow"
+              href={featuredProductHref}
+              aria-label="Xem chi tiết Boardgame di sản"
+            >
               <ArrowUpRight size={18} />
-            </span>
+            </a>
           </article>
           <div className="product-list-hero__headline">
             <p className="product-list-page__eyebrow">
@@ -286,9 +292,9 @@ function ListProductPage() {
               4.9 <span>★</span>
             </strong>
             <p>Được yêu thích bởi cộng đồng khám phá di sản Việt Nam</p>
-            <Link to="#product-catalog">
+            <a href="/products#product-catalog">
               Khám phá bộ sưu tập <ArrowUpRight size={16} aria-hidden="true" />
-            </Link>
+            </a>
           </article>
         </div>
         <div

@@ -14,6 +14,8 @@ import {
   RefreshCw,
   ScanLine,
   Sparkles,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "../../components/ui/Button.jsx";
@@ -242,10 +244,12 @@ function ArExperiencePage() {
     containerRef,
     error,
     modelState,
+    narrationState,
     recognizedExperience,
     startAR,
     status,
     stopAR,
+    toggleNarration,
   } = useMindARSession(experiences);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [selectedExperience, setSelectedExperience] = useState(null);
@@ -443,35 +447,73 @@ function ArExperiencePage() {
                       </span>
                     </span>
                   )}
+                  {recognizedExperience?.audioUrl && narrationState.message && (
+                    <span
+                      className={`ar-narration-status ar-narration-status--${narrationState.status}`}
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {narrationState.message}
+                    </span>
+                  )}
                 </div>
               </div>
             </Card>
           </>
         )}
 
-        {recognizedExperience && modelState.status === "ready" && (
+        {recognizedExperience &&
+          (recognizedExperience.audioUrl || modelState.status === "ready") && (
           <div
             className="ar-model-info-actions"
             aria-label="Thông tin mô hình đang hiển thị"
           >
-            <button
-              className="ar-model-info-actions__button"
-              type="button"
-              onClick={() => openInfo("questions")}
-              aria-label={`Xem câu hỏi về ${recognizedExperience.name}`}
-              title="Câu hỏi về địa danh"
-            >
-              <CircleHelp size={22} aria-hidden="true" />
-            </button>
-            <button
-              className="ar-model-info-actions__button"
-              type="button"
-              onClick={() => openInfo("place")}
-              aria-label={`Xem thông tin ${recognizedExperience.name}`}
-              title="Thông tin địa danh"
-            >
-              <Landmark size={21} aria-hidden="true" />
-            </button>
+            {recognizedExperience.audioUrl && (
+              <button
+                className={`ar-model-info-actions__button${narrationState.status === "playing" ? " ar-model-info-actions__button--audio-active" : ""}`}
+                type="button"
+                onClick={toggleNarration}
+                aria-label={
+                  narrationState.status === "playing"
+                    ? `Tạm dừng thuyết minh về ${recognizedExperience.name}`
+                    : `Phát thuyết minh về ${recognizedExperience.name}`
+                }
+                aria-pressed={narrationState.status === "playing"}
+                title={
+                  narrationState.status === "playing"
+                    ? "Tạm dừng thuyết minh"
+                    : "Phát thuyết minh"
+                }
+              >
+                {narrationState.status === "playing" ? (
+                  <Volume2 size={22} aria-hidden="true" />
+                ) : (
+                  <VolumeX size={22} aria-hidden="true" />
+                )}
+              </button>
+            )}
+            {modelState.status === "ready" && (
+              <>
+                <button
+                  className="ar-model-info-actions__button"
+                  type="button"
+                  onClick={() => openInfo("questions")}
+                  aria-label={`Xem câu hỏi về ${recognizedExperience.name}`}
+                  title="Câu hỏi về địa danh"
+                >
+                  <CircleHelp size={22} aria-hidden="true" />
+                </button>
+                <button
+                  className="ar-model-info-actions__button"
+                  type="button"
+                  onClick={() => openInfo("place")}
+                  aria-label={`Xem thông tin ${recognizedExperience.name}`}
+                  title="Thông tin địa danh"
+                >
+                  <Landmark size={21} aria-hidden="true" />
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -584,15 +626,24 @@ function ArExperiencePage() {
         {infoType === "place" && infoExperience && (
           <article className="ar-info-place">
             {infoExperience.audioUrl && (
-              <audio
+              <Button
                 className="ar-info-place__audio"
-                src={infoExperience.audioUrl}
-                controls
-                preload="auto"
-                aria-label={`Nghe giới thiệu về ${infoExperience.name}`}
+                type="button"
+                variant="secondary"
+                onClick={toggleNarration}
+                aria-pressed={narrationState.status === "playing"}
+                icon={
+                  narrationState.status === "playing" ? (
+                    <Volume2 size={19} aria-hidden="true" />
+                  ) : (
+                    <VolumeX size={19} aria-hidden="true" />
+                  )
+                }
               >
-                Trình duyệt của bạn không hỗ trợ phát audio.
-              </audio>
+                {narrationState.status === "playing"
+                  ? "Tạm dừng thuyết minh"
+                  : "Nghe thuyết minh"}
+              </Button>
             )}
             <p className="ar-info-place__summary">
               {infoExperience.shortDescription}

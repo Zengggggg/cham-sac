@@ -478,6 +478,11 @@ body:has(.ar-page--active) .messenger-wrapper {
   outline-offset: 3px;
 }
 
+.ar-model-info-actions__button--audio-active {
+  color: var(--ar-white);
+  background: var(--ar-pink-dark);
+}
+
 .ar-scanner__guide.ui-card {
   position: absolute;
   left: 50%;
@@ -568,6 +573,20 @@ body:has(.ar-page--active) .messenger-wrapper {
 .ar-model-status--ready { color: var(--ar-blue); font-weight: 700; }
 .ar-model-status--error { color: var(--ar-pink-dark); }
 .ar-model-status--muted { color: var(--ar-muted); }
+
+.ar-narration-status {
+  width: 100%;
+  margin-top: 0;
+  color: var(--ar-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.ar-narration-status--playing,
+.ar-narration-status--ready { color: var(--ar-blue); }
+
+.ar-narration-status--blocked,
+.ar-narration-status--error { color: var(--ar-pink-dark); font-weight: 700; }
 
 .ar-capture-build {
   position: absolute;

@@ -118,7 +118,7 @@ Câu hỏi không tạo thêm collection: câu hỏi public được nhúng tron
 - Mật khẩu và OTP phải được hash; OTP phải hết hạn, giới hạn số lần thử/gửi lại và không được log. Refresh token lưu dưới dạng hash, được xoay khi làm mới và endpoint auth phải có rate limit.
 - Endpoint admin phải kiểm tra role ở backend, không chỉ ẩn chức năng trên giao diện.
 - Nội dung public chỉ trả các bản ghi có trạng thái `active`.
-- Model production phải dùng `.glb` và tên file chứa hash/version để tránh CDN trả asset cũ.
+- Model production phải dùng `.glb` và tên file chứa hash/version để tránh CDN trả asset cũ. Frontend chỉ tải model của target đã nhận diện; Vercel cache model trong 1 giờ ở trình duyệt, 1 ngày ở edge và cache audio thuyết minh trong 1 ngày ở trình duyệt, 1 tuần ở edge.
 
 ## Trạng thái nghiệp vụ
 

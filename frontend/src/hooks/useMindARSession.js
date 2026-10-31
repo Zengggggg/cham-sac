@@ -4,8 +4,10 @@ import targetBundleUrl from '../assets/ar-targets/heritage-targets.mind?url'
 import { HERITAGE_EXPERIENCES } from '../data/heritageExperiences.js'
 
 const MODEL_TARGET_ROTATION_X = Math.PI / 2
+const TARGET_LOST_GRACE_MS = 1200
 
 const createIdleModelState = () => ({ status: 'idle', progress: null, message: null })
+const createIdleNarrationState = () => ({ status: 'idle', message: null })
 
 const disposeObject3D = (root) => {
   root?.traverse((object) => {
@@ -42,10 +44,23 @@ const normalizeModelForTarget = (model, config = {}) => {
   )
 }
 
-const stopAudio = (audio) => {
+const pauseAudio = (audio, { reset = false } = {}) => {
   if (!audio) return
   audio.pause()
-  audio.currentTime = 0
+  if (!reset) return
+
+  try {
+    audio.currentTime = 0
+  } catch {
+    // Metadata may not be available yet on some mobile browsers.
+  }
+}
+
+const releaseAudio = (audio) => {
+  if (!audio) return
+  pauseAudio(audio, { reset: true })
+  audio.removeAttribute('src')
+  audio.load()
 }
 
 const getSupportStatus = () => {
@@ -80,21 +95,85 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const sessionIdRef = useRef(0)
   const mountedRef = useRef(true)
   const recognizedTargetRef = useRef(null)
+  const targetLostTimerRef = useRef(null)
   const modelRootsRef = useRef([])
   const mixersRef = useRef([])
   const dracoLoaderRef = useRef(null)
+  const audioByTargetRef = useRef(new Map())
   const audioRef = useRef(null)
+  const narrationTargetRef = useRef(null)
+  const narrationManuallyPausedRef = useRef(false)
   const [status, setStatus] = useState(getSupportStatus)
   const [error, setError] = useState(null)
   const [recognizedExperience, setRecognizedExperience] = useState(null)
   const [modelState, setModelState] = useState(createIdleModelState)
+  const [narrationState, setNarrationState] = useState(createIdleNarrationState)
+
+  const playNarration = useCallback(() => {
+    const audio = audioRef.current
+    const targetIndex = narrationTargetRef.current
+    if (!audio || targetIndex === null) return
+
+    if (audio.readyState < 3) {
+      setNarrationState({ status: 'loading', message: 'Đang tải thuyết minh…' })
+    }
+
+    let playPromise
+    try {
+      playPromise = audio.play()
+    } catch (audioError) {
+      console.warn('Không thể bắt đầu phát thuyết minh địa danh.', audioError)
+      setNarrationState({ status: 'error', message: 'Không thể phát thuyết minh. Hãy chạm nút loa để thử lại.' })
+      return
+    }
+
+    playPromise?.catch((audioError) => {
+      if (audioRef.current !== audio || narrationTargetRef.current !== targetIndex) return
+      if (audioError?.name === 'AbortError') return
+
+      if (audioError?.name === 'NotAllowedError') {
+        setNarrationState({
+          status: 'blocked',
+          message: 'Trình duyệt đã chặn tự động phát. Chạm nút loa để nghe thuyết minh.',
+        })
+        return
+      }
+
+      console.warn('Không thể phát thuyết minh địa danh.', audioError)
+      setNarrationState({ status: 'error', message: 'Không thể phát thuyết minh. Hãy chạm nút loa để thử lại.' })
+    })
+  }, [])
+
+  const toggleNarration = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    if (audio.paused || audio.ended) {
+      if (audio.ended) audio.currentTime = 0
+      narrationManuallyPausedRef.current = false
+      playNarration()
+      return
+    }
+
+    audio.pause()
+    narrationManuallyPausedRef.current = true
+    setNarrationState({ status: 'paused', message: 'Đã tạm dừng thuyết minh. Chạm nút loa để nghe tiếp.' })
+  }, [playNarration])
 
   const releaseSession = useCallback(() => {
     sessionIdRef.current += 1
     recognizedTargetRef.current = null
+    narrationTargetRef.current = null
+    narrationManuallyPausedRef.current = false
 
-    stopAudio(audioRef.current)
+    if (targetLostTimerRef.current) {
+      window.clearTimeout(targetLostTimerRef.current)
+      targetLostTimerRef.current = null
+    }
+
     audioRef.current = null
+    audioByTargetRef.current.forEach(releaseAudio)
+    audioByTargetRef.current.clear()
 
     mixersRef.current.forEach((mixer) => mixer.stopAllAction())
     mixersRef.current = []
@@ -127,6 +206,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     setError(null)
     setRecognizedExperience(null)
     setModelState(createIdleModelState())
+    setNarrationState(createIdleNarrationState())
     setStatus(getSupportStatus())
   }, [releaseSession])
 
@@ -144,7 +224,62 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     setError(null)
     setRecognizedExperience(null)
     setModelState(createIdleModelState())
+    setNarrationState(createIdleNarrationState())
     setStatus('loading')
+
+    // Voice files are small compared with the GLB assets, so prepare them first.
+    // Reusing these elements also lets a manual tap reliably recover from autoplay blocking.
+    experiences.forEach((experience) => {
+      if (!experience.audioUrl) return
+
+      const audio = new Audio(experience.audioUrl)
+      audio.preload = 'auto'
+
+      const updateForCurrentTarget = (nextState) => {
+        if (
+          mountedRef.current
+          && sessionId === sessionIdRef.current
+          && audioRef.current === audio
+          && narrationTargetRef.current === experience.targetIndex
+        ) {
+          setNarrationState(nextState)
+        }
+      }
+
+      audio.addEventListener('loadstart', () => {
+        updateForCurrentTarget({ status: 'loading', message: 'Đang tải thuyết minh…' })
+      })
+      audio.addEventListener('canplay', () => {
+        if (audio.paused) {
+          setNarrationState((current) => {
+            if (
+              audioRef.current !== audio
+              || narrationTargetRef.current !== experience.targetIndex
+              || current.status === 'blocked'
+            ) return current
+            return { status: 'ready', message: 'Thuyết minh đã sẵn sàng.' }
+          })
+        }
+      })
+      audio.addEventListener('playing', () => {
+        updateForCurrentTarget({ status: 'playing', message: 'Đang phát thuyết minh.' })
+      })
+      audio.addEventListener('waiting', () => {
+        updateForCurrentTarget({ status: 'waiting', message: 'Kết nối chậm, đang tải thêm thuyết minh…' })
+      })
+      audio.addEventListener('stalled', () => {
+        updateForCurrentTarget({ status: 'waiting', message: 'Thuyết minh đang chờ dữ liệu mạng…' })
+      })
+      audio.addEventListener('ended', () => {
+        updateForCurrentTarget({ status: 'ended', message: 'Đã phát xong thuyết minh. Chạm nút loa để nghe lại.' })
+      })
+      audio.addEventListener('error', () => {
+        updateForCurrentTarget({ status: 'error', message: 'Không tải được thuyết minh. Hãy kiểm tra kết nối rồi thử lại.' })
+      })
+
+      audioByTargetRef.current.set(experience.targetIndex, audio)
+      audio.load()
+    })
 
     try {
       const [{ MindARThree }, { GLTFLoader }, { DRACOLoader }] = await Promise.all([
@@ -162,7 +297,7 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
         uiScanning: 'no',
         uiError: 'no',
         warmupTolerance: 5,
-        missTolerance: 5,
+        missTolerance: 12,
       })
       mindARRef.current = mindAR
 
@@ -178,56 +313,28 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       loader.setDRACOLoader(dracoLoader)
       dracoLoaderRef.current = dracoLoader
       const modelStates = new Map()
+      const loadingModelTargets = new Set()
 
-      experiences.forEach((experience) => {
-        const anchor = mindAR.addAnchor(experience.targetIndex)
-        anchor.onTargetFound = () => {
-          if (!mountedRef.current || sessionId !== sessionIdRef.current) return
+      const updateModelState = (targetIndex, nextState) => {
+        if (!mountedRef.current || sessionId !== sessionIdRef.current) return
+        modelStates.set(targetIndex, nextState)
+        if (recognizedTargetRef.current === targetIndex) setModelState(nextState)
+      }
 
-          recognizedTargetRef.current = experience.targetIndex
-          stopAudio(audioRef.current)
-          audioRef.current = null
-          if (experience.audioUrl) {
-            const audio = new Audio(experience.audioUrl)
-            audio.preload = 'auto'
-            audioRef.current = audio
-            audio.play().catch((audioError) => {
-              if (audioRef.current === audio) {
-                console.warn('Trình duyệt chưa cho phép tự động phát audio địa danh.', audioError)
-              }
-            })
-          }
-          setRecognizedExperience(experience)
-          setModelState(experience.model?.url
-            ? modelStates.get(experience.targetIndex) || { status: 'loading', progress: null, message: null }
-            : { status: 'unavailable', progress: null, message: 'Địa danh này chưa có mô hình 3D.' })
-          setStatus('recognized')
-        }
+      const loadModelForTarget = (experience, anchor) => {
+        if (
+          !experience.model?.url
+          || modelStates.has(experience.targetIndex)
+          || loadingModelTargets.has(experience.targetIndex)
+        ) return
 
-        anchor.onTargetLost = () => {
-          if (!mountedRef.current || sessionId !== sessionIdRef.current || recognizedTargetRef.current !== experience.targetIndex) return
+        loadingModelTargets.add(experience.targetIndex)
+        updateModelState(experience.targetIndex, { status: 'loading', progress: null, message: null })
 
-          recognizedTargetRef.current = null
-          stopAudio(audioRef.current)
-          audioRef.current = null
-          setRecognizedExperience(null)
-          setModelState(createIdleModelState())
-          setStatus('scanning')
-        }
-
-
-        if (!experience.model?.url) return
-
-        const updateModelState = (nextState) => {
-          if (!mountedRef.current || sessionId !== sessionIdRef.current) return
-          modelStates.set(experience.targetIndex, nextState)
-          if (recognizedTargetRef.current === experience.targetIndex) setModelState(nextState)
-        }
-
-        updateModelState({ status: 'loading', progress: null, message: null })
         loader.load(
           experience.model.url,
           (gltf) => {
+            loadingModelTargets.delete(experience.targetIndex)
             if (!mountedRef.current || sessionId !== sessionIdRef.current) {
               disposeObject3D(gltf.scene)
               return
@@ -253,22 +360,95 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
                 mixersRef.current.push(mixer)
               }
 
-              updateModelState({ status: 'ready', progress: 100, message: null })
+              updateModelState(experience.targetIndex, { status: 'ready', progress: 100, message: null })
             } catch (modelError) {
               console.error('Không thể chuẩn hóa mô hình AR', modelError)
               disposeObject3D(gltf.scene)
-              updateModelState({ status: 'error', progress: null, message: 'Mô hình 3D không có dữ liệu hiển thị hợp lệ.' })
+              updateModelState(experience.targetIndex, {
+                status: 'error',
+                progress: null,
+                message: 'Mô hình 3D không có dữ liệu hiển thị hợp lệ.',
+              })
             }
           },
           (event) => {
             const progress = event.total > 0 ? Math.min(99, Math.round((event.loaded / event.total) * 100)) : null
-            updateModelState({ status: 'loading', progress, message: null })
+            updateModelState(experience.targetIndex, { status: 'loading', progress, message: null })
           },
           (loadError) => {
+            loadingModelTargets.delete(experience.targetIndex)
             console.error('Không thể tải mô hình AR', loadError)
-            updateModelState({ status: 'error', progress: null, message: 'Không tải được mô hình 3D. Hãy kiểm tra kết nối rồi thử lại.' })
+            updateModelState(experience.targetIndex, {
+              status: 'error',
+              progress: null,
+              message: 'Không tải được mô hình 3D. Hãy kiểm tra kết nối rồi thử lại.',
+            })
           },
         )
+      }
+
+      experiences.forEach((experience) => {
+        const anchor = mindAR.addAnchor(experience.targetIndex)
+        anchor.onTargetFound = () => {
+          if (!mountedRef.current || sessionId !== sessionIdRef.current) return
+
+          if (targetLostTimerRef.current) {
+            window.clearTimeout(targetLostTimerRef.current)
+            targetLostTimerRef.current = null
+          }
+
+          const previousTarget = narrationTargetRef.current
+          if (previousTarget !== experience.targetIndex) {
+            const previousAudio = audioRef.current
+            audioRef.current = null
+            pauseAudio(previousAudio, { reset: true })
+            narrationTargetRef.current = experience.targetIndex
+            narrationManuallyPausedRef.current = false
+            audioRef.current = audioByTargetRef.current.get(experience.targetIndex) || null
+          }
+
+          recognizedTargetRef.current = experience.targetIndex
+          setRecognizedExperience(experience)
+          setStatus('recognized')
+
+          if (experience.audioUrl && audioRef.current) {
+            setNarrationState(audioRef.current.readyState >= 3
+              ? { status: 'ready', message: 'Thuyết minh đã sẵn sàng.' }
+              : { status: 'loading', message: 'Đang tải thuyết minh…' })
+            if (audioRef.current.paused && !narrationManuallyPausedRef.current) playNarration()
+          } else {
+            setNarrationState(createIdleNarrationState())
+          }
+
+          if (!experience.model?.url) {
+            setModelState({ status: 'unavailable', progress: null, message: 'Địa danh này chưa có mô hình 3D.' })
+            return
+          }
+
+          setModelState(modelStates.get(experience.targetIndex) || { status: 'loading', progress: null, message: null })
+          loadModelForTarget(experience, anchor)
+        }
+
+        anchor.onTargetLost = () => {
+          if (!mountedRef.current || sessionId !== sessionIdRef.current || recognizedTargetRef.current !== experience.targetIndex) return
+
+          if (targetLostTimerRef.current) window.clearTimeout(targetLostTimerRef.current)
+          targetLostTimerRef.current = window.setTimeout(() => {
+            targetLostTimerRef.current = null
+            if (
+              !mountedRef.current
+              || sessionId !== sessionIdRef.current
+              || recognizedTargetRef.current !== experience.targetIndex
+            ) return
+
+            recognizedTargetRef.current = null
+            pauseAudio(audioRef.current)
+            setRecognizedExperience(null)
+            setModelState(createIdleModelState())
+            setNarrationState({ status: 'paused', message: 'Thuyết minh đã tạm dừng khi mất thẻ.' })
+            setStatus('scanning')
+          }, TARGET_LOST_GRACE_MS)
+        }
       })
 
       await mindAR.start()
@@ -285,10 +465,11 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     } catch (sessionError) {
       if (!mountedRef.current || sessionId !== sessionIdRef.current) return
       releaseSession()
+      setNarrationState(createIdleNarrationState())
       setError(await getARSessionError(sessionError))
       setStatus('error')
     }
-  }, [experiences, releaseSession])
+  }, [experiences, playNarration, releaseSession])
 
   useEffect(() => {
     const stopWhenHidden = () => {
@@ -310,9 +491,11 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     containerRef,
     error,
     modelState,
+    narrationState,
     recognizedExperience,
     startAR,
     status,
     stopAR,
+    toggleNarration,
   }
 }

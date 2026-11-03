@@ -38,6 +38,7 @@ function HeritageModelViewer({ model, name }) {
     let active = true;
     let animationFrame = null;
     let loadedModel = null;
+    let gridHelper = null;
     let mixer = null;
     const clock = new THREE.Clock();
     const scene = new THREE.Scene();
@@ -121,7 +122,26 @@ function HeritageModelViewer({ model, name }) {
         const normalizedBox = new THREE.Box3().setFromObject(loadedModel);
         const center = normalizedBox.getCenter(new THREE.Vector3());
         loadedModel.position.sub(center);
+        loadedModel.updateMatrixWorld(true);
         scene.add(loadedModel);
+
+        const centeredBox = new THREE.Box3().setFromObject(loadedModel);
+        const centeredSize = centeredBox.getSize(new THREE.Vector3());
+        const gridSize = Math.ceil(
+          Math.max(centeredSize.x, centeredSize.z, 1) * 4.8,
+        ) / 2;
+        const floorOffset = Math.max(centeredSize.y * 0.015, 0.01);
+        gridHelper = new THREE.GridHelper(
+          gridSize,
+          12,
+          0x8b3f80,
+          0xd8bfd3,
+        );
+        gridHelper.position.y = centeredBox.min.y - floorOffset;
+        gridHelper.material.transparent = true;
+        gridHelper.material.opacity = 0.58;
+        gridHelper.material.depthWrite = false;
+        scene.add(gridHelper);
 
         const sphere = normalizedBox.getBoundingSphere(new THREE.Sphere());
         const radius = Math.max(sphere.radius, 0.35);
@@ -165,6 +185,7 @@ function HeritageModelViewer({ model, name }) {
       controlsRef.current = null;
       mixer?.stopAllAction();
       disposeObject3D(loadedModel);
+      disposeObject3D(gridHelper);
       dracoLoader.dispose();
       renderer.dispose();
       renderer.domElement.remove();

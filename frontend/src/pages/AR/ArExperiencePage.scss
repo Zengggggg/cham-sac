@@ -545,34 +545,10 @@ body:has(.ar-page--active) .messenger-wrapper {
 
 .ar-scanner__guide-copy .ui-button { margin-top: 2px; }
 
-.ar-model-status {
-  width: 100%;
-  margin: 2px 0 0;
-  color: var(--ar-muted);
-  font-size: 0.72rem;
+.ar-scanner__detail-button.ui-button {
+  width: fit-content;
+  margin-top: 5px;
 }
-
-.ar-model-status__track {
-  display: block;
-  width: min(220px, 58vw);
-  height: 6px;
-  margin-top: 7px;
-  overflow: hidden;
-  border-radius: 99px;
-  background: var(--ar-line);
-}
-
-.ar-model-status__track > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--ar-pink);
-  transition: width 180ms ease;
-}
-
-.ar-model-status--ready { color: var(--ar-blue); font-weight: 700; }
-.ar-model-status--error { color: var(--ar-pink-dark); }
-.ar-model-status--muted { color: var(--ar-muted); }
 
 .ar-narration-status {
   width: 100%;
@@ -911,7 +887,7 @@ body:has(.ar-catalog) .ui-modal__header p {
   border: 1px solid rgba(114, 50, 126, 0.2);
   border-radius: 999px;
   background: rgba(255, 253, 248, 0.9);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-align: center;
   pointer-events: none;
@@ -933,8 +909,8 @@ body:has(.ar-catalog) .ui-modal__header p {
 
 .ar-model-viewer__controls button {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   place-items: center;
   color: var(--catalog-purple);
@@ -1002,9 +978,95 @@ body:has(.ar-catalog) .ui-modal__header p {
   margin-top: 20px;
 }
 
-.ar-info-modal .ui-modal__body {
-  max-height: min(64svh, 620px);
+.ar-experience-modal.ui-modal__dialog--lg {
+  width: min(100%, 1040px);
+  max-width: 1040px;
+}
+
+.ar-experience-modal .ui-modal__body {
+  max-height: min(72svh, 700px);
   overflow-y: auto;
+}
+
+.ar-experience-card {
+  display: grid;
+  gap: 26px;
+}
+
+.ar-experience-card__viewer {
+  min-width: 0;
+}
+
+.ar-experience-card__viewer .ar-model-viewer {
+  height: clamp(320px, 52svh, 520px);
+  min-height: 320px;
+}
+
+.ar-experience-card__content {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 28px;
+}
+
+.ar-experience-card__model-unavailable {
+  display: grid;
+  min-height: 320px;
+  place-items: center;
+  gap: 12px;
+  padding: 20px;
+  border: 2px solid var(--catalog-purple);
+  border-radius: 12px;
+  background: var(--ar-paper);
+  text-align: center;
+}
+
+.ar-experience-card__model-unavailable img {
+  width: min(100%, 240px);
+  max-height: 280px;
+  object-fit: contain;
+}
+
+.ar-experience-card__model-unavailable p {
+  margin: 0;
+  color: var(--ar-muted);
+}
+
+.ar-experience-card__section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.ar-experience-card__section-heading h3 {
+  margin: 5px 0 0;
+  color: var(--ar-ink);
+  font-family: "Baloo 2", sans-serif;
+  font-size: 1.4rem;
+  line-height: 1.15;
+}
+
+.ar-experience-card__section-heading--questions {
+  justify-content: flex-start;
+  margin-bottom: 16px;
+  padding-top: 24px;
+  border-top: 2px solid var(--ar-line);
+}
+
+.ar-experience-card__section-heading--questions > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--ar-pink-dark);
+}
+
+.ar-experience-card__section-heading--questions h3 { margin-top: 0; }
+
+.ar-experience-card__section-heading--questions p {
+  margin: 3px 0 0;
+  color: var(--ar-muted);
+  font-size: 0.78rem;
 }
 
 .ar-info-place {
@@ -1012,9 +1074,8 @@ body:has(.ar-catalog) .ui-modal__header p {
 }
 
 .ar-info-place__audio {
-  display: block;
-  width: 100%;
-  margin-bottom: 18px;
+  flex: 0 0 auto;
+  margin: 0;
 }
 
 .ar-info-place > p {
@@ -1158,6 +1219,18 @@ body:has(.ar-catalog) .ui-modal__header p {
   .ar-place-detail__layout { grid-template-columns: minmax(210px, 0.7fr) minmax(0, 1.3fr); }
 }
 
+@media (min-width: 820px) {
+  .ar-experience-card {
+    grid-template-columns: minmax(320px, 0.92fr) minmax(0, 1.08fr);
+    align-items: start;
+  }
+
+  .ar-experience-card__viewer {
+    position: sticky;
+    top: 0;
+  }
+}
+
 @media (min-width: 900px) {
   .ar-catalog__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -1260,8 +1333,17 @@ body:has(.ar-catalog) .ui-modal__header p {
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -6px 0 rgba(114, 50, 126, 0.18);
   }
-  .ar-info-modal { max-height: 92svh; }
-  .ar-info-modal .ui-modal__body { max-height: 70svh; }
+  .ar-experience-modal.ui-modal__dialog--lg {
+    width: 100%;
+    max-height: 92svh;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -6px 0 rgba(114, 50, 126, 0.18);
+  }
+  .ar-experience-modal .ui-modal__body { max-height: calc(92svh - 104px); }
+  .ar-experience-card { gap: 22px; }
+  .ar-experience-card__viewer .ar-model-viewer { height: 300px; min-height: 280px; }
+  .ar-experience-card__section-heading { display: grid; }
+  .ar-info-place__audio { width: 100%; }
   .ar-catalog__back.ui-button { width: 38px; padding: 0; }
   .ar-catalog__back.ui-button > span { display: none; }
   .ui-modal__header { padding: 19px 18px; }
@@ -1270,7 +1352,7 @@ body:has(.ar-catalog) .ui-modal__header p {
   .ar-place-card { grid-template-columns: 68px minmax(0, 1fr) auto; min-height: 92px; }
   .ar-place-card > img { width: 68px; height: 68px; }
   .ar-model-viewer { height: 300px; min-height: 260px; }
-  .ar-model-viewer__hint { font-size: 0.6rem; }
+  .ar-model-viewer__hint { font-size: 0.75rem; }
 }
 
 @media (min-width: 561px) and (min-height: 561px) {
@@ -1305,6 +1387,10 @@ body:has(.ar-catalog) .ui-modal__header p {
   .ar-capture-build__tower { animation: ar-build-tower 1.8s ease-in-out infinite; }
   .ar-capture-build__scan { animation: ar-build-scan 1.5s ease-in-out infinite; }
   .ar-capture-build--revealing { animation: ar-reveal-model 700ms ease forwards; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-model-viewer__spinner { animation: none; }
 }
 
 @keyframes ar-model-viewer-spin {

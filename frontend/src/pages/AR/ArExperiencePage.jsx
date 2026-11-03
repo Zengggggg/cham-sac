@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   House,
-  Landmark,
   MapPin,
   RefreshCw,
   ScanLine,
@@ -243,9 +242,10 @@ function ArExperiencePage() {
   const {
     containerRef,
     error,
-    modelState,
     narrationState,
+    pauseAR,
     recognizedExperience,
+    resumeAR,
     startAR,
     status,
     stopAR,
@@ -254,8 +254,7 @@ function ArExperiencePage() {
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [modelPreviewOpen, setModelPreviewOpen] = useState(false);
-  const [infoType, setInfoType] = useState(null);
-  const [infoExperience, setInfoExperience] = useState(null);
+  const [detailExperience, setDetailExperience] = useState(null);
   const [questionState, setQuestionState] = useState({
     status: "idle",
     group: null,
@@ -269,7 +268,7 @@ function ArExperiencePage() {
   const hasFallback = ["error", "insecure", "unsupported"].includes(status);
 
   useEffect(() => {
-    if (infoType !== "questions" || !infoExperience) return undefined;
+    if (!detailExperience) return undefined;
 
     let isCurrentRequest = true;
     listPublicQuestionGroups()
@@ -280,7 +279,7 @@ function ArExperiencePage() {
         }
         setQuestionState({
           status: "ready",
-          group: findQuestionGroup(response.data, infoExperience),
+          group: findQuestionGroup(response.data, detailExperience),
           error: "",
         });
       })
@@ -297,24 +296,23 @@ function ArExperiencePage() {
     return () => {
       isCurrentRequest = false;
     };
-  }, [infoType, infoExperience, questionRetry]);
+  }, [detailExperience, questionRetry]);
 
   const openCatalog = () => {
     setModelPreviewOpen(false);
     setCatalogOpen(true);
   };
-  const openInfo = (type) => {
-    setInfoExperience(recognizedExperience);
-    setInfoType(type);
+  const openRecognizedDetail = () => {
+    if (!recognizedExperience) return;
+    pauseAR();
+    setDetailExperience(recognizedExperience);
     setRevealedAnswers({});
     setSelectedAnswers({});
-    if (type === "questions") {
-      setQuestionState({ status: "loading", group: null, error: "" });
-    }
+    setQuestionState({ status: "loading", group: null, error: "" });
   };
-  const closeInfo = () => {
-    setInfoType(null);
-    setInfoExperience(null);
+  const closeRecognizedDetail = () => {
+    setDetailExperience(null);
+    resumeAR();
   };
   const closeCatalog = () => {
     setCatalogOpen(false);
@@ -404,49 +402,18 @@ function ArExperiencePage() {
                 <div className="ar-scanner__guide-copy">
                   <strong>
                     {recognizedExperience
-                      ? modelState.status === "ready"
-                        ? "Mô hình đang hiển thị trên thẻ"
-                        : modelState.status === "loading"
-                          ? "Đang tải mô hình di sản"
-                          : modelState.status === "error"
-                            ? "Không tải được mô hình"
-                            : "Địa danh chưa có mô hình 3D"
+                      ? `Đã nhận diện ${recognizedExperience.name}`
                       : status === "loading"
                         ? "Đang chuẩn bị bộ nhận diện"
                         : "Đưa hình địa danh vào giữa khung"}
                   </strong>
                   <span>
                     {recognizedExperience
-                      ? modelState.status === "ready"
-                        ? "Giữ thẻ trong khung rồi di chuyển camera để ngắm mô hình từ nhiều góc."
-                        : modelState.status === "loading"
-                          ? "Giữ thẻ ổn định trong lúc mô hình được chuẩn bị."
-                          : modelState.message
+                      ? "Mở thẻ khám phá để xoay, phóng to mô hình và tìm hiểu địa danh."
                       : status === "loading"
                         ? "Lần khởi động đầu tiên có thể mất vài giây."
                         : "Giữ điện thoại ổn định, đủ sáng và cách hình khoảng 20–40 cm."}
                   </span>
-                  {recognizedExperience && modelState.status === "loading" && (
-                    <span
-                      className="ar-model-status"
-                      role="status"
-                      aria-live="polite"
-                    >
-                      {Number.isFinite(modelState.progress)
-                        ? `Đã tải ${modelState.progress}%`
-                        : "Đang tải mô hình…"}
-                      <span
-                        className="ar-model-status__track"
-                        aria-hidden="true"
-                      >
-                        <span
-                          style={{
-                            width: `${Number.isFinite(modelState.progress) ? modelState.progress : 28}%`,
-                          }}
-                        />
-                      </span>
-                    </span>
-                  )}
                   {recognizedExperience?.audioUrl && narrationState.message && (
                     <span
                       className={`ar-narration-status ar-narration-status--${narrationState.status}`}
@@ -456,64 +423,50 @@ function ArExperiencePage() {
                       {narrationState.message}
                     </span>
                   )}
+                  {recognizedExperience && (
+                    <Button
+                      className="ar-scanner__detail-button"
+                      onClick={openRecognizedDetail}
+                      icon={<Box size={18} aria-hidden="true" />}
+                    >
+                      {recognizedExperience.model?.url
+                        ? "Hiện mô hình 3D"
+                        : "Xem thông tin địa danh"}
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
           </>
         )}
 
-        {recognizedExperience &&
-          (recognizedExperience.audioUrl || modelState.status === "ready") && (
+        {recognizedExperience?.audioUrl && (
           <div
             className="ar-model-info-actions"
-            aria-label="Thông tin mô hình đang hiển thị"
+            aria-label="Điều khiển thuyết minh địa danh"
           >
-            {recognizedExperience.audioUrl && (
-              <button
-                className={`ar-model-info-actions__button${narrationState.status === "playing" ? " ar-model-info-actions__button--audio-active" : ""}`}
-                type="button"
-                onClick={toggleNarration}
-                aria-label={
-                  narrationState.status === "playing"
-                    ? `Tạm dừng thuyết minh về ${recognizedExperience.name}`
-                    : `Phát thuyết minh về ${recognizedExperience.name}`
-                }
-                aria-pressed={narrationState.status === "playing"}
-                title={
-                  narrationState.status === "playing"
-                    ? "Tạm dừng thuyết minh"
-                    : "Phát thuyết minh"
-                }
-              >
-                {narrationState.status === "playing" ? (
-                  <Volume2 size={22} aria-hidden="true" />
-                ) : (
-                  <VolumeX size={22} aria-hidden="true" />
-                )}
-              </button>
-            )}
-            {modelState.status === "ready" && (
-              <>
-                <button
-                  className="ar-model-info-actions__button"
-                  type="button"
-                  onClick={() => openInfo("questions")}
-                  aria-label={`Xem câu hỏi về ${recognizedExperience.name}`}
-                  title="Câu hỏi về địa danh"
-                >
-                  <CircleHelp size={22} aria-hidden="true" />
-                </button>
-                <button
-                  className="ar-model-info-actions__button"
-                  type="button"
-                  onClick={() => openInfo("place")}
-                  aria-label={`Xem thông tin ${recognizedExperience.name}`}
-                  title="Thông tin địa danh"
-                >
-                  <Landmark size={21} aria-hidden="true" />
-                </button>
-              </>
-            )}
+            <button
+              className={`ar-model-info-actions__button${narrationState.status === "playing" ? " ar-model-info-actions__button--audio-active" : ""}`}
+              type="button"
+              onClick={toggleNarration}
+              aria-label={
+                narrationState.status === "playing"
+                  ? `Tạm dừng thuyết minh về ${recognizedExperience.name}`
+                  : `Phát thuyết minh về ${recognizedExperience.name}`
+              }
+              aria-pressed={narrationState.status === "playing"}
+              title={
+                narrationState.status === "playing"
+                  ? "Tạm dừng thuyết minh"
+                  : "Phát thuyết minh"
+              }
+            >
+              {narrationState.status === "playing" ? (
+                <Volume2 size={22} aria-hidden="true" />
+              ) : (
+                <VolumeX size={22} aria-hidden="true" />
+              )}
+            </button>
           </div>
         )}
 
@@ -528,8 +481,8 @@ function ArExperiencePage() {
               </h1>
               <p className="ar-intro__lead">
                 Căn một trong {experiences.length} thẻ địa danh vào khung. Khi
-                nhận diện thành công, mô hình 3D xuất hiện trực tiếp trên thẻ
-                qua camera.
+                nhận diện thành công, mở thẻ khám phá để xem mô hình 3D và
+                thông tin địa danh.
               </p>
               <div className="ar-intro__actions">
                 <Button
@@ -560,7 +513,7 @@ function ArExperiencePage() {
               className="ar-intro__guide-card"
               eyebrow="3 BƯỚC KHÁM PHÁ"
               title="Đưa thẻ vào khung"
-              description="Camera nhận diện thẻ và giữ mô hình 3D đúng vị trí để bạn quan sát trong không gian thật."
+              description="Camera nhận diện địa danh, sau đó mở một thẻ khám phá có mô hình 3D tương tác, thông tin và câu hỏi."
             >
               <div className="ar-intro__preview" aria-hidden="true">
                 <span className="ar-intro__preview-corner ar-intro__preview-corner--tl" />
@@ -577,7 +530,7 @@ function ArExperiencePage() {
                   <span>02</span> Căn thẻ địa danh
                 </li>
                 <li>
-                  <span>03</span> Di chuyển để ngắm mô hình
+                  <span>03</span> Mở thẻ khám phá 3D
                 </li>
               </ol>
             </Card>
@@ -606,168 +559,200 @@ function ArExperiencePage() {
       />
 
       <Modal
-        open={Boolean(infoType && infoExperience)}
-        onClose={closeInfo}
-        title={
-          infoType === "questions"
-            ? "Câu hỏi địa danh"
-            : infoExperience?.name || "Thông tin địa danh"
-        }
-        description={
-          infoType === "questions"
-            ? `Câu hỏi public về ${infoExperience?.name || "địa danh đang xem"}.`
-            : [infoExperience?.tagline, infoExperience?.location]
-                .filter(Boolean)
-                .join(" · ")
-        }
+        open={Boolean(detailExperience)}
+        onClose={closeRecognizedDetail}
+        title={detailExperience?.name || "Khám phá địa danh"}
+        description={[detailExperience?.location, detailExperience?.tagline]
+          .filter(Boolean)
+          .join(" · ")}
         size="lg"
-        className="ar-info-modal"
+        className="ar-experience-modal"
       >
-        {infoType === "place" && infoExperience && (
-          <article className="ar-info-place">
-            {infoExperience.audioUrl && (
-              <Button
-                className="ar-info-place__audio"
-                type="button"
-                variant="secondary"
-                onClick={toggleNarration}
-                aria-pressed={narrationState.status === "playing"}
-                icon={
-                  narrationState.status === "playing" ? (
-                    <Volume2 size={19} aria-hidden="true" />
-                  ) : (
-                    <VolumeX size={19} aria-hidden="true" />
-                  )
-                }
-              >
-                {narrationState.status === "playing"
-                  ? "Tạm dừng thuyết minh"
-                  : "Nghe thuyết minh"}
-              </Button>
-            )}
-            <p className="ar-info-place__summary">
-              {infoExperience.shortDescription}
-            </p>
-            {infoExperience.content.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </article>
-        )}
+        {detailExperience && (
+          <article className="ar-experience-card">
+            <div className="ar-experience-card__viewer">
+              {detailExperience.model?.url ? (
+                <HeritageModelViewer
+                  key={detailExperience.id}
+                  model={detailExperience.model}
+                  name={detailExperience.name}
+                />
+              ) : (
+                <div className="ar-experience-card__model-unavailable">
+                  <img
+                    src={detailExperience.targetImage}
+                    alt={`Thẻ địa danh ${detailExperience.name}`}
+                  />
+                  <p>Địa danh này chưa có mô hình 3D.</p>
+                </div>
+              )}
+            </div>
 
-        {infoType === "questions" && (
-          <section
-            className="ar-info-questions"
-            aria-label={`Câu hỏi về ${infoExperience?.name || "địa danh"}`}
-          >
-            {questionState.status === "loading" ? (
-              <p className="ar-info-questions__state" role="status">
-                Đang tải câu hỏi...
-              </p>
-            ) : questionState.status === "error" ? (
-              <div className="ar-info-questions__state" role="alert">
-                <p>{questionState.error}</p>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setQuestionState({
-                      status: "loading",
-                      group: null,
-                      error: "",
-                    });
-                    setQuestionRetry((retry) => retry + 1);
-                  }}
-                >
-                  Thử tải lại
-                </Button>
-              </div>
-            ) : !questionState.group?.questions?.length ? (
-              <p className="ar-info-questions__state">
-                Chưa có câu hỏi public cho địa danh này.
-              </p>
-            ) : (
-              <ol className="ar-info-questions__list">
-                {questionState.group.questions.map((question) => {
-                  const isRevealed = Boolean(revealedAnswers[question.id]);
-                  const selectedOptionIndex = selectedAnswers[question.id];
-                  const isAnswered = Number.isInteger(selectedOptionIndex);
-                  const isCorrect =
-                    selectedOptionIndex === question.correctOptionIndex;
-                  return (
-                    <li key={question.id}>
-                      <p>{question.content}</p>
-                      {question.options?.length > 0 && (
-                        <>
-                          <ul className="ar-info-questions__options">
-                            {question.options.map((option, optionIndex) => (
-                              <li
-                                className={[
-                                  (isRevealed || isAnswered) &&
-                                  optionIndex === question.correctOptionIndex
-                                    ? "is-correct"
-                                    : "",
-                                  isAnswered &&
-                                  optionIndex === selectedOptionIndex &&
-                                  !isCorrect
-                                    ? "is-incorrect"
-                                    : "",
-                                ]
-                                  .filter(Boolean)
-                                  .join(" ")}
-                                key={`${question.id}-${optionIndex}`}
-                              >
+            <div className="ar-experience-card__content">
+              <section
+                className="ar-info-place"
+                aria-labelledby="ar-experience-about-title"
+              >
+                <div className="ar-experience-card__section-heading">
+                  <div>
+                    <span className="ar-place-detail__location">
+                      <MapPin size={16} aria-hidden="true" />
+                      {detailExperience.location}
+                    </span>
+                    <h3 id="ar-experience-about-title">Thông tin địa danh</h3>
+                  </div>
+                  {detailExperience.audioUrl && (
+                    <Button
+                      className="ar-info-place__audio"
+                      type="button"
+                      variant="secondary"
+                      onClick={toggleNarration}
+                      aria-pressed={narrationState.status === "playing"}
+                      icon={
+                        narrationState.status === "playing" ? (
+                          <Volume2 size={19} aria-hidden="true" />
+                        ) : (
+                          <VolumeX size={19} aria-hidden="true" />
+                        )
+                      }
+                    >
+                      {narrationState.status === "playing"
+                        ? "Tạm dừng"
+                        : "Nghe thuyết minh"}
+                    </Button>
+                  )}
+                </div>
+                <p className="ar-info-place__summary">
+                  {detailExperience.shortDescription}
+                </p>
+                {detailExperience.content.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </section>
+
+              <section
+                className="ar-info-questions"
+                aria-labelledby="ar-experience-questions-title"
+              >
+                <div className="ar-experience-card__section-heading ar-experience-card__section-heading--questions">
+                  <CircleHelp size={23} aria-hidden="true" />
+                  <div>
+                    <h3 id="ar-experience-questions-title">Thử tài hiểu biết</h3>
+                    <p>Câu hỏi về {detailExperience.name}</p>
+                  </div>
+                </div>
+
+                {questionState.status === "loading" ? (
+                  <p className="ar-info-questions__state" role="status">
+                    Đang tải câu hỏi...
+                  </p>
+                ) : questionState.status === "error" ? (
+                  <div className="ar-info-questions__state" role="alert">
+                    <p>{questionState.error}</p>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setQuestionState({
+                          status: "loading",
+                          group: null,
+                          error: "",
+                        });
+                        setQuestionRetry((retry) => retry + 1);
+                      }}
+                    >
+                      Thử tải lại
+                    </Button>
+                  </div>
+                ) : !questionState.group?.questions?.length ? (
+                  <p className="ar-info-questions__state">
+                    Chưa có câu hỏi public cho địa danh này.
+                  </p>
+                ) : (
+                  <ol className="ar-info-questions__list">
+                    {questionState.group.questions.map((question) => {
+                      const isRevealed = Boolean(revealedAnswers[question.id]);
+                      const selectedOptionIndex = selectedAnswers[question.id];
+                      const isAnswered = Number.isInteger(selectedOptionIndex);
+                      const isCorrect =
+                        selectedOptionIndex === question.correctOptionIndex;
+                      return (
+                        <li key={question.id}>
+                          <p>{question.content}</p>
+                          {question.options?.length > 0 && (
+                            <>
+                              <ul className="ar-info-questions__options">
+                                {question.options.map((option, optionIndex) => (
+                                  <li
+                                    className={[
+                                      (isRevealed || isAnswered) &&
+                                      optionIndex === question.correctOptionIndex
+                                        ? "is-correct"
+                                        : "",
+                                      isAnswered &&
+                                      optionIndex === selectedOptionIndex &&
+                                      !isCorrect
+                                        ? "is-incorrect"
+                                        : "",
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" ")}
+                                    key={`${question.id}-${optionIndex}`}
+                                  >
+                                    <button
+                                      type="button"
+                                      disabled={isAnswered}
+                                      aria-pressed={
+                                        selectedOptionIndex === optionIndex
+                                      }
+                                      onClick={() =>
+                                        setSelectedAnswers((current) => ({
+                                          ...current,
+                                          [question.id]: optionIndex,
+                                        }))
+                                      }
+                                    >
+                                      <span>
+                                        {String.fromCharCode(65 + optionIndex)}
+                                      </span>
+                                      <p>{option}</p>
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                              {isAnswered ? (
+                                <p
+                                  className={`ar-info-questions__feedback ${isCorrect ? "is-correct" : "is-incorrect"}`}
+                                  role="status"
+                                >
+                                  {isCorrect
+                                    ? "Chính xác!"
+                                    : "Chưa đúng. Đáp án đúng đã được đánh dấu."}
+                                </p>
+                              ) : (
                                 <button
+                                  className="ar-info-questions__answer"
                                   type="button"
-                                  disabled={isAnswered}
-                                  aria-pressed={
-                                    selectedOptionIndex === optionIndex
-                                  }
+                                  aria-expanded={isRevealed}
                                   onClick={() =>
-                                    setSelectedAnswers((current) => ({
+                                    setRevealedAnswers((current) => ({
                                       ...current,
-                                      [question.id]: optionIndex,
+                                      [question.id]: !current[question.id],
                                     }))
                                   }
                                 >
-                                  <span>
-                                    {String.fromCharCode(65 + optionIndex)}
-                                  </span>
-                                  <p>{option}</p>
+                                  {isRevealed ? "Ẩn đáp án" : "Xem đáp án"}
                                 </button>
-                              </li>
-                            ))}
-                          </ul>
-                          {isAnswered ? (
-                            <p
-                              className={`ar-info-questions__feedback ${isCorrect ? "is-correct" : "is-incorrect"}`}
-                              role="status"
-                            >
-                              {isCorrect
-                                ? "Chính xác!"
-                                : "Chưa đúng. Đáp án đúng đã được đánh dấu."}
-                            </p>
-                          ) : (
-                            <button
-                              className="ar-info-questions__answer"
-                              type="button"
-                              aria-expanded={isRevealed}
-                              onClick={() =>
-                                setRevealedAnswers((current) => ({
-                                  ...current,
-                                  [question.id]: !current[question.id],
-                                }))
-                              }
-                            >
-                              {isRevealed ? "Ẩn đáp án" : "Xem đáp án"}
-                            </button>
+                              )}
+                            </>
                           )}
-                        </>
-                      )}
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-          </section>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
+              </section>
+            </div>
+          </article>
         )}
       </Modal>
     </main>

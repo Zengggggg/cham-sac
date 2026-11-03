@@ -43,11 +43,11 @@ MVP không tự động mở rộng sang chatbot/AI assistant, social login ngo�
 AR là tính năng công khai, không yêu cầu đăng nhập và không sử dụng QR.
 
 1. Người dùng mở trang quét AR và cấp quyền camera.
-2. Frontend tải bộ target đã biên dịch chứa 9 image target.
+2. Frontend tải sẵn bộ target đã biên dịch chứa 9 image target, lưu bản có hash vào Cache Storage và dùng HTTP immutable cache làm lớp dự phòng.
 3. AR engine nhận diện hình ảnh trên thiết bị và trả về `target_index`.
 4. Frontend ánh xạ chỉ số này tới đúng địa danh và trải nghiệm AR đang hoạt động.
-5. Model `.glb`, poster và nội dung địa danh được tải từ CDN/object storage.
-6. Model được neo theo image target; khi mất target, model được tạm ẩn hoặc tạm dừng theo cấu hình engine.
+5. Khi nhận diện thành công, frontend hiện nút mở thẻ khám phá và chỉ tải model `.glb` sau thao tác của người dùng.
+6. Thẻ khám phá tạm dừng xử lý camera, cho phép xoay/thu phóng model 3D và hiển thị nội dung, thuyết minh cùng câu hỏi địa danh trong một giao diện.
 7. Nếu thiết bị không hỗ trợ AR hoặc người dùng từ chối camera, giao diện hiển thị thẻ và nội dung địa danh thay thế; model 3D chỉ được xem trong camera AR.
 
 Camera frame và video của người dùng chỉ được xử lý trên thiết bị, không được gửi hoặc lưu trên backend.
@@ -118,7 +118,7 @@ Câu hỏi không tạo thêm collection: câu hỏi public được nhúng tron
 - Mật khẩu và OTP phải được hash; OTP phải hết hạn, giới hạn số lần thử/gửi lại và không được log. Refresh token lưu dưới dạng hash, được xoay khi làm mới và endpoint auth phải có rate limit.
 - Endpoint admin phải kiểm tra role ở backend, không chỉ ẩn chức năng trên giao diện.
 - Nội dung public chỉ trả các bản ghi có trạng thái `active`.
-- Model production phải dùng `.glb` và tên file chứa hash/version để tránh CDN trả asset cũ. Frontend chỉ tải model của target đã nhận diện; Vercel cache model trong 1 giờ ở trình duyệt, 1 ngày ở edge và cache audio thuyết minh trong 1 ngày ở trình duyệt, 1 tuần ở edge.
+- Model production phải dùng `.glb` và tên file chứa hash/version để tránh CDN trả asset cũ. Frontend chỉ tải model sau khi nhận diện target và người dùng mở thẻ khám phá; Vercel cache model trong 1 giờ ở trình duyệt, 1 ngày ở edge và cache audio thuyết minh trong 1 ngày ở trình duyệt, 1 tuần ở edge. Các asset build có content hash được cache immutable trong 1 năm; bundle MindAR được tải sẵn vào Cache Storage và tự quay về HTTP cache nếu trình duyệt nhúng không cho phép lưu cục bộ.
 
 ## Trạng thái nghiệp vụ
 
@@ -149,7 +149,7 @@ Payment: pending -> success
 | payOS provider/webhook | Đã có payment link, webhook xác minh chữ ký và xử lý idempotent |
 | Nội dung di sản | Đã có backend admin CRUD và public API `GET /chamsacviet/ar/experiences` cho cấu hình AR đã xuất bản |
 | Câu hỏi địa danh | Đã có danh sách public theo địa danh, CRUD danh sách private của user và CRUD câu hỏi public dành cho admin |
-| Image tracking/WebAR | Đã có trang công khai `/ar`, MindAR image tracking cho 8 thẻ đầu tiên (`target_index` 0–7), tải model GLB kèm tiến độ/lỗi và neo model trực tiếp lên thẻ trong camera; không có viewer 3D độc lập |
+| Image tracking/WebAR | Đã có trang công khai `/ar`, MindAR image tracking cho 9 thẻ (`target_index` 0–8), tải sẵn/cache bundle nhận diện; sau khi nhận diện, người dùng mở thẻ khám phá có viewer GLB tương tác, thông tin, thuyết minh và câu hỏi địa danh |
 | R2/CDN integration | Đã có upload ảnh sản phẩm trực tiếp từ frontend bằng presigned URL do backend cấp; cần cấu hình bucket, credential, public domain và CORS theo môi trường |
 | Admin | Đã có backend dashboard, quản lý user, sản phẩm, tồn kho, đơn, luật chơi, địa danh và cấu hình model AR; frontend chưa triển khai |
 | Automated tests | Đã có test cho auth, response contract, MongoDB, shop rules, order state và payOS |

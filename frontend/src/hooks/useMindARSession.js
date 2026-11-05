@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import * as THREE from 'three'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import targetBundleUrl from '../assets/ar-targets/heritage-targets.mind?url'
 import { HERITAGE_EXPERIENCES } from '../data/heritageExperiences.js'
 import { prefetchMindARTarget, prepareMindARTargetSource } from '../services/mindARTargetCache.js'
 
 const TARGET_LOST_GRACE_MS = 1200
+const MODEL_TARGET_ROTATION_X = Math.PI / 2
+const MODEL_TARGET_SIZE = 0.78
 
 const createIdleNarrationState = () => ({ status: 'idle', message: null })
 
@@ -52,6 +57,79 @@ const getARSessionError = async (error) => {
   return { code: 'ar-start-failed', message: 'Không thể khởi động bộ nhận diện AR. Hãy tải lại trang và thử lại.' }
 }
 
+const disposeObject3D = (root) => {
+  root?.traverse((object) => {
+    object.geometry?.dispose()
+    const materials = Array.isArray(object.material) ? object.material : [object.material]
+    materials.filter(Boolean).forEach((material) => {
+      Object.values(material).forEach((value) => {
+        if (value?.isTexture) value.dispose()
+      })
+      material.dispose?.()
+    })
+  })
+}
+
+const normalizeModelForTarget = (model, config = {}) => {
+  const rotation = config.rotation || {}
+  model.rotation.set(rotation.x || 0, rotation.y || 0, rotation.z || 0)
+  model.updateMatrixWorld(true)
+
+  const box = new THREE.Box3().setFromObject(model)
+  const size = box.getSize(new THREE.Vector3())
+  const maxDimension = Math.max(size.x, size.y, size.z)
+  if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
+    throw new Error('Mô hình không có kích thước hợp lệ.')
+  }
+
+  model.scale.multiplyScalar((MODEL_TARGET_SIZE / maxDimension) * (config.scale || 1))
+  model.updateMatrixWorld(true)
+
+  const normalizedBox = new THREE.Box3().setFromObject(model)
+  const center = normalizedBox.getCenter(new THREE.Vector3())
+  model.position.set(-center.x, -normalizedBox.min.y, -center.z)
+}
+
+const loadModelOntoAnchor = (loader, anchorGroup, model) => new Promise((resolve, reject) => {
+  loader.load(
+    model.url,
+    (gltf) => {
+      try {
+        normalizeModelForTarget(gltf.scene, model)
+
+        const targetOrientedRoot = new THREE.Group()
+        const position = model.position || {}
+        targetOrientedRoot.position.set(position.x || 0, position.y || 0, position.z || 0)
+        // MindAR targets lie on XY while glTF models are Y-up. Rotating the
+        // normalized model makes it stand out from the physical card surface.
+        targetOrientedRoot.rotation.x = MODEL_TARGET_ROTATION_X
+        targetOrientedRoot.add(gltf.scene)
+        anchorGroup.add(targetOrientedRoot)
+
+        let mixer = null
+        if (gltf.animations?.length) {
+          mixer = new THREE.AnimationMixer(gltf.scene)
+          gltf.animations.forEach((clip) => mixer.clipAction(clip).play())
+        }
+
+        resolve({
+          mixer,
+          cleanup: () => {
+            mixer?.stopAllAction()
+            anchorGroup.remove(targetOrientedRoot)
+            disposeObject3D(gltf.scene)
+          },
+        })
+      } catch (modelError) {
+        disposeObject3D(gltf.scene)
+        reject(modelError)
+      }
+    },
+    undefined,
+    reject,
+  )
+})
+
 export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const containerRef = useRef(null)
   const mindARRef = useRef(null)
@@ -64,6 +142,9 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const narrationTargetRef = useRef(null)
   const narrationManuallyPausedRef = useRef(false)
   const releaseTargetSourceRef = useRef(null)
+  const anchorModelCleanupsRef = useRef(new Map())
+  const mixersRef = useRef([])
+  const dracoLoaderRef = useRef(null)
   const [status, setStatus] = useState(getSupportStatus)
   const [error, setError] = useState(null)
   const [recognizedExperience, setRecognizedExperience] = useState(null)
@@ -136,6 +217,12 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     audioRef.current = null
     audioByTargetRef.current.forEach(releaseAudio)
     audioByTargetRef.current.clear()
+
+    anchorModelCleanupsRef.current.forEach((cleanup) => cleanup?.())
+    anchorModelCleanupsRef.current.clear()
+    mixersRef.current = []
+    dracoLoaderRef.current?.dispose()
+    dracoLoaderRef.current = null
 
     const mindAR = mindARRef.current
     mindARRef.current = null
@@ -210,7 +297,6 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     setStatus('loading')
 
     // Voice files are small compared with the GLB assets, so prepare them first.
-    // Reusing these elements also lets a manual tap reliably recover from autoplay blocking.
     experiences.forEach((experience) => {
       if (!experience.audioUrl) return
 
@@ -287,8 +373,48 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       })
       mindARRef.current = mindAR
 
+      mindAR.scene.add(new THREE.HemisphereLight(0xfff8ed, 0x5d4255, 2.6))
+      const keyLight = new THREE.DirectionalLight(0xffffff, 3.2)
+      keyLight.position.set(-3, 5, 4)
+      mindAR.scene.add(keyLight)
+
+      const loader = new GLTFLoader()
+      const dracoLoader = new DRACOLoader()
+      dracoLoader.setDecoderPath('/draco/')
+      dracoLoader.setWorkerLimit(2)
+      loader.setDRACOLoader(dracoLoader)
+      dracoLoaderRef.current = dracoLoader
+      const modelLoadPromises = new Map()
+
+      const loadModelForTarget = (experience, anchor) => {
+        if (
+          !experience.model?.url
+          || anchorModelCleanupsRef.current.has(experience.targetIndex)
+          || modelLoadPromises.has(experience.targetIndex)
+        ) return
+
+        const loadPromise = loadModelOntoAnchor(loader, anchor.group, experience.model)
+          .then(({ cleanup, mixer }) => {
+            if (!mountedRef.current || sessionId !== sessionIdRef.current) {
+              cleanup()
+              return
+            }
+
+            anchorModelCleanupsRef.current.set(experience.targetIndex, cleanup)
+            if (mixer) mixersRef.current.push(mixer)
+          })
+          .catch((modelError) => {
+            modelLoadPromises.delete(experience.targetIndex)
+            if (!mountedRef.current || sessionId !== sessionIdRef.current) return
+            console.error(`Không thể tải mô hình AR cho ${experience.name}.`, modelError)
+          })
+
+        modelLoadPromises.set(experience.targetIndex, loadPromise)
+      }
+
       experiences.forEach((experience) => {
         const anchor = mindAR.addAnchor(experience.targetIndex)
+
         anchor.onTargetFound = () => {
           if (!mountedRef.current || sessionId !== sessionIdRef.current) return
 
@@ -319,6 +445,8 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
           } else {
             setNarrationState(createIdleNarrationState())
           }
+
+          loadModelForTarget(experience, anchor)
         }
 
         anchor.onTargetLost = () => {
@@ -346,6 +474,13 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       releaseTargetSourceRef.current?.()
       releaseTargetSourceRef.current = null
       if (!mountedRef.current || sessionId !== sessionIdRef.current) return
+
+      const clock = new THREE.Clock()
+      mindAR.renderer.setAnimationLoop(() => {
+        const delta = clock.getDelta()
+        mixersRef.current.forEach((mixer) => mixer.update(delta))
+        mindAR.renderer.render(mindAR.scene, mindAR.camera)
+      })
       setStatus('scanning')
     } catch (sessionError) {
       if (!mountedRef.current || sessionId !== sessionIdRef.current) return

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
+import { RotateCcw, RotateCw } from "lucide-react";
 import * as THREE from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-const UP_AXIS = new THREE.Vector3(0, 1, 0);
+const VIEWER_BACKGROUND = 0x17131f;
+const GRID_AXIS_COLOR = 0xffd166;
+const GRID_LINE_COLOR = 0xb8aec4;
 
 const disposeObject3D = (root) => {
   root?.traverse((object) => {
@@ -24,7 +25,7 @@ const disposeObject3D = (root) => {
 
 function HeritageModelViewer({ model, name }) {
   const containerRef = useRef(null);
-  const controlsRef = useRef(null);
+  const modelPivotRef = useRef(null);
   const [attempt, setAttempt] = useState(0);
   const [viewerState, setViewerState] = useState({
     status: "loading",
@@ -39,10 +40,16 @@ function HeritageModelViewer({ model, name }) {
     let animationFrame = null;
     let loadedModel = null;
     let gridHelper = null;
+    let environmentSphere = null;
+    let environmentTexture = null;
+    let environmentRenderTarget = null;
     let mixer = null;
     const clock = new THREE.Clock();
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf8f4ec);
+    scene.background = new THREE.Color(VIEWER_BACKGROUND);
+    const modelPivot = new THREE.Group();
+    scene.add(modelPivot);
+    modelPivotRef.current = modelPivot;
 
     const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 100);
     camera.position.set(1.6, 1.05, 2.4);
@@ -54,16 +61,71 @@ function HeritageModelViewer({ model, name }) {
     renderer.toneMappingExposure = 1.15;
     container.appendChild(renderer.domElement);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.enablePan = false;
-    controls.minDistance = 0.45;
-    controls.maxDistance = 8;
-    controls.target.set(0, 0.15, 0);
-    controls.touches.ONE = THREE.TOUCH.ROTATE;
-    controls.touches.TWO = THREE.TOUCH.DOLLY_ROTATE;
-    controls.update();
-    controlsRef.current = { camera, controls };
+    let activePointerId = null;
+    let previousPointerX = 0;
+    const handlePointerDown = (event) => {
+      if (!loadedModel) return;
+      activePointerId = event.pointerId;
+      previousPointerX = event.clientX;
+      renderer.domElement.setPointerCapture(event.pointerId);
+    };
+    const handlePointerMove = (event) => {
+      if (activePointerId !== event.pointerId) return;
+      const deltaX = event.clientX - previousPointerX;
+      previousPointerX = event.clientX;
+      modelPivot.rotation.y += deltaX * 0.01;
+    };
+    const handlePointerEnd = (event) => {
+      if (activePointerId !== event.pointerId) return;
+      if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+        renderer.domElement.releasePointerCapture(event.pointerId);
+      }
+      activePointerId = null;
+    };
+    renderer.domElement.addEventListener("pointerdown", handlePointerDown);
+    renderer.domElement.addEventListener("pointermove", handlePointerMove);
+    renderer.domElement.addEventListener("pointerup", handlePointerEnd);
+    renderer.domElement.addEventListener("pointercancel", handlePointerEnd);
+
+    if (model.environmentUrl) {
+      new THREE.TextureLoader().load(
+        model.environmentUrl,
+        (texture) => {
+          if (!active) {
+            texture.dispose();
+            return;
+          }
+
+          texture.mapping = THREE.EquirectangularReflectionMapping;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          environmentTexture = texture;
+
+          const pmremGenerator = new THREE.PMREMGenerator(renderer);
+          pmremGenerator.compileEquirectangularShader();
+          environmentRenderTarget = pmremGenerator.fromEquirectangular(texture);
+          scene.environment = environmentRenderTarget.texture;
+          pmremGenerator.dispose();
+
+          texture.mapping = THREE.UVMapping;
+          texture.needsUpdate = true;
+          environmentSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(50, 64, 32),
+            new THREE.MeshBasicMaterial({
+              map: texture,
+              side: THREE.BackSide,
+              toneMapped: false,
+            }),
+          );
+          environmentSphere.rotation.x = model.environmentPitch || 0;
+          environmentSphere.frustumCulled = false;
+          modelPivot.add(environmentSphere);
+        },
+        undefined,
+        () => {
+          // Keep the dark viewer background when the optional environment fails.
+        },
+      );
+    }
 
     scene.add(new THREE.HemisphereLight(0xffffff, 0x6d5875, 2.8));
     const keyLight = new THREE.DirectionalLight(0xffffff, 4);
@@ -123,33 +185,35 @@ function HeritageModelViewer({ model, name }) {
         const center = normalizedBox.getCenter(new THREE.Vector3());
         loadedModel.position.sub(center);
         loadedModel.updateMatrixWorld(true);
-        scene.add(loadedModel);
+        modelPivot.add(loadedModel);
 
         const centeredBox = new THREE.Box3().setFromObject(loadedModel);
         const centeredSize = centeredBox.getSize(new THREE.Vector3());
-        const gridSize = Math.ceil(
-          Math.max(centeredSize.x, centeredSize.z, 1) * 4.8,
-        ) / 2;
+        const hasEnvironment = Boolean(model.environmentUrl);
+        const gridSize = hasEnvironment
+          ? Math.max(centeredSize.x, centeredSize.z, 0.75) * 1.2
+          : Math.ceil(Math.max(centeredSize.x, centeredSize.z, 1) * 4.8) / 2;
         const floorOffset = Math.max(centeredSize.y * 0.015, 0.01);
+        const floorY = hasEnvironment
+          ? centeredBox.min.y
+          : centeredBox.min.y - floorOffset;
+
         gridHelper = new THREE.GridHelper(
           gridSize,
-          12,
-          0x8b3f80,
-          0xd8bfd3,
+          hasEnvironment ? 6 : 12,
+          GRID_AXIS_COLOR,
+          GRID_LINE_COLOR,
         );
-        gridHelper.position.y = centeredBox.min.y - floorOffset;
+        gridHelper.position.y = floorY + 0.002;
         gridHelper.material.transparent = true;
-        gridHelper.material.opacity = 0.58;
+        gridHelper.material.opacity = hasEnvironment ? 0.44 : 0.86;
         gridHelper.material.depthWrite = false;
-        scene.add(gridHelper);
+        modelPivot.add(gridHelper);
 
         const sphere = normalizedBox.getBoundingSphere(new THREE.Sphere());
         const radius = Math.max(sphere.radius, 0.35);
-        controls.minDistance = radius * 1.15;
-        controls.maxDistance = radius * 8;
         camera.position.set(radius * 1.8, radius * 1.15, radius * 2.7);
-        controls.target.set(0, 0, 0);
-        controls.update();
+        camera.lookAt(0, 0, 0);
 
         if (gltf.animations?.length) {
           mixer = new THREE.AnimationMixer(loadedModel);
@@ -172,7 +236,6 @@ function HeritageModelViewer({ model, name }) {
     const render = () => {
       animationFrame = requestAnimationFrame(render);
       mixer?.update(clock.getDelta());
-      controls.update();
       renderer.render(scene, camera);
     };
     render();
@@ -181,40 +244,27 @@ function HeritageModelViewer({ model, name }) {
       active = false;
       if (animationFrame) cancelAnimationFrame(animationFrame);
       resizeObserver.disconnect();
-      controls.dispose();
-      controlsRef.current = null;
+      renderer.domElement.removeEventListener("pointerdown", handlePointerDown);
+      renderer.domElement.removeEventListener("pointermove", handlePointerMove);
+      renderer.domElement.removeEventListener("pointerup", handlePointerEnd);
+      renderer.domElement.removeEventListener("pointercancel", handlePointerEnd);
+      modelPivotRef.current = null;
       mixer?.stopAllAction();
       disposeObject3D(loadedModel);
       disposeObject3D(gridHelper);
+      environmentSphere?.geometry.dispose();
+      environmentSphere?.material.dispose();
+      environmentRenderTarget?.dispose();
+      environmentTexture?.dispose();
       dracoLoader.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };
   }, [attempt, model]);
 
-  const zoom = (factor) => {
-    const activeControls = controlsRef.current;
-    if (!activeControls) return;
-    const { camera, controls } = activeControls;
-    const offset = camera.position.clone().sub(controls.target);
-    const distance = THREE.MathUtils.clamp(
-      offset.length() * factor,
-      controls.minDistance,
-      controls.maxDistance,
-    );
-    camera.position.copy(controls.target).add(offset.setLength(distance));
-    controls.update();
-  };
-
   const rotate = (angle) => {
-    const activeControls = controlsRef.current;
-    if (!activeControls) return;
-    const { camera, controls } = activeControls;
-    const offset = camera.position.clone().sub(controls.target);
-    offset.applyAxisAngle(UP_AXIS, angle);
-    camera.position.copy(controls.target).add(offset);
-    camera.lookAt(controls.target);
-    controls.update();
+    if (!modelPivotRef.current) return;
+    modelPivotRef.current.rotation.y += angle;
   };
 
   return (
@@ -255,7 +305,7 @@ function HeritageModelViewer({ model, name }) {
       {viewerState.status === "ready" && (
         <>
           <p className="ar-model-viewer__hint">
-            Kéo để xoay · Chụm hai ngón hoặc cuộn để thu phóng
+            Kéo ngang để xoay mô hình
           </p>
           <div className="ar-model-viewer__controls" aria-label="Điều khiển mô hình 3D">
             <button type="button" onClick={() => rotate(Math.PI / 8)} aria-label="Xoay mô hình sang trái">
@@ -263,12 +313,6 @@ function HeritageModelViewer({ model, name }) {
             </button>
             <button type="button" onClick={() => rotate(-Math.PI / 8)} aria-label="Xoay mô hình sang phải">
               <RotateCw size={19} aria-hidden="true" />
-            </button>
-            <button type="button" onClick={() => zoom(0.82)} aria-label="Phóng to mô hình">
-              <ZoomIn size={19} aria-hidden="true" />
-            </button>
-            <button type="button" onClick={() => zoom(1.22)} aria-label="Thu nhỏ mô hình">
-              <ZoomOut size={19} aria-hidden="true" />
             </button>
           </div>
         </>

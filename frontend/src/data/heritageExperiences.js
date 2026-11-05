@@ -11,6 +11,7 @@ import muiCaMauTarget from '../assets/ar-targets/mui-ca-mau-card.png'
 const AR_ASSET_ORIGIN = 'https://assets.chamsacviet.io.vn'
 
 export const THAP_RUA_MODEL_URL = '/ar-assets/models/thap-rua/Meshy_AI_turtle_tower_ar_optim_1015064523_texture.glb'
+export const HO_GUOM_ENVIRONMENT_URL = '/environments/ho-guom-tower-islet-360-v2.webp'
 export const QUOC_TU_GIAM_MODEL_URL = '/ar-assets/models/quoc-tu-giam/ban%20mau%20quoc%20tu%20giam%20final.glb'
 export const CAU_RONG_MODEL_URL = '/ar-assets/models/cau-rong/Cau%20rong%20Da%20Nang%20Minh%20Dang%20an%20Cut.glb'
 export const CU_CHI_MODEL_URL = '/ar-assets/models/cu-chi/dia-dao-cu-chi%20%281%29.glb'
@@ -19,6 +20,16 @@ export const DINH_DOC_LAP_MODEL_URL = '/ar-assets/models/dinh-doc-lap/Dinh%20doc
 export const NGO_MON_HUE_MODEL_URL = '/ar-assets/models/ngo-mon-hue/Ngo%20Mon%20Hue%20final%20nhe.glb'
 export const FANSIPAN_MODEL_URL = '/ar-assets/models/fansipan/test%20fansipan.glb'
 export const MUI_CA_MAU_MODEL_URL = '/ar-assets/models/mui-ca-mau/Mui%20Ca%20Mau%20nhe.glb'
+
+// 360 panorama environments (equirectangular, served from /environments/)
+export const CU_CHI_ENVIRONMENT_URL = '/environments/dia-dao-cu-chi-360-v2.webp'
+export const CAU_RONG_ENVIRONMENT_URL = '/environments/cau-rong-da-nang-360-v2.webp'
+export const HOA_LU_ENVIRONMENT_URL = '/environments/co-do-hoa-lu-360-v2.webp'
+export const DINH_DOC_LAP_ENVIRONMENT_URL = '/environments/dinh-doc-lap-360-v2.webp'
+export const VAN_MIEU_ENVIRONMENT_URL = '/environments/van-mieu-quoc-tu-giam-360-v2.webp'
+export const HUE_ENVIRONMENT_URL = '/environments/co-do-hue-360-v2.webp'
+export const FANSIPAN_ENVIRONMENT_URL = '/environments/fansipan-360-v2.webp'
+export const MUI_CA_MAU_ENVIRONMENT_URL = '/environments/mui-ca-mau-360-v2.webp'
 
 const toSameOriginAssetUrl = (url) => {
   if (typeof url !== 'string' || !url.startsWith(`${AR_ASSET_ORIGIN}/`)) return url
@@ -36,6 +47,7 @@ export const HERITAGE_EXPERIENCES = [
     audioUrl: '/audio/heritage/dia-dao-cu-chi.mp3',
     model: {
       url: CU_CHI_MODEL_URL,
+      environmentUrl: CU_CHI_ENVIRONMENT_URL,
       scale: 1,
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -57,6 +69,7 @@ export const HERITAGE_EXPERIENCES = [
     audioUrl: '/audio/heritage/cau-rong-da-nang.mp3',
     model: {
       url: CAU_RONG_MODEL_URL,
+      environmentUrl: CAU_RONG_ENVIRONMENT_URL,
       scale: 2,
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -78,6 +91,7 @@ export const HERITAGE_EXPERIENCES = [
     audioUrl: '/audio/heritage/co-do-hoa-lu.mp3',
     model: {
       url: HOA_LU_MODEL_URL,
+      environmentUrl: HOA_LU_ENVIRONMENT_URL,
       scale: 1,
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -99,6 +113,7 @@ export const HERITAGE_EXPERIENCES = [
     audioUrl: '/audio/heritage/dinh-doc-lap.mp3',
     model: {
       url: DINH_DOC_LAP_MODEL_URL,
+      environmentUrl: DINH_DOC_LAP_ENVIRONMENT_URL,
       scale: 1,
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -120,6 +135,7 @@ export const HERITAGE_EXPERIENCES = [
     audioUrl: '/audio/heritage/van-mieu-quoc-tu-giam.mp3',
     model: {
       url: QUOC_TU_GIAM_MODEL_URL,
+      environmentUrl: VAN_MIEU_ENVIRONMENT_URL,
       scale: 1,
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -141,6 +157,8 @@ export const HERITAGE_EXPERIENCES = [
     audioUrl: '/audio/heritage/ho-guom.mp3',
     model: {
       url: THAP_RUA_MODEL_URL,
+      environmentUrl: HO_GUOM_ENVIRONMENT_URL,
+      environmentPitch: 0.12,
       scale: 1,
       position: { x: 0, y: 0, z: 0.02 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -162,6 +180,7 @@ export const HERITAGE_EXPERIENCES = [
     audioUrl: '/audio/heritage/co-do-hue.mp3',
     model: {
       url: NGO_MON_HUE_MODEL_URL,
+      environmentUrl: HUE_ENVIRONMENT_URL,
       scale: 1,
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -183,6 +202,7 @@ export const HERITAGE_EXPERIENCES = [
     audioUrl: '/audio/heritage/fansipan.mp3',
     model: {
       url: FANSIPAN_MODEL_URL,
+      environmentUrl: FANSIPAN_ENVIRONMENT_URL,
       scale: 1,
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -204,6 +224,7 @@ export const HERITAGE_EXPERIENCES = [
     audioUrl: '/audio/heritage/mui-ca-mau.mp3',
     model: {
       url: MUI_CA_MAU_MODEL_URL,
+      environmentUrl: MUI_CA_MAU_ENVIRONMENT_URL,
       scale: 1,
       position: { x: 0, y: 0, z: 0 },
       rotation: { x: 0, y: 0, z: 0 },
@@ -247,7 +268,11 @@ export function mergeHeritageExperiences(remoteExperiences = []) {
       content: normalizeContent(remote.content, fallback.content),
       targetImageUrl: remote.targetImageUrl || fallback.targetImageUrl,
       model: remote.model?.url
-        ? { ...remote.model, url: toSameOriginAssetUrl(remote.model.url) }
+        ? {
+            ...fallback.model,
+            ...remote.model,
+            url: toSameOriginAssetUrl(remote.model.url),
+          }
         : fallback.model,
     }
   })

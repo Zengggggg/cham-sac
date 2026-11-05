@@ -409,7 +409,7 @@ function ArExperiencePage() {
                   </strong>
                   <span>
                     {recognizedExperience
-                      ? "Mở thẻ khám phá để xoay, phóng to mô hình và tìm hiểu địa danh."
+                      ? "Mô hình 3D đang hiển thị trên thẻ. Mở thẻ khám phá để xem chi tiết và xoay mô hình."
                       : status === "loading"
                         ? "Lần khởi động đầu tiên có thể mất vài giây."
                         : "Giữ điện thoại ổn định, đủ sáng và cách hình khoảng 20–40 cm."}

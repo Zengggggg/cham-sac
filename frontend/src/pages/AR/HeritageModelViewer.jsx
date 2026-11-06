@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw, RotateCw } from "lucide-react";
+import { RotateCcw, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
 import * as THREE from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -7,6 +7,9 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 const VIEWER_BACKGROUND = 0x17131f;
 const GRID_AXIS_COLOR = 0xffd166;
 const GRID_LINE_COLOR = 0xb8aec4;
+const VIEWER_ZOOM_MIN = 0.65;
+const VIEWER_ZOOM_MAX = 2.4;
+const VIEWER_ZOOM_STEP = 0.2;
 
 const disposeObject3D = (root) => {
   root?.traverse((object) => {
@@ -26,6 +29,8 @@ const disposeObject3D = (root) => {
 function HeritageModelViewer({ model, name }) {
   const containerRef = useRef(null);
   const modelPivotRef = useRef(null);
+  const cameraRef = useRef(null);
+  const zoomRef = useRef(1);
   const [attempt, setAttempt] = useState(0);
   const [viewerState, setViewerState] = useState({
     status: "loading",
@@ -53,6 +58,8 @@ function HeritageModelViewer({ model, name }) {
 
     const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 100);
     camera.position.set(1.6, 1.05, 2.4);
+    cameraRef.current = camera;
+    zoomRef.current = 1;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -61,31 +68,66 @@ function HeritageModelViewer({ model, name }) {
     renderer.toneMappingExposure = 1.15;
     container.appendChild(renderer.domElement);
 
-    let activePointerId = null;
-    let previousPointerX = 0;
+    const pointers = new Map();
+    let previousPointerX = null;
+    let previousPinchDistance = null;
+    const applyZoom = (nextZoom) => {
+      const zoom = THREE.MathUtils.clamp(
+        nextZoom,
+        VIEWER_ZOOM_MIN,
+        VIEWER_ZOOM_MAX,
+      );
+      zoomRef.current = zoom;
+      camera.zoom = zoom;
+      camera.updateProjectionMatrix();
+    };
     const handlePointerDown = (event) => {
       if (!loadedModel) return;
-      activePointerId = event.pointerId;
-      previousPointerX = event.clientX;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pointers.size === 1) previousPointerX = event.clientX;
       renderer.domElement.setPointerCapture(event.pointerId);
     };
     const handlePointerMove = (event) => {
-      if (activePointerId !== event.pointerId) return;
-      const deltaX = event.clientX - previousPointerX;
+      if (!pointers.has(event.pointerId)) return;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+      if (pointers.size >= 2) {
+        const [first, second] = [...pointers.values()];
+        const pinchDistance = Math.hypot(
+          first.x - second.x,
+          first.y - second.y,
+        );
+        if (previousPinchDistance) {
+          applyZoom(zoomRef.current * (pinchDistance / previousPinchDistance));
+        }
+        previousPinchDistance = pinchDistance;
+        return;
+      }
+
+      if (previousPointerX === null) previousPointerX = event.clientX;
+      modelPivot.rotation.y += (event.clientX - previousPointerX) * 0.01;
       previousPointerX = event.clientX;
-      modelPivot.rotation.y += deltaX * 0.01;
     };
     const handlePointerEnd = (event) => {
-      if (activePointerId !== event.pointerId) return;
+      if (!pointers.has(event.pointerId)) return;
+      pointers.delete(event.pointerId);
       if (renderer.domElement.hasPointerCapture(event.pointerId)) {
         renderer.domElement.releasePointerCapture(event.pointerId);
       }
-      activePointerId = null;
+      previousPinchDistance = null;
+      const [remainingPointer] = pointers.values();
+      previousPointerX = remainingPointer?.x ?? null;
+    };
+    const handleWheel = (event) => {
+      if (!loadedModel) return;
+      event.preventDefault();
+      applyZoom(zoomRef.current - event.deltaY * 0.0015);
     };
     renderer.domElement.addEventListener("pointerdown", handlePointerDown);
     renderer.domElement.addEventListener("pointermove", handlePointerMove);
     renderer.domElement.addEventListener("pointerup", handlePointerEnd);
     renderer.domElement.addEventListener("pointercancel", handlePointerEnd);
+    renderer.domElement.addEventListener("wheel", handleWheel, { passive: false });
 
     if (model.environmentUrl) {
       new THREE.TextureLoader().load(
@@ -248,7 +290,9 @@ function HeritageModelViewer({ model, name }) {
       renderer.domElement.removeEventListener("pointermove", handlePointerMove);
       renderer.domElement.removeEventListener("pointerup", handlePointerEnd);
       renderer.domElement.removeEventListener("pointercancel", handlePointerEnd);
+      renderer.domElement.removeEventListener("wheel", handleWheel);
       modelPivotRef.current = null;
+      cameraRef.current = null;
       mixer?.stopAllAction();
       disposeObject3D(loadedModel);
       disposeObject3D(gridHelper);
@@ -265,6 +309,19 @@ function HeritageModelViewer({ model, name }) {
   const rotate = (angle) => {
     if (!modelPivotRef.current) return;
     modelPivotRef.current.rotation.y += angle;
+  };
+
+  const zoom = (delta) => {
+    const camera = cameraRef.current;
+    if (!camera) return;
+    const nextZoom = THREE.MathUtils.clamp(
+      zoomRef.current + delta,
+      VIEWER_ZOOM_MIN,
+      VIEWER_ZOOM_MAX,
+    );
+    zoomRef.current = nextZoom;
+    camera.zoom = nextZoom;
+    camera.updateProjectionMatrix();
   };
 
   return (
@@ -305,7 +362,7 @@ function HeritageModelViewer({ model, name }) {
       {viewerState.status === "ready" && (
         <>
           <p className="ar-model-viewer__hint">
-            Kéo ngang để xoay mô hình
+            Kéo ngang để xoay, chụm/mở hoặc cuộn để thu phóng
           </p>
           <div className="ar-model-viewer__controls" aria-label="Điều khiển mô hình 3D">
             <button type="button" onClick={() => rotate(Math.PI / 8)} aria-label="Xoay mô hình sang trái">
@@ -313,6 +370,22 @@ function HeritageModelViewer({ model, name }) {
             </button>
             <button type="button" onClick={() => rotate(-Math.PI / 8)} aria-label="Xoay mô hình sang phải">
               <RotateCw size={19} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => zoom(VIEWER_ZOOM_STEP)}
+              aria-label="Phóng to mô hình"
+              title="Phóng to"
+            >
+              <ZoomIn size={19} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => zoom(-VIEWER_ZOOM_STEP)}
+              aria-label="Thu nhỏ mô hình"
+              title="Thu nhỏ"
+            >
+              <ZoomOut size={19} aria-hidden="true" />
             </button>
           </div>
         </>

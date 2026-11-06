@@ -5,11 +5,28 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 const VIEWER_BACKGROUND = 0x17131f;
-const GRID_AXIS_COLOR = 0xffd166;
-const GRID_LINE_COLOR = 0xb8aec4;
 const VIEWER_ZOOM_MIN = 0.65;
 const VIEWER_ZOOM_MAX = 2.4;
 const VIEWER_ZOOM_STEP = 0.2;
+const AUTO_ROTATION_SPEED = 0.32;
+
+const createSoftShadowTexture = () => {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const context = canvas.getContext("2d");
+  const gradient = context.createRadialGradient(128, 128, 8, 128, 128, 128);
+  gradient.addColorStop(0, "rgba(0, 0, 0, 0.58)");
+  gradient.addColorStop(0.42, "rgba(0, 0, 0, 0.38)");
+  gradient.addColorStop(0.72, "rgba(0, 0, 0, 0.16)");
+  gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+};
 
 const disposeObject3D = (root) => {
   root?.traverse((object) => {
@@ -44,11 +61,14 @@ function HeritageModelViewer({ model, name }) {
     let active = true;
     let animationFrame = null;
     let loadedModel = null;
-    let gridHelper = null;
+    let groundShadow = null;
     let environmentSphere = null;
     let environmentTexture = null;
     let environmentRenderTarget = null;
     let mixer = null;
+    const autoRotationEnabled = !window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     const clock = new THREE.Clock();
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(VIEWER_BACKGROUND);
@@ -69,6 +89,7 @@ function HeritageModelViewer({ model, name }) {
     container.appendChild(renderer.domElement);
 
     const pointers = new Map();
+    let isPointerInteracting = false;
     let previousPointerX = null;
     let previousPinchDistance = null;
     const applyZoom = (nextZoom) => {
@@ -84,6 +105,7 @@ function HeritageModelViewer({ model, name }) {
     const handlePointerDown = (event) => {
       if (!loadedModel) return;
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      isPointerInteracting = true;
       if (pointers.size === 1) previousPointerX = event.clientX;
       renderer.domElement.setPointerCapture(event.pointerId);
     };
@@ -117,6 +139,7 @@ function HeritageModelViewer({ model, name }) {
       previousPinchDistance = null;
       const [remainingPointer] = pointers.values();
       previousPointerX = remainingPointer?.x ?? null;
+      isPointerInteracting = pointers.size > 0;
     };
     const handleWheel = (event) => {
       if (!loadedModel) return;
@@ -160,7 +183,7 @@ function HeritageModelViewer({ model, name }) {
           );
           environmentSphere.rotation.x = model.environmentPitch || 0;
           environmentSphere.frustumCulled = false;
-          modelPivot.add(environmentSphere);
+          scene.add(environmentSphere);
         },
         undefined,
         () => {
@@ -232,25 +255,27 @@ function HeritageModelViewer({ model, name }) {
         const centeredBox = new THREE.Box3().setFromObject(loadedModel);
         const centeredSize = centeredBox.getSize(new THREE.Vector3());
         const hasEnvironment = Boolean(model.environmentUrl);
-        const gridSize = hasEnvironment
-          ? Math.max(centeredSize.x, centeredSize.z, 0.75) * 1.2
-          : Math.ceil(Math.max(centeredSize.x, centeredSize.z, 1) * 4.8) / 2;
         const floorOffset = Math.max(centeredSize.y * 0.015, 0.01);
-        const floorY = hasEnvironment
-          ? centeredBox.min.y
-          : centeredBox.min.y - floorOffset;
-
-        gridHelper = new THREE.GridHelper(
-          gridSize,
-          hasEnvironment ? 6 : 12,
-          GRID_AXIS_COLOR,
-          GRID_LINE_COLOR,
+        const floorY = centeredBox.min.y - floorOffset;
+        const shadowDiameter = Math.max(
+          centeredSize.x,
+          centeredSize.z,
+          0.75,
+        ) * 1.35;
+        groundShadow = new THREE.Mesh(
+          new THREE.PlaneGeometry(shadowDiameter, shadowDiameter),
+          new THREE.MeshBasicMaterial({
+            map: createSoftShadowTexture(),
+            transparent: true,
+            opacity: hasEnvironment ? 0.52 : 0.72,
+            depthWrite: false,
+            toneMapped: false,
+          }),
         );
-        gridHelper.position.y = floorY + 0.002;
-        gridHelper.material.transparent = true;
-        gridHelper.material.opacity = hasEnvironment ? 0.44 : 0.86;
-        gridHelper.material.depthWrite = false;
-        modelPivot.add(gridHelper);
+        groundShadow.rotation.x = -Math.PI / 2;
+        groundShadow.position.y = floorY;
+        groundShadow.renderOrder = -1;
+        modelPivot.add(groundShadow);
 
         const sphere = normalizedBox.getBoundingSphere(new THREE.Sphere());
         const radius = Math.max(sphere.radius, 0.35);
@@ -277,7 +302,11 @@ function HeritageModelViewer({ model, name }) {
 
     const render = () => {
       animationFrame = requestAnimationFrame(render);
-      mixer?.update(clock.getDelta());
+      const delta = Math.min(clock.getDelta(), 0.1);
+      mixer?.update(delta);
+      if (loadedModel && autoRotationEnabled && !isPointerInteracting) {
+        modelPivot.rotation.y += AUTO_ROTATION_SPEED * delta;
+      }
       renderer.render(scene, camera);
     };
     render();
@@ -295,7 +324,7 @@ function HeritageModelViewer({ model, name }) {
       cameraRef.current = null;
       mixer?.stopAllAction();
       disposeObject3D(loadedModel);
-      disposeObject3D(gridHelper);
+      disposeObject3D(groundShadow);
       environmentSphere?.geometry.dispose();
       environmentSphere?.material.dispose();
       environmentRenderTarget?.dispose();
@@ -362,7 +391,7 @@ function HeritageModelViewer({ model, name }) {
       {viewerState.status === "ready" && (
         <>
           <p className="ar-model-viewer__hint">
-            Kéo ngang để xoay, chụm/mở hoặc cuộn để thu phóng
+            Tự xoay · Kéo để xoay · Chụm/mở hoặc cuộn để thu phóng
           </p>
           <div className="ar-model-viewer__controls" aria-label="Điều khiển mô hình 3D">
             <button type="button" onClick={() => rotate(Math.PI / 8)} aria-label="Xoay mô hình sang trái">

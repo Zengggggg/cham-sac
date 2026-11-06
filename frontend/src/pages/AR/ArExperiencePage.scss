@@ -827,10 +827,10 @@ body:has(.ar-catalog) .ui-modal__header p {
   display: block;
   width: 100%;
   height: 100%;
-  cursor: ew-resize;
+  cursor: grab;
 }
 
-.ar-model-viewer__canvas canvas:active { cursor: ew-resize; }
+.ar-model-viewer__canvas canvas:active { cursor: grabbing; }
 
 .ar-model-viewer__state {
   position: absolute;

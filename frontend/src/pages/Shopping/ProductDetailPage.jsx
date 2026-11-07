@@ -60,12 +60,14 @@ function ProductDetailSkeleton() {
     <main className="product-detail-page product-detail-page--loading" role="status" aria-label="Đang tải sản phẩm">
       <div className="product-detail-shell">
         <Skeleton width={150} height={18} />
+        <div className="product-detail-heading" aria-hidden="true">
+          <Skeleton width="28%" height={13} />
+          <Skeleton className="product-detail-skeleton-title" width="76%" height={76} />
+          <Skeleton className="product-detail-skeleton-lede" count={2} height={16} />
+          <Skeleton className="product-detail-skeleton-rating" width="58%" height={16} />
+        </div>
         <div className="product-detail-layout" aria-hidden="true">
           <section className="product-detail-main">
-            <Skeleton width="28%" height={13} />
-            <Skeleton className="product-detail-skeleton-title" width="76%" height={76} />
-            <Skeleton className="product-detail-skeleton-lede" count={2} height={16} />
-            <Skeleton className="product-detail-skeleton-rating" width="58%" height={16} />
             <div className="product-detail-gallery product-detail-gallery--skeleton">
               <div className="product-detail-thumbnails">
                 {Array.from({ length: 5 }, (_, index) => <Skeleton key={index} />)}
@@ -263,17 +265,20 @@ function ProductDetailPage() {
           Quay lại sản phẩm
         </button>
 
+        <section className="product-detail-heading" aria-labelledby="product-detail-title">
+          <p className="product-detail-eyebrow">
+            <Sparkles size={15} aria-hidden="true" /> Khám phá sản phẩm
+          </p>
+          <h1 id="product-detail-title">{product.name}</h1>
+          <div className="product-detail-rating" aria-label="Được đánh giá 4.9 trên 5">
+            <Star size={17} fill="currentColor" aria-hidden="true" />
+            <strong>4.9</strong>
+            <span>Được yêu thích bởi cộng đồng khám phá di sản</span>
+          </div>
+        </section>
+
         <div className="product-detail-layout">
-          <section className="product-detail-main" aria-labelledby="product-detail-title">
-            <p className="product-detail-eyebrow">
-              <Sparkles size={15} aria-hidden="true" /> Khám phá sản phẩm
-            </p>
-            <h1 id="product-detail-title">{product.name}</h1>
-            <div className="product-detail-rating" aria-label="Được đánh giá 4.9 trên 5">
-              <Star size={17} fill="currentColor" aria-hidden="true" />
-              <strong>4.9</strong>
-              <span>Được yêu thích bởi cộng đồng khám phá di sản</span>
-            </div>
+          <section className="product-detail-main" aria-label="Hình ảnh sản phẩm">
             <div className="product-detail-gallery">
               <div className="product-detail-thumbnails" aria-label="Ảnh sản phẩm">
                 {(product.images?.length ? product.images : [product.image])

@@ -262,7 +262,7 @@ function ListProductPage() {
               <img src={diceElement} alt="" aria-hidden="true" />
             </div>
             <p>Boardgame di sản</p>
-            <strong>{formatMoney(299000)}</strong>
+            <strong>{formatMoney(499000)}</strong>
             <a
               className="product-list-hero__side-arrow"
               href={featuredProductHref}

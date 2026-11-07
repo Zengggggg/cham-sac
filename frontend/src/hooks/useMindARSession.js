@@ -4,9 +4,9 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import targetBundleUrl from '../assets/ar-targets/heritage-targets.mind?url'
 import { HERITAGE_EXPERIENCES } from '../data/heritageExperiences.js'
-import { prefetchMindARTarget, prepareMindARTargetSource } from '../services/mindARTargetCache.js'
 
 const TARGET_LOST_GRACE_MS = 1200
+const CAMERA_FRAME_TIMEOUT_MS = 10000
 const MODEL_TARGET_ROTATION_X = Math.PI / 2
 const MODEL_TARGET_SIZE = 0.78
 
@@ -37,7 +37,125 @@ const getSupportStatus = () => {
   return 'idle'
 }
 
+const createCameraPlaybackError = (cause = null) => {
+  const error = new Error('Camera stream did not produce a playable video frame.')
+  error.name = 'CameraPlaybackError'
+  error.code = 'camera-playback-failed'
+  error.cause = cause
+  return error
+}
+
+const waitForCameraVideoPlayback = (video, signal) => new Promise((resolve, reject) => {
+  if (!video) {
+    reject(createCameraPlaybackError())
+    return
+  }
+
+  let settled = false
+  let playbackTimer = null
+  let videoFrameCallbackId = null
+  let videoTrack = null
+
+  const cleanup = () => {
+    if (playbackTimer) window.clearTimeout(playbackTimer)
+    if (videoFrameCallbackId !== null && typeof video.cancelVideoFrameCallback === 'function') {
+      video.cancelVideoFrameCallback(videoFrameCallbackId)
+    }
+    video.removeEventListener('loadedmetadata', beginPlayback)
+    video.removeEventListener('playing', confirmVideoFrame)
+    video.removeEventListener('canplay', confirmVideoFrame)
+    videoTrack?.removeEventListener('unmute', confirmVideoFrame)
+    videoTrack?.removeEventListener('ended', handleTrackEnded)
+    signal?.removeEventListener('abort', handleAbort)
+  }
+
+  const finish = (callback, value) => {
+    if (settled) return
+    settled = true
+    cleanup()
+    callback(value)
+  }
+
+  const fail = (cause = null) => finish(reject, createCameraPlaybackError(cause))
+
+  function handleTrackEnded() {
+    fail()
+  }
+
+  function handleAbort() {
+    fail()
+  }
+
+  function confirmVideoFrame() {
+    if (settled) return
+
+    videoTrack = video.srcObject?.getVideoTracks?.()[0] || null
+    if (!videoTrack || videoTrack.readyState !== 'live') {
+      fail()
+      return
+    }
+    if (videoTrack.muted || video.paused || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return
+
+    if (typeof video.requestVideoFrameCallback === 'function') {
+      if (videoFrameCallbackId !== null) return
+      videoFrameCallbackId = video.requestVideoFrameCallback(() => finish(resolve))
+      return
+    }
+
+    finish(resolve)
+  }
+
+  function beginPlayback() {
+    if (settled || playbackTimer) return
+
+    videoTrack = video.srcObject?.getVideoTracks?.()[0] || null
+    if (!videoTrack || videoTrack.readyState !== 'live') {
+      fail()
+      return
+    }
+
+    video.autoplay = true
+    video.muted = true
+    video.playsInline = true
+    video.setAttribute('autoplay', '')
+    video.setAttribute('muted', '')
+    video.setAttribute('playsinline', '')
+
+    videoTrack.addEventListener('unmute', confirmVideoFrame)
+    videoTrack.addEventListener('ended', handleTrackEnded, { once: true })
+    playbackTimer = window.setTimeout(() => fail(), CAMERA_FRAME_TIMEOUT_MS)
+
+    let playPromise
+    try {
+      playPromise = video.play()
+    } catch (playbackError) {
+      fail(playbackError)
+      return
+    }
+
+    if (playPromise && typeof playPromise.then === 'function') {
+      playPromise.then(confirmVideoFrame).catch(fail)
+    }
+    confirmVideoFrame()
+  }
+
+  video.addEventListener('loadedmetadata', beginPlayback)
+  video.addEventListener('playing', confirmVideoFrame)
+  video.addEventListener('canplay', confirmVideoFrame)
+  signal?.addEventListener('abort', handleAbort, { once: true })
+
+  if (signal?.aborted) handleAbort()
+  else if (video.readyState >= 1) beginPlayback()
+})
+
 const getARSessionError = async (error) => {
+  if (error?.code === 'camera-playback-failed') {
+    return {
+      code: 'camera-playback-failed',
+      message: 'Camera đã được cấp quyền nhưng chưa phát được hình ảnh. Hãy thử mở lại camera.',
+    }
+  }
+
   let permissionState = null
   try {
     permissionState = await navigator.permissions?.query({ name: 'camera' })
@@ -133,6 +251,7 @@ const loadModelOntoAnchor = (loader, anchorGroup, model) => new Promise((resolve
 export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const containerRef = useRef(null)
   const mindARRef = useRef(null)
+  const cameraPlaybackAbortRef = useRef(null)
   const sessionIdRef = useRef(0)
   const mountedRef = useRef(true)
   const recognizedTargetRef = useRef(null)
@@ -141,7 +260,6 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
   const audioRef = useRef(null)
   const narrationTargetRef = useRef(null)
   const narrationManuallyPausedRef = useRef(false)
-  const releaseTargetSourceRef = useRef(null)
   const anchorModelCleanupsRef = useRef(new Map())
   const mixersRef = useRef([])
   const dracoLoaderRef = useRef(null)
@@ -203,11 +321,11 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
 
   const releaseSession = useCallback(() => {
     sessionIdRef.current += 1
+    cameraPlaybackAbortRef.current?.abort()
+    cameraPlaybackAbortRef.current = null
     recognizedTargetRef.current = null
     narrationTargetRef.current = null
     narrationManuallyPausedRef.current = false
-    releaseTargetSourceRef.current?.()
-    releaseTargetSourceRef.current = null
 
     if (targetLostTimerRef.current) {
       window.clearTimeout(targetLostTimerRef.current)
@@ -296,12 +414,13 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
     setNarrationState(createIdleNarrationState())
     setStatus('loading')
 
-    // Voice files are small compared with the GLB assets, so prepare them first.
+    // Prepare audio elements without downloading all narration files while the
+    // target bundle and camera are starting on a mobile connection.
     experiences.forEach((experience) => {
       if (!experience.audioUrl) return
 
       const audio = new Audio(experience.audioUrl)
-      audio.preload = 'auto'
+      audio.preload = 'none'
 
       const updateForCurrentTarget = (nextState) => {
         if (
@@ -346,24 +465,18 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       })
 
       audioByTargetRef.current.set(experience.targetIndex, audio)
-      audio.load()
     })
 
     try {
-      const [{ MindARThree }, targetSource] = await Promise.all([
-        import('mind-ar/dist/mindar-image-three.prod.js'),
-        prepareMindARTargetSource(targetBundleUrl),
-      ])
-      if (!mountedRef.current || sessionId !== sessionIdRef.current || !containerRef.current) {
-        targetSource.release()
-        return
-      }
-
-      releaseTargetSourceRef.current = targetSource.release
+      const { MindARThree } = await import('mind-ar/dist/mindar-image-three.prod.js')
+      if (!mountedRef.current || sessionId !== sessionIdRef.current || !containerRef.current) return
 
       const mindAR = new MindARThree({
         container: containerRef.current,
-        imageTargetSrc: targetSource.url,
+        // Vite fingerprints this asset and Vercel serves /assets as immutable,
+        // so the browser HTTP cache is sufficient. Avoid blocking camera access
+        // on an extra Cache Storage write and Blob round-trip on iOS.
+        imageTargetSrc: targetBundleUrl,
         maxTrack: 1,
         uiLoading: 'no',
         uiScanning: 'no',
@@ -431,6 +544,10 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
             narrationTargetRef.current = experience.targetIndex
             narrationManuallyPausedRef.current = false
             audioRef.current = audioByTargetRef.current.get(experience.targetIndex) || null
+            if (audioRef.current?.preload === 'none') {
+              audioRef.current.preload = 'auto'
+              audioRef.current.load()
+            }
           }
 
           recognizedTargetRef.current = experience.targetIndex
@@ -470,9 +587,19 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
         }
       })
 
-      await mindAR.start()
-      releaseTargetSourceRef.current?.()
-      releaseTargetSourceRef.current = null
+      // MindAR 1.2 resolves video setup on loadedmetadata. On iOS that does not
+      // guarantee that autoplay started or that a camera frame was rendered.
+      // Start both checks together and do not advertise scanning until both pass.
+      const cameraPlaybackController = new AbortController()
+      cameraPlaybackAbortRef.current = cameraPlaybackController
+      const mindARStartPromise = mindAR.start()
+      await Promise.all([
+        mindARStartPromise,
+        waitForCameraVideoPlayback(mindAR.video, cameraPlaybackController.signal),
+      ])
+      if (cameraPlaybackAbortRef.current === cameraPlaybackController) {
+        cameraPlaybackAbortRef.current = null
+      }
       if (!mountedRef.current || sessionId !== sessionIdRef.current) return
 
       const clock = new THREE.Clock()
@@ -490,12 +617,6 @@ export default function useMindARSession(experiences = HERITAGE_EXPERIENCES) {
       setStatus('error')
     }
   }, [experiences, playNarration, releaseSession])
-
-  useEffect(() => {
-    prefetchMindARTarget(targetBundleUrl).catch((prefetchError) => {
-      console.warn('Không thể tải sẵn bộ nhận diện MindAR.', prefetchError)
-    })
-  }, [])
 
   useEffect(() => {
     const stopWhenHidden = () => {

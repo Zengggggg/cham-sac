@@ -9,6 +9,8 @@ const VIEWER_ZOOM_MIN = 0.65;
 const VIEWER_ZOOM_MAX = 5;
 const VIEWER_ZOOM_STEP = 0.2;
 const AUTO_ROTATION_SPEED = 0.32;
+const VIEWER_TILT_MIN = -Math.PI / 4;
+const VIEWER_TILT_MAX = Math.PI / 4;
 
 const createSoftShadowTexture = () => {
   const canvas = document.createElement("canvas");
@@ -73,6 +75,8 @@ function HeritageModelViewer({ model, name }) {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(VIEWER_BACKGROUND);
     const modelPivot = new THREE.Group();
+    const modelTilt = new THREE.Group();
+    modelPivot.add(modelTilt);
     scene.add(modelPivot);
     modelPivotRef.current = modelPivot;
 
@@ -91,6 +95,7 @@ function HeritageModelViewer({ model, name }) {
     const pointers = new Map();
     let isPointerInteracting = false;
     let previousPointerX = null;
+    let previousPointerY = null;
     let previousPinchDistance = null;
     const applyZoom = (nextZoom) => {
       const zoom = THREE.MathUtils.clamp(
@@ -106,7 +111,10 @@ function HeritageModelViewer({ model, name }) {
       if (!loadedModel) return;
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       isPointerInteracting = true;
-      if (pointers.size === 1) previousPointerX = event.clientX;
+      if (pointers.size === 1) {
+        previousPointerX = event.clientX;
+        previousPointerY = event.clientY;
+      }
       renderer.domElement.setPointerCapture(event.pointerId);
     };
     const handlePointerMove = (event) => {
@@ -127,8 +135,15 @@ function HeritageModelViewer({ model, name }) {
       }
 
       if (previousPointerX === null) previousPointerX = event.clientX;
+      if (previousPointerY === null) previousPointerY = event.clientY;
       modelPivot.rotation.y += (event.clientX - previousPointerX) * 0.01;
+      modelTilt.rotation.x = THREE.MathUtils.clamp(
+        modelTilt.rotation.x + (event.clientY - previousPointerY) * 0.008,
+        VIEWER_TILT_MIN,
+        VIEWER_TILT_MAX,
+      );
       previousPointerX = event.clientX;
+      previousPointerY = event.clientY;
     };
     const handlePointerEnd = (event) => {
       if (!pointers.has(event.pointerId)) return;
@@ -139,6 +154,7 @@ function HeritageModelViewer({ model, name }) {
       previousPinchDistance = null;
       const [remainingPointer] = pointers.values();
       previousPointerX = remainingPointer?.x ?? null;
+      previousPointerY = remainingPointer?.y ?? null;
       isPointerInteracting = pointers.size > 0;
     };
     const handleWheel = (event) => {
@@ -250,7 +266,7 @@ function HeritageModelViewer({ model, name }) {
         const center = normalizedBox.getCenter(new THREE.Vector3());
         loadedModel.position.sub(center);
         loadedModel.updateMatrixWorld(true);
-        modelPivot.add(loadedModel);
+        modelTilt.add(loadedModel);
 
         const centeredBox = new THREE.Box3().setFromObject(loadedModel);
         const centeredSize = centeredBox.getSize(new THREE.Vector3());
@@ -391,7 +407,7 @@ function HeritageModelViewer({ model, name }) {
       {viewerState.status === "ready" && (
         <>
           <p className="ar-model-viewer__hint">
-            Tự xoay · Kéo để xoay · Chụm/mở hoặc cuộn để thu phóng
+            Tự xoay · Kéo ngang/dọc để xem 360° · Chụm/mở hoặc cuộn để thu phóng
           </p>
           <div className="ar-model-viewer__controls" aria-label="Điều khiển mô hình 3D">
             <button type="button" onClick={() => rotate(Math.PI / 8)} aria-label="Xoay mô hình sang trái">

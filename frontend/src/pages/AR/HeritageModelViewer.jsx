@@ -6,7 +6,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 const VIEWER_BACKGROUND = 0x17131f;
 const VIEWER_ZOOM_MIN = 0.65;
-const VIEWER_ZOOM_MAX = 2.4;
+const VIEWER_ZOOM_MAX = 5;
 const VIEWER_ZOOM_STEP = 0.2;
 const AUTO_ROTATION_SPEED = 0.32;
 

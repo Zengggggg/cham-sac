@@ -161,6 +161,8 @@ const steps = [
 
 const MODEL_ZOOM_MIN = 0.4;
 const MODEL_ZOOM_MAX = 5;
+const MODEL_TILT_MIN = -Math.PI / 4;
+const MODEL_TILT_MAX = Math.PI / 4;
 const SMALL_SCREEN_QUERY = "(max-width: 640px)";
 
 function isSmallScreen() {
@@ -200,6 +202,7 @@ function HeroModel() {
     zoom: 1,
     active: false,
     lastX: 0,
+    lastY: 0,
     lastPinchDistance: null,
     pointers: new Map(),
   });
@@ -376,6 +379,7 @@ function HeroModel() {
     });
     interaction.active = true;
     interaction.lastX = event.clientX;
+    interaction.lastY = event.clientY;
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
   const handlePointerMove = (event) => {
@@ -403,7 +407,13 @@ function HeroModel() {
 
     if (!interaction.model) return;
     interaction.model.rotation.y += (event.clientX - interaction.lastX) * 0.012;
+    interaction.model.rotation.x = THREE.MathUtils.clamp(
+      interaction.model.rotation.x + (event.clientY - interaction.lastY) * 0.008,
+      MODEL_TILT_MIN,
+      MODEL_TILT_MAX,
+    );
     interaction.lastX = event.clientX;
+    interaction.lastY = event.clientY;
   };
   const handlePointerUp = (event) => {
     const interaction = interactionRef.current;
@@ -411,7 +421,10 @@ function HeroModel() {
     interaction.active = interaction.pointers.size > 0;
     interaction.lastPinchDistance = null;
     const [remainingPointer] = interaction.pointers.values();
-    if (remainingPointer) interaction.lastX = remainingPointer.x;
+    if (remainingPointer) {
+      interaction.lastX = remainingPointer.x;
+      interaction.lastY = remainingPointer.y;
+    }
     event.currentTarget.releasePointerCapture?.(event.pointerId);
   };
   return (
@@ -419,7 +432,7 @@ function HeroModel() {
       ref={mountRef}
       className="home-hero__model"
       role="group"
-      aria-label="Mô hình 3D Văn Miếu – Quốc Tử Giám. Kéo để xoay, sử dụng các nút điều khiển để thu phóng."
+      aria-label="Mô hình 3D Văn Miếu – Quốc Tử Giám. Kéo ngang hoặc dọc để xem 360 độ, sử dụng các nút điều khiển để thu phóng."
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

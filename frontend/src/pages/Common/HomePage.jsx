@@ -160,7 +160,7 @@ const steps = [
 ];
 
 const MODEL_ZOOM_MIN = 0.4;
-const MODEL_ZOOM_MAX = 2.5;
+const MODEL_ZOOM_MAX = 5;
 const SMALL_SCREEN_QUERY = "(max-width: 640px)";
 
 function isSmallScreen() {

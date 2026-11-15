@@ -12,10 +12,10 @@ export const TEAM_MEMBERS = [
     image: projectLeadImage,
   },
   {
-    id: 'lai-quoc-son',
-    name: 'Lại Quốc Sơn',
-    role: 'Trưởng ban Marketing & Kinh doanh',
-    image: creativeLeadImage,
+    id: 'tran-thu-thuy',
+    name: 'Trần Thu Thủy',
+    role: 'Trưởng ban Nội dung',
+    image: researchLeadImage,
   },
   {
     id: 'nguyen-hoang-bach',
@@ -30,9 +30,9 @@ export const TEAM_MEMBERS = [
     image: financeLeadImage,
   },
   {
-    id: 'tran-thu-thuy',
-    name: 'Trần Thu Thủy',
-    role: 'Trưởng ban Nội dung',
-    image: researchLeadImage,
+    id: 'lai-quoc-son',
+    name: 'Lại Quốc Sơn',
+    role: 'Trưởng ban Marketing & Kinh doanh',
+    image: creativeLeadImage,
   },
 ]

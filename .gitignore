@@ -5,3 +5,6 @@
 /specs
 /node_modules
 /gianghv/
+/.tmp/
+/.vercel/
+/frontend/.vercel/

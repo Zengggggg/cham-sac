@@ -19,6 +19,7 @@ If the specification and codebase conflict, report the conflict before making a 
 - JavaScript with ES modules (`"type": "module"`), not TypeScript or CommonJS.
 - Node.js/Express 4 with Mongoose 8 and MongoDB.
 - Entry point: `backend/src/server.js`.
+- CI and Render use Node `22.22.0` (`backend/.node-version`). Render readiness is `/chamsacviet/health/ready`, which performs a bounded MongoDB ping and returns `RENDER_GIT_COMMIT` as `data.commitSha`; `/status` remains an application liveness check. Workflow and setup: `.github/workflows/cicd.yml`, `docs/cicd/README.md`.
 - The canonical API prefix is `/chamsacviet`, defined by `API_PREFIX` in `backend/src/config/api.js` and mounted in `backend/src/server.js`. Keep code, OpenAPI, tests, Postman assets, and documentation aligned with this prefix.
 - Required environment variables: `MONGODB_URI`, `JWT_SECRET`, `REFRESH_TOKEN_SECRET`, `RESEND_API_KEY`, and `RESEND_FROM_EMAIL`. Payment code additionally requires `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `PAYOS_RETURN_URL`, and `PAYOS_CANCEL_URL` when invoked.
 - Optional environment variables include `MONGODB_DB_NAME` (default `cham_sac_viet`), `PORT` (default `8080`), `FRONTEND_URL` (default `http://localhost:5173`), token lifetimes, bcrypt rounds, Resend sender name, email OTP expiry/attempt/cooldown limits, `SHOP_SHIPPING_FEE_VND` (default `30000`), `ORDER_PAYMENT_EXPIRES_MINUTES` (default `15`), and `ORDER_EXPIRY_INTERVAL_SECONDS` (default `60`). `GOOGLE_CLIENT_ID` is required when Google login is enabled.

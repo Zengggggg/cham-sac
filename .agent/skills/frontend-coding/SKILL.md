@@ -16,8 +16,8 @@ Do not choose an AR engine, guest checkout behavior, or another item listed unde
 - Entry point: `frontend/src/main.jsx`; root component: `frontend/src/App.jsx`.
 - Styling currently uses `src/index.css` and `src/App.css`.
 - ESLint is configured; production output is created in `frontend/dist`.
-- No router, Tailwind CSS, Zustand, React Query, Axios, component library, or automated test runner is currently installed.
-- The frontend does not currently consume environment variables or call the backend.
+- React Router, Material UI, MindAR and Three.js are installed. API requests use `VITE_API_URL` and the `/chamsacviet` prefix. Tailwind CSS, Zustand, React Query and Axios are not installed.
+- `npm test` uses Node's built-in test runner. CI uses Node `24.22.3` from `.node-version`; `engines.node` selects major 24 on Vercel. Production is built with Vercel CLI at repository root while project Root Directory remains `frontend`; direct Git deploys are disabled. See `docs/cicd/README.md`.
 
 Do not write TypeScript or assume an uninstalled library is available. Do not introduce a dependency or application-wide pattern for a local problem without a clear benefit to the requested feature.
 

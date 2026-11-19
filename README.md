@@ -168,7 +168,7 @@ Frontend dùng React Router, Material UI, Lucide, React Hot Toast, MindAR/Three.
 
 ## Yêu cầu môi trường local
 
-- Node.js `20.19+` để đáp ứng yêu cầu của Vite 8 và toàn workspace.
+- Backend dùng Node.js `22.22.0`; frontend dùng Node.js `24.22.3` (Vercel major `24.x`). Phiên bản CI được lưu trong `.node-version` của từng thư mục.
 - npm đi kèm Node.js.
 - MongoDB chạy local hoặc MongoDB Atlas connection string.
 
@@ -341,6 +341,18 @@ Chạy trong `frontend/`:
 | `npm run build` | Tạo production build trong `dist` |
 | `npm run preview` | Xem production build ở local |
 | `npm run lint` | Kiểm tra code bằng ESLint |
+| `npm test` | Chạy test frontend bằng Node.js test runner |
+
+## CI/CD
+
+Workflow [`.github/workflows/cicd.yml`](./.github/workflows/cicd.yml) kiểm tra backend, frontend và script pipeline song song trên PR vào `main`. Khi push/merge vào `main`, CI chạy lại rồi deploy tuần tự **Render → backend smoke → Vercel → frontend smoke**, dùng đúng commit đã kiểm tra. Production build lấy biến môi trường từ Vercel trước khi deploy; PR không dùng secret production.
+
+Render dùng readiness probe `GET /chamsacviet/health/ready`: ping MongoDB có timeout, trả 200 khi sẵn sàng hoặc 503 khi lỗi; `data.commitSha` lấy từ `RENDER_GIT_COMMIT`. `/chamsacviet/status` vẫn được giữ. Frontend artifact có `release.json` để đối chiếu SHA sau deploy.
+
+Cần cấu hình GitHub Environment `production`, Secrets/Variables và tắt auto-deploy trực tiếp trên hosting theo [hướng dẫn CI/CD](./docs/cicd/README.md). Thay đổi file local chưa tự kích hoạt workflow trên GitHub hoặc cấu hình service đã tạo thủ công.
+
+- [Diagram CI/CD](./docs/cicd/pipeline.svg) · [PNG](./docs/cicd/pipeline.png) · [Mermaid source](./docs/cicd/pipeline.mmd)
+- [Kịch bản trình bày với mentor](./docs/cicd/mentor-script.md)
 
 ## Cấu trúc repository
 

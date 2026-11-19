@@ -1,0 +1,26 @@
+flowchart TD
+    PR[Pull request vào main] --> BE[Backend checks · Node 22<br/>npm ci → lint → test]
+    PR --> FE[Frontend checks · Node 24<br/>npm ci → lint → test → build]
+    PR --> PC[Pipeline checks<br/>Cấu hình · deploy orchestration · smoke tests]
+    BE --> GATE{Cả 3 checks pass?}
+    FE --> GATE
+    PC --> GATE
+    GATE -->|Không| FIX[Sửa code · chạy lại CI]
+    FIX --> PR
+    GATE -->|Có · PR được review| MERGE[Merge vào main]
+    MERGE --> MAINCI[Chạy lại 3 checks trên SHA main]
+    MAINCI -->|Thành công| CONFIG[Production environment<br/>Kiểm tra Secrets và Variables]
+    CONFIG --> BUILD[Vercel pull + kiểm tra VITE_API_URL<br/>Build artifact production + gắn release.json]
+    BUILD --> RENDER[Render API · commitId = SHA đã test<br/>Đợi đúng deployment ID live]
+    RENDER --> READY[Backend smoke<br/>MongoDB ping · SHA · CORS · AR API]
+    READY --> VERCEL[Vercel deploy --prebuilt --prod]
+    VERCEL --> SMOKE[Frontend smoke<br/>SPA routes · camera policy · SHA · GLB]
+    SMOKE --> SUMMARY[Actions Summary<br/>SHA · deployment ID · production URLs]
+    BUILD -. Lỗi .-> STOP[Dừng workflow · xem log<br/>Rollback có kiểm soát nếu đã deploy]
+    RENDER -. Lỗi .-> STOP
+    READY -. Lỗi .-> STOP
+    VERCEL -. Lỗi .-> STOP
+    SMOKE -. Lỗi .-> STOP
+    CONFIG -. Thiếu hoặc sai .-> STOP
+    DB[(MongoDB)] -. readiness ping .-> READY
+    R2[(Cloudflare R2)] -. asset qua proxy Vercel .-> SMOKE

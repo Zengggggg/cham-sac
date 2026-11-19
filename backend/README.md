@@ -2,6 +2,12 @@
 
 Backend Node.js/Express dùng MongoDB/Mongoose. Toàn bộ API được mount dưới prefix `/chamsacviet`.
 
+## Readiness và CI/CD
+
+`GET /chamsacviet/health/ready` trả HTTP 200 khi MongoDB đã kết nối và ping thành công trong thời hạn 3 giây. Response dùng envelope chung, `data` là `{ "status": "ready", "commitSha": "<SHA>" }`; SHA lấy từ biến do Render cung cấp `RENDER_GIT_COMMIT`, hoặc `null` ở local. MongoDB chưa sẵn sàng trả 503, không lộ thông tin kết nối. Response không được cache.
+
+Render health check và pipeline dùng readiness này; `/chamsacviet/status` vẫn chỉ kiểm tra ứng dụng đang chạy. Backend CI dùng Node `22.22.0`, chạy `npm ci`, `npm run lint`, `npm test`. Hướng dẫn cấu hình, diagram và rollback nằm trong [tài liệu CI/CD](../docs/cicd/README.md).
+
 ## Swagger API
 
 Sau khi khởi động backend, mở giao diện Swagger tại:
@@ -71,7 +77,7 @@ Ví dụ response phân trang:
 
 ## Chạy local
 
-Yêu cầu Node.js 20.19+.
+Phiên bản kiểm thử CI/Render: Node.js `22.22.0`, ghi trong `.node-version`.
 
 ```bash
 npm ci

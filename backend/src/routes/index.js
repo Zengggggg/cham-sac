@@ -15,8 +15,11 @@ import paymentRouter from './paymentRoutes.js';
 import questionRouter from './questionRoutes.js';
 import shopRouter from './shopRoutes.js';
 import { sendSuccess } from '../utils/apiResponse.js';
+import { getHealthReadiness } from '../controllers/healthController.js';
 
 const router = express.Router();
+
+router.get('/health/ready', getHealthReadiness);
 
 router.get('/status', (req, res) => {
     void req;

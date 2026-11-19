@@ -1,5 +1,7 @@
 # Deploy frontend lên Vercel
 
+> Pipeline production do GitHub Actions điều phối: xem [CI/CD](../docs/cicd/README.md). `git.deploymentEnabled: false` tắt deploy trực tiếp từ Git; sau khi cấu hình Secrets/Variables, merge vào `main` để workflow deploy. Các bước bên dưới dùng để thiết lập project lần đầu.
+
 ## 1. Tạo project
 
 1. Import repository vào Vercel.
@@ -9,7 +11,7 @@
    - Build Command: `npm run build`
    - Output Directory: `dist`
 
-Dự án giữ Node.js 24 mặc định của Vercel. `package.json` đã override dependency native `canvas` cũ của MindAR sang bản tương thích Node.js 24; không hạ project về Node.js 20.
+Dự án dùng Node.js `24.x` trên Vercel và Node `24.22.3` trong CI theo `.node-version`; `package.json` có `engines.node: 24.x`. Dependency native `canvas` cũ của MindAR đã được override sang bản tương thích; không hạ project về Node.js 20.
 
 `vercel.json` đã có SPA rewrite về `index.html`, vì vậy mở trực tiếp hoặc tải lại các route như `/ar`, `/login` và `/admin` sẽ không bị 404.
 

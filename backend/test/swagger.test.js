@@ -7,6 +7,7 @@ test('Swagger spec exposes the current API routes and Bearer authentication', ()
     assert.equal(API_PREFIX, '/chamsacviet');
     assert.equal(swaggerSpec.openapi, '3.0.3');
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/status`]);
+    assert.ok(swaggerSpec.paths[`${API_PREFIX}/health/ready`].get.responses[503]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/register`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/verify-email`]);
     assert.ok(swaggerSpec.paths[`${API_PREFIX}/auth/resend-verification-otp`]);
@@ -41,6 +42,7 @@ test('Swagger response schemas enforce the backend-to-frontend contract', () => 
         'PasswordResetOtpResponse',
         'UserResponse',
         'StatusResponse',
+        'ReadinessResponse',
         'EmptySuccessResponse',
         'ErrorResponse',
         'ArExperiencesResponse',

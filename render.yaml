@@ -7,8 +7,8 @@ services:
     rootDir: backend
     buildCommand: npm ci --omit=dev
     startCommand: npm start
-    healthCheckPath: /chamsacviet/status
-    autoDeployTrigger: commit
+    healthCheckPath: /chamsacviet/health/ready
+    autoDeployTrigger: off
     envVars:
       - key: NODE_ENV
         value: production

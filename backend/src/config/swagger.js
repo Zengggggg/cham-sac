@@ -209,6 +209,21 @@ const swaggerDefinition = {
                     }
                 }
             },
+            ReadinessResponse: {
+                type: 'object',
+                required: responseRequiredFields,
+                properties: {
+                    ...successProperties('Hệ thống sẵn sàng phục vụ.'),
+                    data: {
+                        type: 'object',
+                        required: ['status', 'commitSha'],
+                        properties: {
+                            status: { type: 'string', enum: ['ready'] },
+                            commitSha: { type: 'string', nullable: true, pattern: '^[a-f0-9]{40}$' }
+                        }
+                    }
+                }
+            },
             EmptySuccessResponse: {
                 type: 'object',
                 required: responseRequiredFields,
@@ -246,6 +261,20 @@ const swaggerDefinition = {
         }
     },
     paths: {
+        [`${API_PREFIX}/health/ready`]: {
+            get: {
+                tags: ['System'],
+                summary: 'Kiểm tra kết nối MongoDB và phiên bản đang phục vụ',
+                operationId: 'getHealthReadiness',
+                responses: {
+                    200: {
+                        description: 'MongoDB trả lời ping; commitSha lấy từ RENDER_GIT_COMMIT hoặc null ở local.',
+                        content: { 'application/json': { schema: { $ref: '#/components/schemas/ReadinessResponse' } } }
+                    },
+                    503: errorResponse('MongoDB chưa kết nối hoặc không trả lời trong thời hạn.')
+                }
+            }
+        },
         [`${API_PREFIX}/status`]: {
             get: {
                 tags: ['System'],
